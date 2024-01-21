@@ -1,4 +1,5 @@
-pytorch==2.1.2
+# pytorch==2.1.2
+torch==2.1.2
 matplotlib==3.8.2
 numpy==1.26.3
 Pillow==10.2.0
