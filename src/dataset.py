@@ -13,6 +13,7 @@ class ClothesDataset(data.Dataset):
         self.data_path = path.join(opt.dataset_dir, opt.dataset_mode)
         self.transform = transforms.Compose([
             transforms.ToTensor(),
+            transforms.Resize(self.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
@@ -35,9 +36,9 @@ class ClothesDataset(data.Dataset):
         img = transforms.Resize(self.load_width)(img)
         img = self.transform(img)
 
-        # agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name))
-        # agnostic_mask = transforms.Resize(self.load_width)(agnostic_mask)
-        # agnostic_mask = self.transform(agnostic_mask)
+        agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png"))).convert('RGB')
+        agnostic_mask = transforms.Resize(self.load_width)(agnostic_mask)
+        agnostic_mask = self.transform(agnostic_mask)
 
         cloth = Image.open(path.join(self.data_path, 'cloth', img_name)).convert('RGB')
         cloth = transforms.Resize(self.load_width)(cloth)
@@ -50,7 +51,7 @@ class ClothesDataset(data.Dataset):
         result = {
             'img_name': img_name,
             'img': img,
-        #   'agnostic_mask': agnostic_mask,
+            'agnostic_mask': agnostic_mask,
             'cloth': cloth,
             'cloth_mask': cloth_mask,
         }
