@@ -1,6 +1,7 @@
 from torch.utils import data
 from os import path
 from PIL import Image
+import numpy as np
 from torchvision import transforms
 
 
@@ -30,6 +31,7 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
+        # print('Loading image: {}'.format(self.img_names[index]))
         img_name = self.img_names[index]
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
@@ -40,13 +42,17 @@ class ClothesDataset(data.Dataset):
         agnostic_mask = transforms.Resize(self.load_width)(agnostic_mask)
         agnostic_mask = self.transform(agnostic_mask)
 
-        mask_body = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
-        mask, mask_body = self.get_body_color_mask(mask_body)
+        mask_body_parts = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
+        mask, mask_body = self.get_body_color_mask(mask_body_parts)
+        centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = transforms.Resize(self.load_width)(mask_body)
         mask_body = self.transform(mask_body)
+        centered_mask_body = transforms.Resize(self.load_width)(centered_mask_body)
+        centered_mask_body = self.transform(centered_mask_body)
+        mask_body_parts = transforms.Resize(self.load_width)(mask_body_parts.convert('RGB'))
+        mask_body_parts = self.transform(mask_body_parts)
 
-        img_masked = Image.composite(img_pil, Image.new('RGBA', img_pil.size), mask)
-        img_masked_rgb = img_masked.convert('RGB')
+        img_masked_rgb = self.adjust_at_offset(img_pil, offset, mask=mask)
         img_masked_rgb = transforms.Resize(self.load_width)(img_masked_rgb)
         img_masked_rgb = self.transform(img_masked_rgb)
 
@@ -64,6 +70,8 @@ class ClothesDataset(data.Dataset):
             'img_masked': img_masked_rgb,
             'agnostic_mask': agnostic_mask,
             'mask_body': mask_body,
+            'mask_body_parts': mask_body_parts,
+            'centered_mask_body': centered_mask_body,
             'cloth': cloth,
             'cloth_mask': cloth_mask,
         }
@@ -84,12 +92,37 @@ class ClothesDataset(data.Dataset):
         mask = Image.new('RGBA', mask_body.size)
         mask.putdata(new_data)
 
-        result = Image.composite(mask_body, Image.new('RGBA', mask_body.size, transparent), mask)
-
-        result_rgb = result.convert('RGB')
+        result = Image.new('RGB', mask_body.size)
+        result.paste(mask_body, mask=mask)
+        result_rgb = result
 
         return mask, result_rgb
+    
+    @staticmethod
+    def adjust_at_offset(img, offset, mask=None):
+        new_img = Image.new('RGB', img.size)
+        new_img.paste(img, offset, mask=mask)
+        return new_img
 
+    @staticmethod
+    def center_masked_area(img, mask):
+        mask_alpha = np.array(mask)[:, :, 3]
+
+        rows = np.any(mask_alpha, axis=1)
+        cols = np.any(mask_alpha, axis=0)
+        ymin, ymax = np.where(rows)[0][[0, -1]]
+        xmin, xmax = np.where(cols)[0][[0, -1]]
+
+        masked_center = ((xmin + xmax) // 2, (ymin + ymax) // 2)
+
+        img_center = (img.width // 2, img.height // 2)
+
+        offset = (img_center[0] - masked_center[0], img_center[1] - masked_center[1])
+
+        new_img = ClothesDataset.adjust_at_offset(img, offset, mask=mask)
+
+        return new_img, offset
+        
 
 class ClothesDataLoader:
     def __init__(self, opt, dataset):
