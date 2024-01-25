@@ -20,3 +20,26 @@ These are proposal that I think can help us to keep the project under control an
 ### Actions
 * Josep Maria to generate the code to parse the detailed mask from "image-parse-v3"
 * Raúl to prepare the doc folder and continue testing Dataset.
+
+## 2024-01-25
+**Attendees** Alvaro, Joan, Josep Maria, Pol, Raúl
+Periodic meeting for reviewing the actual status of the project
+###During the meeting
+* Review of what we have done duriong the week
+  * Extract new mask
+  * Center mask
+* Reviewing curren resuls we have discussed about
+  * Scale of images. is this necessary or not
+  * Occlusions of clothing due to how the model is wearing her outfit
+  * We will need to define a kind of data augmentation, flip, rotation and color variations are proposed. Other possibilities are partial occlussions but this will be defined later.
+* We have checked the algoritm to traini our net from scratch.
+  * Take model clothe using a detailled mask (image 7 in Josep Maria jupyter) Concatenate with final Clothes mask (image 3) and we have to predict the final image (image 2). As we mentkioned last day we are going to add the final image mask to the loss calciulation of the net.
+* Pol has asked about the net we are propossing fot doing the work. We have discussed about U-net and we have been checking different models and analysing the U-net created fort the lab.
+* Pol has explain what is the goal and what we need to show in  the critical review of next wedneday
+* With respect to the trainning of the network we have disscusse two possibilities we have, or train a net from scdratch of to use some U-net pretrainned with Imagenet and do the transfer learning and fine tunning.
+* Pol proposse SNR and SSIM as metrics to evaluate how much good is out algorithm.
+
+### Actions
+* Alvarto and Joan to use the lab U-nbet as base to create a net that we can train from scratch.
+* Josep Maria to use a pretrainned U-net and do the transfer learning
+* Raul to prepare an index of the presentation and an intial propossal. When this is done help to the rest.
