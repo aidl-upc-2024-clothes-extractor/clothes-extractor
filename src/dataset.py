@@ -30,7 +30,6 @@ class StableColorJitter:
         self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue = transforms.ColorJitter.get_params(
             jitter.brightness, jitter.contrast, jitter.saturation, jitter.hue
         )
-        print(self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue)
 
     def __call__(self, img):
         for fn_id in self.fn_idx:
@@ -128,7 +127,7 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        # print('Loading image: {}'.format(self.img_names[index]))
+        print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
         horizontal_flip = np.random.random() < self.horizontal_flip_prob
         zoom = np.random.random() < self.crop_prob
@@ -165,8 +164,8 @@ class ClothesDataset(data.Dataset):
         if angle:
             mask_body_parts = random_rotation(mask_body_parts)
 
-        orange_target_color = (254, 85, 0)  # #fe5500 in RGB
-        mask, mask_body = self.get_body_color_mask(mask_body_parts, orange_target_color)
+        target_colors = [(254, 85, 0), (0, 0, 85)]
+        mask, mask_body = self.get_body_color_mask(mask_body_parts, target_colors)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
         centered_mask_body = self.transform(centered_mask_body)
@@ -182,7 +181,7 @@ class ClothesDataset(data.Dataset):
             cloth = color_jitter(cloth)
 
         cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGBA')
-        cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, (255, 255, 255))
+        cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, [(255, 255, 255)])
         predict = self.adjust_at_offset(cloth, None, mask=cloth_color_mask)
 
         cloth = self.transform(cloth)
@@ -205,7 +204,7 @@ class ClothesDataset(data.Dataset):
         return result
     
     @staticmethod
-    def get_body_color_mask(mask_body, target_color):
+    def get_body_color_mask(mask_body, target_colors):
 
         opaque = (255, 255, 255, 255)  # White, fully opaque
         transparent = (255, 255, 255, 0)  # White, fully transparent
@@ -213,7 +212,7 @@ class ClothesDataset(data.Dataset):
         data = mask_body.getdata()
         new_data = []
         for item in data:
-            new_data.append(opaque if item[:3] == target_color else transparent)
+            new_data.append(opaque if item[:3] in target_colors else transparent)
 
         mask = Image.new('RGBA', mask_body.size)
         mask.putdata(new_data)
