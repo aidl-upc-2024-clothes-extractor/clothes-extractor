@@ -7,20 +7,21 @@ from torchvision import transforms
 
 class ClothesDataset(data.Dataset):
 
-    def __init__(self, opt):
+    def __init__(self, dataset_dir, dataset_mode, load_height, load_width):
         super(ClothesDataset).__init__()
-        self.load_height = opt.load_height
-        self.load_width = opt.load_width
-        self.data_path = path.join(opt.dataset_dir, opt.dataset_mode)
+        self.load_height = load_height
+        self.load_width = load_width
+        self.data_path = path.join(dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Resize(self.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
+        dataset_list = f'{dataset_mode}_pairs.txt'
 
         # load data list
         img_names = []
-        with open(path.join(opt.dataset_dir, opt.dataset_list), 'r') as f:
+        with open(path.join(dataset_dir, dataset_list), 'r') as f:
             for line in f.readlines():
                 img_name, c_name = line.strip().split()
                 img_names.append(img_name)
@@ -125,12 +126,12 @@ class ClothesDataset(data.Dataset):
         
 
 class ClothesDataLoader:
-    def __init__(self, opt, dataset):
+    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1):
         super(ClothesDataLoader, self).__init__()
 
         self.data_loader = data.DataLoader(
-                dataset, batch_size=opt.batch_size, shuffle=True,
-                num_workers=opt.workers, pin_memory=True, drop_last=True
+                dataset, batch_size=batch_size, shuffle=shuffle,
+                num_workers=num_workers, pin_memory=True, drop_last=True
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()
