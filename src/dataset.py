@@ -3,15 +3,46 @@ from os import path
 from PIL import Image
 import numpy as np
 from torchvision import transforms
+from torchvision.transforms import functional as F
+
+
+class SameCropTransform:
+    def __init__(self, output_size, scale=(0.8, 1.0)):
+        self.output_size = output_size
+        self.scale = scale
+        self.i = None
+        self.j = None
+        self.h = None
+        self.w = None
+
+    def __call__(self, img):
+        if self.i is None or self.j is None or self.h is None or self.w is None:
+            self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
+                img, scale=self.scale, ratio=(1.0, 1.0))
+            
+        img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, self.output_size)
+
+        return img_resized
 
 
 class ClothesDataset(data.Dataset):
 
-    def __init__(self, dataset_dir, dataset_mode, load_height, load_width, vertical_flip_prob=0.5):
+    def __init__(self,
+                 dataset_dir, dataset_mode,
+                 load_height, load_width,
+                 horizontal_flip_prob=0.5,
+                 rotation_prob=0.5, rotation_angle=10,
+                 crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92
+    ):
         super(ClothesDataset).__init__()
         self.load_height = load_height
         self.load_width = load_width
-        self.horizontal_flip_prob = vertical_flip_prob
+        self.horizontal_flip_prob = horizontal_flip_prob
+        self.crop_prob = crop_prob
+        self.min_crop_factor = min_crop_factor
+        self.max_crop_factor = max_crop_factor
+        self.rotation_prob = rotation_prob
+        self.rotation_angle = rotation_angle
         self.data_path = path.join(dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             transforms.ToTensor(),
@@ -36,10 +67,15 @@ class ClothesDataset(data.Dataset):
         # print('Loading image: {}'.format(self.img_names[index]))
         img_name = self.img_names[index]
         horizontal_flip = np.random.random() < self.horizontal_flip_prob
+        zoom = np.random.random() < self.crop_prob
+        random_zoom = SameCropTransform((self.load_height, self.load_width), scale=(self.min_crop_factor, self.max_crop_factor))
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
         if horizontal_flip:
             img_pil = img_pil.transpose(Image.FLIP_LEFT_RIGHT)
+        if zoom:
+            img_pil = random_zoom(img_pil)
+            
         img = self.transform(img_pil)
 
         agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png"))).convert('RGB')
@@ -50,6 +86,8 @@ class ClothesDataset(data.Dataset):
         mask_body_parts = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
         if horizontal_flip:
             mask_body_parts = mask_body_parts.transpose(Image.FLIP_LEFT_RIGHT)
+        if zoom:
+            mask_body_parts = random_zoom(mask_body_parts)
         mask, mask_body = self.get_body_color_mask(mask_body_parts)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
