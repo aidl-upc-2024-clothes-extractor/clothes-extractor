@@ -7,10 +7,11 @@ from torchvision import transforms
 
 class ClothesDataset(data.Dataset):
 
-    def __init__(self, dataset_dir, dataset_mode, load_height, load_width):
+    def __init__(self, dataset_dir, dataset_mode, load_height, load_width, vertical_flip_prob=0.5):
         super(ClothesDataset).__init__()
         self.load_height = load_height
         self.load_width = load_width
+        self.horizontal_flip_prob = vertical_flip_prob
         self.data_path = path.join(dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             transforms.ToTensor(),
@@ -34,35 +35,36 @@ class ClothesDataset(data.Dataset):
     def __getitem__(self, index):
         # print('Loading image: {}'.format(self.img_names[index]))
         img_name = self.img_names[index]
+        horizontal_flip = np.random.random() < self.horizontal_flip_prob
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
-        img = transforms.Resize(self.load_width)(img_pil)
-        img = self.transform(img)
+        if horizontal_flip:
+            img_pil = img_pil.transpose(Image.FLIP_LEFT_RIGHT)
+        img = self.transform(img_pil)
 
         agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png"))).convert('RGB')
-        agnostic_mask = transforms.Resize(self.load_width)(agnostic_mask)
+        if horizontal_flip:
+            agnostic_mask = agnostic_mask.transpose(Image.FLIP_LEFT_RIGHT)
         agnostic_mask = self.transform(agnostic_mask)
 
         mask_body_parts = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
+        if horizontal_flip:
+            mask_body_parts = mask_body_parts.transpose(Image.FLIP_LEFT_RIGHT)
         mask, mask_body = self.get_body_color_mask(mask_body_parts)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
-        mask_body = transforms.Resize(self.load_width)(mask_body)
         mask_body = self.transform(mask_body)
-        centered_mask_body = transforms.Resize(self.load_width)(centered_mask_body)
         centered_mask_body = self.transform(centered_mask_body)
-        mask_body_parts = transforms.Resize(self.load_width)(mask_body_parts.convert('RGB'))
-        mask_body_parts = self.transform(mask_body_parts)
+        mask_body_parts = self.transform(mask_body_parts.convert('RGB'))
 
         img_masked_rgb = self.adjust_at_offset(img_pil, offset, mask=mask)
-        img_masked_rgb = transforms.Resize(self.load_width)(img_masked_rgb)
         img_masked_rgb = self.transform(img_masked_rgb)
 
         cloth = Image.open(path.join(self.data_path, 'cloth', img_name)).convert('RGB')
-        cloth = transforms.Resize(self.load_width)(cloth)
+        if horizontal_flip:
+            cloth = cloth.transpose(Image.FLIP_LEFT_RIGHT)
         cloth = self.transform(cloth)
 
         cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGB')
-        cloth_mask = transforms.Resize(self.load_width)(cloth_mask)
         cloth_mask = self.transform(cloth_mask)
 
         result = {
