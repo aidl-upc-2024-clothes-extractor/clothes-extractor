@@ -164,7 +164,7 @@ class ClothesDataset(data.Dataset):
         if angle:
             mask_body_parts = random_rotation(mask_body_parts)
 
-        target_colors = [(254, 85, 0), (0, 0, 85)]
+        target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220)]
         mask, mask_body = self.get_body_color_mask(mask_body_parts, target_colors)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
