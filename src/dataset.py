@@ -56,6 +56,27 @@ class StableRotation:
     def __call__(self, img):
         return F.rotate(img, self.angle)
 
+class MakeSquareWithPad:
+    def __init__(self, fill=0):
+        self.fill = fill  # fill color, 0 for black
+
+    def __call__(self, img):
+        width, height = img.size
+        max_side = max(width, height)
+        padding_left = padding_right = padding_top = padding_bottom = 0
+
+        if width < max_side:
+            padding_left = (max_side - width) // 2
+            padding_right = max_side - width - padding_left
+        elif height < max_side:
+            padding_top = (max_side - height) // 2
+            padding_bottom = max_side - height - padding_top
+
+        padding = (padding_left, padding_top, padding_right, padding_bottom)
+        return F.pad(img, padding, fill=self.fill, padding_mode='constant')
+
+
+
 class ClothesDataset(data.Dataset):
 
     def __init__(
@@ -87,6 +108,7 @@ class ClothesDataset(data.Dataset):
         self.rotation_angle = rotation_angle
         self.data_path = path.join(dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
+            MakeSquareWithPad(),
             transforms.ToTensor(),
             transforms.Resize(self.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -142,7 +164,9 @@ class ClothesDataset(data.Dataset):
             mask_body_parts = random_zoom(mask_body_parts)
         if angle:
             mask_body_parts = random_rotation(mask_body_parts)
-        mask, mask_body = self.get_body_color_mask(mask_body_parts)
+
+        orange_target_color = (254, 85, 0)  # #fe5500 in RGB
+        mask, mask_body = self.get_body_color_mask(mask_body_parts, orange_target_color)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
         centered_mask_body = self.transform(centered_mask_body)
@@ -156,10 +180,15 @@ class ClothesDataset(data.Dataset):
             cloth = cloth.transpose(Image.FLIP_LEFT_RIGHT)
         if jitter:
             cloth = color_jitter(cloth)
-        cloth = self.transform(cloth)
 
-        cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGB')
-        cloth_mask = self.transform(cloth_mask)
+        cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGBA')
+        cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, (255, 255, 255))
+        predict = self.adjust_at_offset(cloth, None, mask=cloth_color_mask)
+
+        cloth = self.transform(cloth)
+        cloth_mask = self.transform(cloth_mask.convert('RGB'))
+        predict = self.transform(predict)
+
 
         result = {
             'img_name': img_name,
@@ -171,12 +200,12 @@ class ClothesDataset(data.Dataset):
             'centered_mask_body': centered_mask_body,
             'cloth': cloth,
             'cloth_mask': cloth_mask,
+            'predict': predict
         }
         return result
     
     @staticmethod
-    def get_body_color_mask(mask_body):
-        target_color = (254, 85, 0)  # #fe5500 in RGB
+    def get_body_color_mask(mask_body, target_color):
 
         opaque = (255, 255, 255, 255)  # White, fully opaque
         transparent = (255, 255, 255, 0)  # White, fully transparent
