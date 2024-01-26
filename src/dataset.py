@@ -205,23 +205,23 @@ class ClothesDataset(data.Dataset):
     
     @staticmethod
     def get_body_color_mask(mask_body, target_colors):
+        target_colors = [np.array(color) for color in target_colors]  # Convert to numpy arrays for comparison
 
-        opaque = (255, 255, 255, 255)  # White, fully opaque
-        transparent = (255, 255, 255, 0)  # White, fully transparent
+        data = np.array(mask_body)  # Convert image to numpy array
+        mask = np.full(data.shape[:2], False)  # Initialize mask with False (shape: [height, width])
 
-        data = mask_body.getdata()
-        new_data = []
-        for item in data:
-            new_data.append(opaque if item[:3] in target_colors else transparent)
+        for color in target_colors:
+            mask |= np.all(data[:, :, :3] == color, axis=-1)  # Update mask for each target color
 
-        mask = Image.new('RGBA', mask_body.size)
-        mask.putdata(new_data)
+        new_data = np.zeros(data.shape, dtype=np.uint8)  # Initialize new_data with zeros
+        new_data[:, :, :3] = data[:, :, :3]  # Copy RGB channels
+        new_data[mask, 3] = 255  # Set alpha channel to 255 where mask is True
 
+        mask_image = Image.fromarray(new_data, 'RGBA')
         result = Image.new('RGB', mask_body.size)
-        result.paste(mask_body, mask=mask)
-        result_rgb = result
+        result.paste(mask_body, mask=mask_image)
 
-        return mask, result_rgb
+        return mask_image, result
     
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):
