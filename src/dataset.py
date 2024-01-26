@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 from torchvision import transforms
 from torchvision.transforms import functional as F
-
+import torch
 
 class SameCropTransform:
     def __init__(self, output_size, scale=(0.8, 1.0)):
@@ -24,15 +24,42 @@ class SameCropTransform:
 
         return img_resized
 
+class StableColorJitter:
+    def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
+        jitter = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
+        self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue = transforms.ColorJitter.get_params(
+            jitter.brightness, jitter.contrast, jitter.saturation, jitter.hue
+        )
+        print(self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue)
+
+    def __call__(self, img):
+        for fn_id in self.fn_idx:
+            if fn_id == 0 and self.brightness != 0:
+                brightness_factor = self.brightness
+                img = F.adjust_brightness(img, brightness_factor)
+            elif fn_id == 1 and self.contrast != 0:
+                contrast_factor = self.contrast
+                img = F.adjust_contrast(img, contrast_factor)
+            elif fn_id == 2 and self.saturation != 0:
+                saturation_factor = self.saturation
+                img = F.adjust_saturation(img, saturation_factor)
+            elif fn_id == 3 and self.hue != 0:
+                hue_factor = self.hue
+                img = F.adjust_hue(img, hue_factor)
+
+        return img
 
 class ClothesDataset(data.Dataset):
 
-    def __init__(self,
-                 dataset_dir, dataset_mode,
-                 load_height, load_width,
-                 horizontal_flip_prob=0.5,
-                 rotation_prob=0.5, rotation_angle=10,
-                 crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92
+    def __init__(
+            self,
+            dataset_dir, dataset_mode,
+            load_height, load_width,
+            horizontal_flip_prob=0.5,
+            rotation_prob=0.5, rotation_angle=10,
+            crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92,
+            brightness=0.15, contrast=0.3, saturation=0.3, hue=0.05,
+            color_jitter_prob=1
     ):
         super(ClothesDataset).__init__()
         self.load_height = load_height
@@ -41,6 +68,11 @@ class ClothesDataset(data.Dataset):
         self.crop_prob = crop_prob
         self.min_crop_factor = min_crop_factor
         self.max_crop_factor = max_crop_factor
+        self.color_jitter_prob = color_jitter_prob
+        self.brightness = brightness
+        self.contrast = contrast
+        self.saturation = saturation
+        self.hue = hue
         self.rotation_prob = rotation_prob
         self.rotation_angle = rotation_angle
         self.data_path = path.join(dataset_dir, dataset_mode)
@@ -68,13 +100,17 @@ class ClothesDataset(data.Dataset):
         img_name = self.img_names[index]
         horizontal_flip = np.random.random() < self.horizontal_flip_prob
         zoom = np.random.random() < self.crop_prob
+        jitter = np.random.random() < self.color_jitter_prob
         random_zoom = SameCropTransform((self.load_height, self.load_width), scale=(self.min_crop_factor, self.max_crop_factor))
+        color_jitter = StableColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
         if horizontal_flip:
             img_pil = img_pil.transpose(Image.FLIP_LEFT_RIGHT)
         if zoom:
             img_pil = random_zoom(img_pil)
+        if jitter:
+            img_pil = color_jitter(img_pil)
             
         img = self.transform(img_pil)
 
@@ -100,6 +136,8 @@ class ClothesDataset(data.Dataset):
         cloth = Image.open(path.join(self.data_path, 'cloth', img_name)).convert('RGB')
         if horizontal_flip:
             cloth = cloth.transpose(Image.FLIP_LEFT_RIGHT)
+        if jitter:
+            cloth = color_jitter(cloth)
         cloth = self.transform(cloth)
 
         cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGB')
