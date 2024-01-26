@@ -49,6 +49,13 @@ class StableColorJitter:
 
         return img
 
+class StableRotation:
+    def __init__(self, angle=0):
+        self.angle = np.random.uniform(-angle, angle)
+
+    def __call__(self, img):
+        return F.rotate(img, self.angle)
+
 class ClothesDataset(data.Dataset):
 
     def __init__(
@@ -59,7 +66,8 @@ class ClothesDataset(data.Dataset):
             rotation_prob=0.5, rotation_angle=10,
             crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92,
             brightness=0.15, contrast=0.3, saturation=0.3, hue=0.05,
-            color_jitter_prob=1
+            color_jitter_prob=1,
+            angle_prob=0.5, angle=10
     ):
         super(ClothesDataset).__init__()
         self.load_height = load_height
@@ -73,6 +81,8 @@ class ClothesDataset(data.Dataset):
         self.contrast = contrast
         self.saturation = saturation
         self.hue = hue
+        self.angle_prob = angle_prob
+        self.angle = angle
         self.rotation_prob = rotation_prob
         self.rotation_angle = rotation_angle
         self.data_path = path.join(dataset_dir, dataset_mode)
@@ -101,8 +111,10 @@ class ClothesDataset(data.Dataset):
         horizontal_flip = np.random.random() < self.horizontal_flip_prob
         zoom = np.random.random() < self.crop_prob
         jitter = np.random.random() < self.color_jitter_prob
+        angle = np.random.random() < self.angle_prob
         random_zoom = SameCropTransform((self.load_height, self.load_width), scale=(self.min_crop_factor, self.max_crop_factor))
         color_jitter = StableColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
+        random_rotation = StableRotation(self.rotation_angle)
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
         if horizontal_flip:
@@ -111,12 +123,16 @@ class ClothesDataset(data.Dataset):
             img_pil = random_zoom(img_pil)
         if jitter:
             img_pil = color_jitter(img_pil)
-            
+        if angle:
+            img_pil = random_rotation(img_pil)
+
         img = self.transform(img_pil)
 
         agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png"))).convert('RGB')
         if horizontal_flip:
             agnostic_mask = agnostic_mask.transpose(Image.FLIP_LEFT_RIGHT)
+        if angle:
+            agnostic_mask = random_rotation(agnostic_mask)
         agnostic_mask = self.transform(agnostic_mask)
 
         mask_body_parts = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
@@ -124,6 +140,8 @@ class ClothesDataset(data.Dataset):
             mask_body_parts = mask_body_parts.transpose(Image.FLIP_LEFT_RIGHT)
         if zoom:
             mask_body_parts = random_zoom(mask_body_parts)
+        if angle:
+            mask_body_parts = random_rotation(mask_body_parts)
         mask, mask_body = self.get_body_color_mask(mask_body_parts)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
