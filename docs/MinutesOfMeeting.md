@@ -40,6 +40,6 @@ Periodic meeting for reviewing the actual status of the project
 * Pol proposse SNR and SSIM as metrics to evaluate how much good is out algorithm.
 
 ### Actions
-* Alvarto and Joan to use the lab U-nbet as base to create a net that we can train from scratch.
+* Alvarto and Joan to use the lab U-net as base to create a net that we can train from scratch.
 * Josep Maria to use a pretrainned U-net and do the transfer learning
 * Raul to prepare an index of the presentation and an intial propossal. When this is done help to the rest.
