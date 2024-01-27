@@ -1,10 +1,11 @@
 from torch.utils import data
 from os import path
-from PIL import Image
 import numpy as np
-from torchvision import transforms
+from torchvision import transforms, io
 from torchvision.transforms import functional as F
 import torch
+import os
+from PIL import Image
 
 class SameCropTransform:
     def __init__(self, output_size, scale=(0.8, 1.0)):
@@ -60,7 +61,7 @@ class MakeSquareWithPad:
         self.fill = fill  # fill color, 0 for black
 
     def __call__(self, img):
-        width, height = img.size
+        _, width, height = img.size()
         max_side = max(width, height)
         padding_left = padding_right = padding_top = padding_bottom = 0
 
@@ -73,6 +74,18 @@ class MakeSquareWithPad:
 
         padding = (padding_left, padding_top, padding_right, padding_bottom)
         return F.pad(img, padding, fill=self.fill, padding_mode='constant')
+
+
+class ToFloatTensor(object):
+    def __call__(self, tensor):
+        if tensor.dtype.is_floating_point:
+            return tensor
+        if tensor.dtype == torch.uint8:
+            return tensor.float() / 255.0
+        return tensor.float()
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
 
 
 
@@ -108,7 +121,7 @@ class ClothesDataset(data.Dataset):
         self.data_path = path.join(dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             MakeSquareWithPad(),
-            transforms.ToTensor(),
+            ToFloatTensor(),
             transforms.Resize(self.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
@@ -137,9 +150,10 @@ class ClothesDataset(data.Dataset):
         color_jitter = StableColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
         random_rotation = StableRotation(self.rotation_angle)
 
-        img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
+        img_pil = io.read_image(os.path.join(self.data_path, 'image', img_name))
+
         if horizontal_flip:
-            img_pil = img_pil.transpose(Image.FLIP_LEFT_RIGHT)
+            img_pil = F.hflip(img_pil)
         if zoom:
             img_pil = random_zoom(img_pil)
         if jitter:
@@ -149,16 +163,18 @@ class ClothesDataset(data.Dataset):
 
         img = self.transform(img_pil)
 
-        agnostic_mask = Image.open(path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png"))).convert('RGB')
+        agnostic_mask = io.read_image(os.path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png")))
+        agnostic_mask = agnostic_mask[:3, :, :]
         if horizontal_flip:
-            agnostic_mask = agnostic_mask.transpose(Image.FLIP_LEFT_RIGHT)
+            agnostic_mask = F.hflip(agnostic_mask)
         if angle:
             agnostic_mask = random_rotation(agnostic_mask)
         agnostic_mask = self.transform(agnostic_mask)
 
-        mask_body_parts = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('RGBA')
+        mask_body_parts = self.convert_to_rgb_tensor(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png")))
+        print(mask_body_parts.shape)
         if horizontal_flip:
-            mask_body_parts = mask_body_parts.transpose(Image.FLIP_LEFT_RIGHT)
+            mask_body_parts = F.hflip(mask_body_parts)
         if zoom:
             mask_body_parts = random_zoom(mask_body_parts)
         if angle:
@@ -166,40 +182,42 @@ class ClothesDataset(data.Dataset):
 
         target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
         mask, mask_body = self.get_body_color_mask(mask_body_parts, target_colors)
-        centered_mask_body, offset = self.center_masked_area(mask_body, mask)
-        mask_body = self.transform(mask_body)
-        centered_mask_body = self.transform(centered_mask_body)
-        mask_body_parts = self.transform(mask_body_parts.convert('RGB'))
+        # centered_mask_body, offset = self.center_masked_area(mask_body, mask)
+        # mask_body = self.transform(mask_body)
+        # centered_mask_body = self.transform(centered_mask_body)
+        mask_body_parts = mask_body_parts[:3, :, :]
+        # mask_body_parts = self.transform(mask_body_parts)
 
-        img_masked_rgb = self.adjust_at_offset(img_pil, offset, mask=mask)
-        img_masked_rgb = self.transform(img_masked_rgb)
+        # img_masked_rgb = self.adjust_at_offset(img_pil, offset, mask=mask)
+        # img_masked_rgb = self.transform(img_masked_rgb)
 
-        cloth = Image.open(path.join(self.data_path, 'cloth', img_name)).convert('RGB')
-        if horizontal_flip:
-            cloth = cloth.transpose(Image.FLIP_LEFT_RIGHT)
-        if jitter:
-            cloth = color_jitter(cloth)
+        # cloth = io.read_image(path.join(self.data_path, 'cloth', img_name))
+        # if horizontal_flip:
+        #     cloth = F.hflip(cloth)
+        # if jitter:
+        #     cloth = color_jitter(cloth)
 
-        cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGBA')
-        cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, [(255, 255, 255)])
-        predict = self.adjust_at_offset(cloth, None, mask=cloth_color_mask)
+        # cloth_mask = io.read_image(path.join(self.data_path, 'cloth-mask', img_name))
+        # cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, [(255, 255, 255)])
+        # predict = self.adjust_at_offset(cloth, None, mask=cloth_color_mask)
 
-        cloth = self.transform(cloth)
-        cloth_mask = self.transform(cloth_mask.convert('RGB'))
-        predict = self.transform(predict)
+        # cloth = self.transform(cloth)
+        # cloth_mask = cloth_mask[:3, :, :]
+        # cloth_mask = self.transform(cloth_mask)
+        # predict = self.transform(predict)
 
 
         result = {
             'img_name': img_name,
             'img': img,
-            'img_masked': img_masked_rgb,
+            # 'img_masked': img_masked_rgb,
             'agnostic_mask': agnostic_mask,
             'mask_body': mask_body,
             'mask_body_parts': mask_body_parts,
-            'centered_mask_body': centered_mask_body,
-            'cloth': cloth,
-            'cloth_mask': cloth_mask,
-            'predict': predict
+            # 'centered_mask_body': centered_mask_body,
+            # 'cloth': cloth,
+            # 'cloth_mask': cloth_mask,
+            # 'predict': predict
         }
         return result
     
@@ -209,33 +227,42 @@ class ClothesDataset(data.Dataset):
         device = "cpu"
 
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
-        data = torch.tensor(np.array(mask_body), device=device, dtype=torch.uint8)
+        data = mask_body.to(device, dtype=torch.uint8)
 
         mask = torch.any(torch.all(data[:, :, None, :3] == target_colors, dim=-1), dim=-1)
 
-        new_data = torch.zeros(data.shape, dtype=torch.uint8, device=device)
-        new_data[:, :, :3] = data[:, :, :3]
-        new_data[:, :, 3][mask] = 255
+        new_data = torch.zeros(4, data.shape[1], data.shape[2], dtype=torch.uint8, device=device)
+        new_data[:3] = data[:3]
 
-        mask_image = Image.fromarray(new_data.cpu().numpy(), 'RGBA')
-        result = Image.new('RGB', mask_body.size)
-        result.paste(mask_body, mask=mask_image)
+        new_data[3, mask] = 255
 
-        return mask_image, result
+        result_data = data.clone()
+        result_data[:, mask] = 0
+
+        return new_data, result_data
 
     
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):
-        new_img = Image.new('RGB', img.size)
-        new_img.paste(img, offset, mask=mask)
+        padded_img = F.pad(img, (offset[0], 0, offset[1], 0), mode='constant', value=0)
+
+        new_img = padded_img[:, :img.size(1), :img.size(2)]
+
+        if mask is not None:
+            mask = F.pad(mask, (offset[0], 0, offset[1], 0), mode='constant', value=0)
+            new_img = new_img * mask
+
         return new_img
+
 
     @staticmethod
     def center_masked_area(img, mask):
-        mask_alpha = np.array(mask)[:, :, 3]
+        mask_alpha = mask[0, :, :].cpu().numpy()
 
         rows = np.any(mask_alpha, axis=1)
         cols = np.any(mask_alpha, axis=0)
+        print(rows.shape, cols.shape)
+        print(rows, cols)
         ymin, ymax = np.where(rows)[0][[0, -1]]
         xmin, xmax = np.where(cols)[0][[0, -1]]
 
@@ -248,6 +275,14 @@ class ClothesDataset(data.Dataset):
         new_img = ClothesDataset.adjust_at_offset(img, offset, mask=mask)
 
         return new_img, offset
+
+    @staticmethod
+    def convert_to_rgb_tensor(image_path):
+        image = Image.open(image_path)
+        if image.mode == 'P':
+            image = image.convert('RGB')
+        transform = transforms.ToTensor()
+        return transform(image)
         
 
 class ClothesDataLoader:
