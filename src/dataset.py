@@ -55,6 +55,7 @@ class StableRotation:
     def __call__(self, img):
         return F.rotate(img, self.angle)
 
+
 class MakeSquareWithPad:
     def __init__(self, fill=0):
         self.fill = fill  # fill color, 0 for black
@@ -75,48 +76,22 @@ class MakeSquareWithPad:
         return F.pad(img, padding, fill=self.fill, padding_mode='constant')
 
 
-
 class ClothesDataset(data.Dataset):
-
-    def __init__(
-            self,
-            dataset_dir, dataset_mode,
-            load_height, load_width,
-            horizontal_flip_prob=0.5,
-            rotation_prob=0.5, rotation_angle=10,
-            crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92,
-            brightness=0.15, contrast=0.3, saturation=0.3, hue=0.05,
-            color_jitter_prob=1,
-            angle_prob=0.5, angle=10
-    ):
+    def __init__(self, cfg):
         super(ClothesDataset).__init__()
-        self.load_height = load_height
-        self.load_width = load_width
-        self.horizontal_flip_prob = horizontal_flip_prob
-        self.crop_prob = crop_prob
-        self.min_crop_factor = min_crop_factor
-        self.max_crop_factor = max_crop_factor
-        self.color_jitter_prob = color_jitter_prob
-        self.brightness = brightness
-        self.contrast = contrast
-        self.saturation = saturation
-        self.hue = hue
-        self.angle_prob = angle_prob
-        self.angle = angle
-        self.rotation_prob = rotation_prob
-        self.rotation_angle = rotation_angle
-        self.data_path = path.join(dataset_dir, dataset_mode)
+        self.cfg = cfg
+        self.data_path = path.join(cfg.dataset_dir, cfg.dataset_mode)
         self.transform = transforms.Compose([
             MakeSquareWithPad(),
             transforms.ToTensor(),
-            transforms.Resize(self.load_width),
+            transforms.Resize(self.cfg.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
-        dataset_list = f'{dataset_mode}_pairs.txt'
+        dataset_list = f'{cfg.dataset_mode}_pairs.txt'
 
         # load data list
         img_names = []
-        with open(path.join(dataset_dir, dataset_list), 'r') as f:
+        with open(path.join(cfg.dataset_dir, dataset_list), 'r') as f:
             for line in f.readlines():
                 img_name, c_name = line.strip().split()
                 img_names.append(img_name)
@@ -129,13 +104,13 @@ class ClothesDataset(data.Dataset):
     def __getitem__(self, index):
         print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
-        horizontal_flip = np.random.random() < self.horizontal_flip_prob
-        zoom = np.random.random() < self.crop_prob
-        jitter = np.random.random() < self.color_jitter_prob
-        angle = np.random.random() < self.angle_prob
-        random_zoom = SameCropTransform((self.load_height, self.load_width), scale=(self.min_crop_factor, self.max_crop_factor))
-        color_jitter = StableColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
-        random_rotation = StableRotation(self.rotation_angle)
+        horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
+        zoom = np.random.random() < self.cfg.crop_prob
+        jitter = np.random.random() < self.cfg.color_jitter_prob
+        angle = np.random.random() < self.cfg.angle_prob
+        random_zoom = SameCropTransform((self.cfg.load_height, self.cfg.load_width), scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
+        color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
+        random_rotation = StableRotation(self.cfg.rotation_angle)
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
         if horizontal_flip:
