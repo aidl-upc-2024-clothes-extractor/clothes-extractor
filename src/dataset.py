@@ -225,32 +225,42 @@ class ClothesDataset(data.Dataset):
     @staticmethod
     def get_body_color_mask(mask_body, target_colors):
         device = "cpu"
-
+        t = transforms.ToPILImage()
+        mask_body = t(mask_body.cpu())
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
-        data = mask_body.to(device, dtype=torch.uint8)
+        data = torch.tensor(np.array(mask_body), device=device, dtype=torch.uint8)
 
         mask = torch.any(torch.all(data[:, :, None, :3] == target_colors, dim=-1), dim=-1)
 
-        new_data = torch.zeros(4, data.shape[1], data.shape[2], dtype=torch.uint8, device=device)
-        new_data[:3] = data[:3]
+        new_data = torch.zeros(mask_body.size[1], mask_body.size[0], 4, dtype=torch.uint8, device=device)
+        new_data[:, :, :3] = data[:, :, :3]
+        new_data[:, :, 3][mask] = 255
 
-        new_data[3, mask] = 255
+        mask_image = Image.fromarray(new_data.cpu().numpy(), 'RGBA')
+        result = Image.new('RGB', mask_body.size)
+        result.paste(mask_body, mask=mask_image)
 
-        result_data = data.clone()
-        result_data[:, mask] = 0
+        t = transforms.ToTensor()
+        mask_image = t(mask_image)
+        result = t(result)
 
-        return new_data, result_data
-
+        return mask_image, result
     
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):
-        padded_img = F.pad(img, (offset[0], 0, offset[1], 0), mode='constant', value=0)
+        _, height, width = img.shape
+        print(img.shape)
+        new_img = torch.zeros_like(img)
 
-        new_img = padded_img[:, :img.size(1), :img.size(2)]
+        # Applying offset
+        dx, dy = offset
+        new_img[:, dy:height, dx:width] = img[:, :height-dy, :width-dx]
 
+        # Applying mask if provided
         if mask is not None:
-            mask = F.pad(mask, (offset[0], 0, offset[1], 0), mode='constant', value=0)
-            new_img = new_img * mask
+            alpha_mask = mask[-1,:,:].unsqueeze(0).expand_as(new_img)
+            alpha_mask = alpha_mask.to(dtype=new_img.dtype)
+            new_img *= alpha_mask
 
         return new_img
 
@@ -268,7 +278,7 @@ class ClothesDataset(data.Dataset):
 
         masked_center = ((xmin + xmax) // 2, (ymin + ymax) // 2)
 
-        img_center = (img.width // 2, img.height // 2)
+        img_center = (img.size(2) // 2, img.size(1) // 2)
 
         offset = (img_center[0] - masked_center[0], img_center[1] - masked_center[1])
 
