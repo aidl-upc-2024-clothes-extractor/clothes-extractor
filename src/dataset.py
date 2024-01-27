@@ -2,7 +2,8 @@ from torch.utils import data
 from os import path
 from PIL import Image
 import torch
-from data_augmentation import *
+
+from src.data_augmentation import *
 
 
 class ClothesDataset(data.Dataset):
