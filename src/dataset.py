@@ -10,10 +10,9 @@ class ClothesDataset(data.Dataset):
     '''
     dataset_mode must be 'test' or 'train'
     '''
-    def __init__(self, cfg, device, dataset_mode):
+    def __init__(self, cfg, dataset_mode):
         super(ClothesDataset).__init__()
         self.cfg = cfg
-        self.device = device
         self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             MakeSquareWithPad(),
@@ -74,7 +73,7 @@ class ClothesDataset(data.Dataset):
             mask_body_parts = random_rotation(mask_body_parts)
 
         target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
-        mask, mask_body = self.get_body_color_mask(self.device, mask_body_parts, target_colors)
+        mask, mask_body = self.get_body_color_mask(mask_body_parts, target_colors)
         centered_mask_body, offset = self.center_masked_area(mask_body, mask)
         mask_body = self.transform(mask_body)
         centered_mask_body = self.transform(centered_mask_body)
@@ -90,7 +89,7 @@ class ClothesDataset(data.Dataset):
             cloth = color_jitter(cloth)
 
         cloth_mask = Image.open(path.join(self.data_path, 'cloth-mask', img_name)).convert('RGBA')
-        cloth_color_mask, _ = self.get_body_color_mask(self.device, cloth_mask, [(255, 255, 255)])
+        cloth_color_mask, _ = self.get_body_color_mask(cloth_mask, [(255, 255, 255)])
         predict = self.adjust_at_offset(cloth, None, mask=cloth_color_mask)
 
         cloth = self.transform(cloth)
@@ -114,7 +113,9 @@ class ClothesDataset(data.Dataset):
     
         
     @staticmethod
-    def get_body_color_mask(device, mask_body, target_colors):
+    def get_body_color_mask(mask_body, target_colors):
+        device = "cpu"
+
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
         data = torch.tensor(np.array(mask_body), device=device, dtype=torch.uint8)
 
