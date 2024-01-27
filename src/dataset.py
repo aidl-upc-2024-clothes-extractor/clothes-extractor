@@ -35,7 +35,7 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        # print('Loading image: {}'.format(self.img_names[index]), index)
+        print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
         horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
         zoom = np.random.random() < self.cfg.crop_prob

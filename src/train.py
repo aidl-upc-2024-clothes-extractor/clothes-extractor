@@ -3,7 +3,7 @@ import torch.optim as optim
 from torch.nn import L1Loss
 
 
-def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
+def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
     criterion = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -13,8 +13,8 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_ra
         running_loss = 0.0
 
         for batch_idx, inputs in enumerate(train_dataloader.data_loader):
-            target = inputs ["predict"]
-            source = inputs["img_masked"]
+            target = inputs ["predict"].to(device)
+            source = inputs["img_masked"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
@@ -34,8 +34,8 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_ra
         running_loss = 0.0
         with torch.no_grad():
             for batch_idx, inputs in enumerate(val_dataloader.data_loader):
-                target = inputs["predict"]
-                source = inputs["img_masked"]
+                target = inputs["predict"].to(device)
+                source = inputs["img_masked"].to(device)
 
                 outputs = model(source)
                 loss = criterion(outputs, target)
