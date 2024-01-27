@@ -16,11 +16,8 @@ def main():
     cfg.load_height = 28
     cfg.load_width = 28
 
-    cfg.dataset_mode = "test"
-    test_dataset = ClothesDataset(cfg)
-
-    cfg.dataset_mode = "train"
-    train_dataset = ClothesDataset(cfg)
+    test_dataset = ClothesDataset(cfg, "test")
+    train_dataset = ClothesDataset(cfg, "train")
 
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)

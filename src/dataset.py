@@ -7,17 +7,20 @@ from src.data_augmentation import *
 
 
 class ClothesDataset(data.Dataset):
-    def __init__(self, cfg):
+    '''
+    dataset_mode must be 'test' or 'train'
+    '''
+    def __init__(self, cfg, dataset_mode):
         super(ClothesDataset).__init__()
         self.cfg = cfg
-        self.data_path = path.join(cfg.dataset_dir, cfg.dataset_mode)
+        self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             MakeSquareWithPad(),
             transforms.ToTensor(),
             transforms.Resize(self.cfg.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
-        dataset_list = f'{cfg.dataset_mode}_pairs.txt'
+        dataset_list = f'{dataset_mode}_pairs.txt'
 
         # load data list
         img_names = []
@@ -32,7 +35,7 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        print('Loading image: {}'.format(self.img_names[index]), index)
+        # print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
         horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
         zoom = np.random.random() < self.cfg.crop_prob

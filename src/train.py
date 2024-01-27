@@ -7,6 +7,7 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_ra
     criterion = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+    print('Start training')
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -27,15 +28,16 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_ra
                 break
 
 
-        avg_train_loss = running_loss / len(train_dataloader)
+        avg_train_loss = running_loss / len(train_dataloader.data_loader)
 
         model.eval()
         running_loss = 0.0
         with torch.no_grad():
             for batch_idx, inputs in enumerate(val_dataloader.data_loader):
                 target = inputs["predict"]
+                source = inputs["img_masked"]
 
-                outputs = model(inputs)
+                outputs = model(source)
                 loss = criterion(outputs, target)
 
                 running_loss += loss.item()
@@ -43,7 +45,7 @@ def train_model(model, train_dataloader, val_dataloader, num_epochs, learning_ra
                 if 0 < max_batches == batch_idx:
                     break
 
-        avg_val_loss = running_loss / len(val_dataloader)
+        avg_val_loss = running_loss / len(val_dataloader.data_loader)
 
         print(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {avg_train_loss:.4f}, '
