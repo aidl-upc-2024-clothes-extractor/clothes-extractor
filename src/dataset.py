@@ -1,122 +1,30 @@
 from torch.utils import data
 from os import path
 from PIL import Image
-import numpy as np
-from torchvision import transforms
-from torchvision.transforms import functional as F
 import torch
 
-class SameCropTransform:
-    def __init__(self, output_size, scale=(0.8, 1.0)):
-        self.output_size = output_size
-        self.scale = scale
-        self.i = None
-        self.j = None
-        self.h = None
-        self.w = None
-
-    def __call__(self, img):
-        if self.i is None or self.j is None or self.h is None or self.w is None:
-            self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
-                img, scale=self.scale, ratio=(1.0, 1.0))
-            
-        img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, self.output_size)
-
-        return img_resized
-
-class StableColorJitter:
-    def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
-        jitter = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
-        self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue = transforms.ColorJitter.get_params(
-            jitter.brightness, jitter.contrast, jitter.saturation, jitter.hue
-        )
-
-    def __call__(self, img):
-        for fn_id in self.fn_idx:
-            if fn_id == 0 and self.brightness != 0:
-                brightness_factor = self.brightness
-                img = F.adjust_brightness(img, brightness_factor)
-            elif fn_id == 1 and self.contrast != 0:
-                contrast_factor = self.contrast
-                img = F.adjust_contrast(img, contrast_factor)
-            elif fn_id == 2 and self.saturation != 0:
-                saturation_factor = self.saturation
-                img = F.adjust_saturation(img, saturation_factor)
-            elif fn_id == 3 and self.hue != 0:
-                hue_factor = self.hue
-                img = F.adjust_hue(img, hue_factor)
-
-        return img
-
-class StableRotation:
-    def __init__(self, angle=0):
-        self.angle = np.random.uniform(-angle, angle)
-
-    def __call__(self, img):
-        return F.rotate(img, self.angle)
-
-class MakeSquareWithPad:
-    def __init__(self, fill=0):
-        self.fill = fill  # fill color, 0 for black
-
-    def __call__(self, img):
-        width, height = img.size
-        max_side = max(width, height)
-        padding_left = padding_right = padding_top = padding_bottom = 0
-
-        if width < max_side:
-            padding_left = (max_side - width) // 2
-            padding_right = max_side - width - padding_left
-        elif height < max_side:
-            padding_top = (max_side - height) // 2
-            padding_bottom = max_side - height - padding_top
-
-        padding = (padding_left, padding_top, padding_right, padding_bottom)
-        return F.pad(img, padding, fill=self.fill, padding_mode='constant')
-
+from src.data_augmentation import *
 
 
 class ClothesDataset(data.Dataset):
-
-    def __init__(
-            self,
-            dataset_dir, dataset_mode,
-            load_height, load_width,
-            horizontal_flip_prob=0.5,
-            rotation_prob=0.5, rotation_angle=10,
-            crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92,
-            brightness=0.15, contrast=0.3, saturation=0.3, hue=0.05,
-            color_jitter_prob=1,
-            angle_prob=0.5, angle=10
-    ):
+    '''
+    dataset_mode must be 'test' or 'train'
+    '''
+    def __init__(self, cfg, dataset_mode):
         super(ClothesDataset).__init__()
-        self.load_height = load_height
-        self.load_width = load_width
-        self.horizontal_flip_prob = horizontal_flip_prob
-        self.crop_prob = crop_prob
-        self.min_crop_factor = min_crop_factor
-        self.max_crop_factor = max_crop_factor
-        self.color_jitter_prob = color_jitter_prob
-        self.brightness = brightness
-        self.contrast = contrast
-        self.saturation = saturation
-        self.hue = hue
-        self.angle_prob = angle_prob
-        self.angle = angle
-        self.rotation_prob = rotation_prob
-        self.rotation_angle = rotation_angle
-        self.data_path = path.join(dataset_dir, dataset_mode)
+        self.cfg = cfg
+        self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             MakeSquareWithPad(),
             transforms.ToTensor(),
-            transforms.Resize(self.load_width),
+            transforms.Resize(self.cfg.load_width),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
         dataset_list = f'{dataset_mode}_pairs.txt'
 
         # load data list
         img_names = []
-        with open(path.join(dataset_dir, dataset_list), 'r') as f:
+        with open(path.join(cfg.dataset_dir, dataset_list), 'r') as f:
             for line in f.readlines():
                 img_name, c_name = line.strip().split()
                 img_names.append(img_name)
@@ -127,15 +35,15 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        print('Loading image: {}'.format(self.img_names[index]), index)
+        # print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
-        horizontal_flip = np.random.random() < self.horizontal_flip_prob
-        zoom = np.random.random() < self.crop_prob
-        jitter = np.random.random() < self.color_jitter_prob
-        angle = np.random.random() < self.angle_prob
-        random_zoom = SameCropTransform((self.load_height, self.load_width), scale=(self.min_crop_factor, self.max_crop_factor))
-        color_jitter = StableColorJitter(self.brightness, self.contrast, self.saturation, self.hue)
-        random_rotation = StableRotation(self.rotation_angle)
+        horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
+        zoom = np.random.random() < self.cfg.crop_prob
+        jitter = np.random.random() < self.cfg.color_jitter_prob
+        angle = np.random.random() < self.cfg.angle_prob
+        random_zoom = SameCropTransform((self.cfg.load_height, self.cfg.load_width), scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
+        color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
+        random_rotation = StableRotation(self.cfg.rotation_angle)
 
         img_pil = Image.open(path.join(self.data_path, 'image', img_name)).convert('RGB')
         if horizontal_flip:
