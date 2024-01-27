@@ -203,25 +203,26 @@ class ClothesDataset(data.Dataset):
         }
         return result
     
+        
     @staticmethod
     def get_body_color_mask(mask_body, target_colors):
-        target_colors = [np.array(color) for color in target_colors]  # Convert to numpy arrays for comparison
+        device = "cpu"
 
-        data = np.array(mask_body)  # Convert image to numpy array
-        mask = np.full(data.shape[:2], False)  # Initialize mask with False (shape: [height, width])
+        target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
+        data = torch.tensor(np.array(mask_body), device=device, dtype=torch.uint8)
 
-        for color in target_colors:
-            mask |= np.all(data[:, :, :3] == color, axis=-1)  # Update mask for each target color
+        mask = torch.any(torch.all(data[:, :, None, :3] == target_colors, dim=-1), dim=-1)
 
-        new_data = np.zeros(data.shape, dtype=np.uint8)  # Initialize new_data with zeros
-        new_data[:, :, :3] = data[:, :, :3]  # Copy RGB channels
-        new_data[mask, 3] = 255  # Set alpha channel to 255 where mask is True
+        new_data = torch.zeros(data.shape, dtype=torch.uint8, device=device)
+        new_data[:, :, :3] = data[:, :, :3]
+        new_data[:, :, 3][mask] = 255
 
-        mask_image = Image.fromarray(new_data, 'RGBA')
+        mask_image = Image.fromarray(new_data.cpu().numpy(), 'RGBA')
         result = Image.new('RGB', mask_body.size)
         result.paste(mask_body, mask=mask_image)
 
         return mask_image, result
+
     
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):
