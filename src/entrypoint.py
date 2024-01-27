@@ -21,8 +21,8 @@ def main():
     cfg.load_height = 28
     cfg.load_width = 28
 
-    test_dataset = ClothesDataset(cfg, "test")
-    train_dataset = ClothesDataset(cfg, "train")
+    test_dataset = ClothesDataset(cfg, device, "test")
+    train_dataset = ClothesDataset(cfg, device,"train")
 
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
