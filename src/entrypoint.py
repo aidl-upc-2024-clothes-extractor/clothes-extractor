@@ -27,7 +27,7 @@ def main():
 
     model = Unet(in_channels=3, n_feat=32)
 
-    trained_model = train_model(model, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate)
+    trained_model = train_model(model, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches)
 
 
 if __name__ == '__main__':
