@@ -27,6 +27,28 @@ folders = {
             "./datasets/zalando-hd-resized/train/image-parse-agnostic-v3.2",
             "./datasets/zalando-low-res/train/image-parse-agnostic-v3.2",
         ],
+     },
+    "test" : {
+        "images": [
+            "./datasets/zalando-hd-resized/test/image",
+            "./datasets/zalando-low-res/test/image",
+        ],
+        "image_parse_v3": [
+            "./datasets/zalando-hd-resized/test/image-parse-v3",
+            "./datasets/zalando-low-res/test/image-parse-v3",
+        ],
+        "cloth": [
+            "./datasets/zalando-hd-resized/test/cloth",
+            "./datasets/zalando-low-res/test/cloth",
+        ],
+        "cloth_mask": [
+            "./datasets/zalando-hd-resized/test/cloth-mask",
+            "./datasets/zalando-low-res/test/cloth-mask",
+        ],
+       "image_parse_agnostic_v3.2": [
+            "./datasets/zalando-hd-resized/test/image-parse-agnostic-v3.2",
+            "./datasets/zalando-low-res/test/image-parse-agnostic-v3.2",
+        ],
      }
 }
 
