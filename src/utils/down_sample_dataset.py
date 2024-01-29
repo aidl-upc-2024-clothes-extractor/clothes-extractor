@@ -101,7 +101,7 @@ def downsample_folder(src_dir: str, dst_dir: str, max_files: int = None, area: s
     # Wehn we have a maximum of file to convert we take a subset of all the files in the folder
     if max_files is not None:
         files = files[:max_files]
-    for f in tqdm.tqdm(files):
+    for f in tqdm.tqdm(files, desc=area):
         count += 1
         #read the source image
         image = Image.open(f)
