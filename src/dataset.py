@@ -124,12 +124,13 @@ class ClothesDataset(data.Dataset):
     @staticmethod
     def get_body_color_mask(mask_body, target_colors, img):
         device = "cpu"
-        t = transforms.ToPILImage()
-        mask_body = t(mask_body.cpu())
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
-        data = torch.tensor(np.array(mask_body), device=device, dtype=torch.uint8)
-
-        mask = torch.any(torch.all(data[:, :, None, :3] == target_colors, dim=-1), dim=-1)
+        data = (mask_body * 255).to(torch.uint8)
+        data = data.permute(1, 2, 0)
+        
+        X = data[:, :, None, :3]
+        intermediate = torch.all(X == target_colors, dim=-1)
+        mask = torch.any(intermediate, dim=-1)
 
         new_data = torch.zeros(4, img.size(1), img.size(2), dtype=torch.uint8, device=device)
         new_data[:3, :, :] = img[:3, :, :]
