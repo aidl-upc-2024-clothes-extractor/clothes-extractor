@@ -228,7 +228,7 @@ class ClothesDataset(data.Dataset):
             rotation_prob=0.5, rotation_angle=10,
             crop_prob=0.5, min_crop_factor=0.65, max_crop_factor=0.92,
             brightness=0.15, contrast=0.3, saturation=0.3, hue=0.05,
-            color_jitter_prob=1,
+            color_jitter_prob=0,
             angle_prob=0.5, angle=10
     ):
         super(ClothesDataset).__init__()
@@ -290,7 +290,7 @@ class ClothesDataset(data.Dataset):
         if angle:
             img_pil = random_rotation(img_pil)
 
-        img = self.transform(img_pil)
+        # img = self.transform(img_pil)
 
         # agnostic_mask = io.read_image(os.path.join(self.data_path, 'agnostic-mask', img_name.replace(".jpg","_mask.png")))
         # agnostic_mask = agnostic_mask[:3, :, :]
