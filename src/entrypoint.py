@@ -1,38 +1,35 @@
 import argparse
 from dataset import ClothesDataset, ClothesDataLoader
+from config import Config
+from argparse_dataclass import ArgumentParser
 
-
-def get_opt():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('-b', '--batch_size', type=int, default=1)
-    parser.add_argument('-j', '--workers', type=int, default=1)
-    parser.add_argument('--dataset_dir', type=str, default='./datasets/')
-    parser.add_argument('--dataset_mode', type=str, default='test')
-    parser.add_argument('--load_height', type=int, default=1024)
-    parser.add_argument('--load_width', type=int, default=768)
-
-    opt = parser.parse_args()
-    return opt
+import torch
+from src.model import Unet
+from src.train import train_model
 
 
 def main():
-    opt = get_opt()
-    print(opt)
-    dataset_config = dict(vars(opt))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available() and torch.backends.mps.is_built() and torch.device != "cuda":
+        device = torch.device("mps")
 
-    dataset = ClothesDataset(
-        dataset_config['dataset_dir'],
-        dataset_config['dataset_mode'],
-        dataset_config['load_height'],
-        dataset_config['load_width']
-    )
-    loader = ClothesDataLoader(dataset, dataset_config['batch_size'], num_workers=dataset_config['workers'])
+    args = ArgumentParser(Config)
+    cfg = args.parse_args()
+    print(cfg.batch_size)
 
-    # FIXIT: This is just to test the loader works
-    for batch_idx, result in enumerate(loader.next_batch()):
-        print(batch_idx)
-        print(result)
+    cfg = Config()
+    cfg.load_height = 28
+    cfg.load_width = 28
+
+    test_dataset = ClothesDataset(cfg, "test")
+    train_dataset = ClothesDataset(cfg, "train")
+
+    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
+    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
+
+    model = Unet(in_channels=3, n_feat=32).to(device)
+
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches)
 
 
 if __name__ == '__main__':
