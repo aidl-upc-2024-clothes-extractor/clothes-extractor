@@ -1,7 +1,7 @@
 from torchvision.transforms import functional as F
 from torchvision import transforms
 import numpy as np
-
+import torch
 
 class SameCropTransform:
     def __init__(self, output_size, scale=(0.8, 1.0)):
@@ -16,11 +16,10 @@ class SameCropTransform:
         if self.i is None or self.j is None or self.h is None or self.w is None:
             self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
                 img, scale=self.scale, ratio=(1.0, 1.0))
-
+            
         img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, self.output_size)
 
         return img_resized
-
 
 class StableColorJitter:
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
@@ -46,7 +45,6 @@ class StableColorJitter:
 
         return img
 
-
 class StableRotation:
     def __init__(self, angle=0):
         self.angle = np.random.uniform(-angle, angle)
@@ -54,13 +52,12 @@ class StableRotation:
     def __call__(self, img):
         return F.rotate(img, self.angle)
 
-
 class MakeSquareWithPad:
     def __init__(self, fill=0):
         self.fill = fill  # fill color, 0 for black
 
     def __call__(self, img):
-        width, height = img.size
+        _, height, width = img.size()
         max_side = max(width, height)
         padding_left = padding_right = padding_top = padding_bottom = 0
 
@@ -73,3 +70,135 @@ class MakeSquareWithPad:
 
         padding = (padding_left, padding_top, padding_right, padding_bottom)
         return F.pad(img, padding, fill=self.fill, padding_mode='constant')
+
+
+class ToFloatTensor(object):
+    def __call__(self, tensor):
+        if tensor.dtype.is_floating_point:
+            return tensor
+        if tensor.dtype == torch.uint8:
+            return tensor.float() / 255.0
+        return tensor.float()
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
+class RGBAtoRGBWhiteBlack:
+
+    def __call__(self, img):
+        if img.shape[0] == 4:
+            rgb_img, alpha_img = img[:3, :, :], img[3:4, :, :]
+
+            white = torch.ones_like(rgb_img)
+            black = torch.zeros_like(rgb_img)
+
+            rgb_transformed = torch.where(alpha_img > 0, white, black)
+
+            return rgb_transformed
+        else:
+            return img
+
+class SingleChannelToRGBTransform:
+    def __call__(self, img):
+        if img.shape[0] != 1:
+            raise ValueError("Image must have a single channel")
+
+        return img.repeat(3, 1, 1)
+
+
+
+class CropAlphaChannelTransform:
+    def __call__(self, img):
+        alpha_channel = img[-1]
+
+        non_zero_rows = torch.any(alpha_channel != 0, dim=1)
+        non_zero_cols = torch.any(alpha_channel != 0, dim=0)
+
+        # Crop the image
+        cropped_img = img[:, non_zero_rows, :]
+        cropped_img = cropped_img[:, :, non_zero_cols]
+
+        return cropped_img
+
+
+class AlphaToBlackTransform:
+    def __call__(self, img):
+        if img.shape[0] != 4:
+            raise ValueError("Image must have 4 channels")
+
+        alpha = img[3].unsqueeze(0)
+        rgb = img[:3]
+
+        background = torch.zeros_like(rgb)
+
+        return torch.where(alpha > 0, rgb, background)
+
+
+class PadToShapeTransform:
+    def __init__(self, output_shape):
+        self.output_shape = output_shape
+
+    def __call__(self, img):
+        _, h, w = img.shape
+        target_h, target_w = self.output_shape[1], self.output_shape[2]
+
+        pad_vert = max((target_h - h) // 2, 0)
+        pad_horiz = max((target_w - w) // 2, 0)
+        
+        padded_img = F.pad(img, (pad_horiz, pad_horiz, pad_vert, pad_vert))
+
+        if padded_img.shape[1] > target_h or padded_img.shape[2] > target_w:
+            padded_img = padded_img[:, :target_h, :target_w]
+
+        return padded_img
+
+class ApplyMaskTransform:
+    def __call__(self, img, mask):
+        if img.shape[1:] != mask.shape[1:]:
+            raise ValueError("RGB image and mask must have the same height and width")
+
+        if mask.dim() == 2:
+            mask = mask.unsqueeze(0)
+
+        black_background = torch.zeros_like(img)
+        return torch.where(mask > 0, img, black_background)
+
+
+
+def plot_alpha_channel(img):
+    from matplotlib import pyplot as plt
+    if img.shape[0] < 4:
+        raise ValueError("Image does not have an alpha channel")
+
+    alpha_channel = img[-1]
+
+    plt.imshow(alpha_channel, cmap='gray')
+    plt.title("Alpha Channel")
+    plt.colorbar()
+    plt.show()
+
+def plot_alpha_channel_raw(img):
+
+    if len(img.shape) != 3:
+        raise ValueError("Image is not 3D")
+    
+    if img.shape[0] != 1:
+        raise ValueError("Image does not have an alpha channel")
+    
+    img = img[0]
+    from matplotlib import pyplot as plt
+    plt.imshow(img, cmap='gray')
+    plt.title("Alpha Channel")
+    plt.colorbar()
+    plt.show()
+
+def plot_rgb(img):
+    from matplotlib import pyplot as plt
+    if img.shape[0] < 3:
+        raise ValueError("Image does not have an RGB channel")
+
+    rgb = img[:3]
+
+    plt.imshow(rgb.permute(1, 2, 0))
+    plt.title("RGB")
+    plt.show()
