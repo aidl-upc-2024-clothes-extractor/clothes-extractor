@@ -29,8 +29,8 @@ class Config:
     contrast: float = 0.3
     saturation: float = 0.3
     hue: float = 0.05
-    color_jitter_prob: float = 1
-    angle_prob: float = 0.5
+    color_jitter_prob: float = 0
+    angle_prob: float = 0.3
     angle: float = 10
 
 
