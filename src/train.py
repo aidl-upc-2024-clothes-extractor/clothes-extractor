@@ -1,18 +1,18 @@
 import torch
 import torch.optim as optim
 from torch.nn import L1Loss
-
+from tqdm import tqdm
 
 def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
     criterion = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     print('Start training')
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs)):
         model.train()
         running_loss = 0.0
 
-        for batch_idx, inputs in enumerate(train_dataloader.data_loader):
+        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader)):
             target = inputs ["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
