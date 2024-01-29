@@ -4,8 +4,7 @@ import numpy as np
 import torch
 
 class SameCropTransform:
-    def __init__(self, output_size, scale=(0.8, 1.0)):
-        self.output_size = output_size
+    def __init__(self, scale=(0.8, 1.0)):
         self.scale = scale
         self.i = None
         self.j = None
@@ -16,8 +15,9 @@ class SameCropTransform:
         if self.i is None or self.j is None or self.h is None or self.w is None:
             self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
                 img, scale=self.scale, ratio=(1.0, 1.0))
-            
-        img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, self.output_size)
+        
+        _, h, w = img.size()
+        img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, (h, w))
 
         return img_resized
 

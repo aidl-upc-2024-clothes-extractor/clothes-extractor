@@ -22,6 +22,7 @@ class ClothesDataset(data.Dataset):
             RGBAtoRGBWhiteBlack(),
             MakeSquareWithPad(),
             ToFloatTensor(),
+            transforms.Resize((cfg.load_height, cfg.load_width)),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
         dataset_list = f'{dataset_mode}_pairs.txt'
@@ -45,7 +46,7 @@ class ClothesDataset(data.Dataset):
         zoom = np.random.random() < self.cfg.crop_prob
         jitter = np.random.random() < self.cfg.color_jitter_prob
         angle = np.random.random() < self.cfg.angle_prob
-        random_zoom = SameCropTransform((self.cfg.load_height, self.cfg.load_width), scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
+        random_zoom = SameCropTransform(scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
         color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
         random_rotation = StableRotation(self.cfg.rotation_angle)
 
