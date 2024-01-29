@@ -13,9 +13,10 @@ class ClothesDataset(data.Dataset):
     '''
     dataset_mode must be 'test' or 'train'
     '''
-    def __init__(self, cfg, dataset_mode):
+    def __init__(self, cfg, dataset_mode, device='cpu'):
         super(ClothesDataset).__init__()
         self.cfg = cfg
+        self.device = device
         self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             RGBAtoRGBWhiteBlack(),
@@ -49,6 +50,7 @@ class ClothesDataset(data.Dataset):
         random_rotation = StableRotation(self.cfg.rotation_angle)
 
         img_torch = io.read_image(os.path.join(self.data_path, 'image', img_name))
+        img_torch = img_torch.to(self.device)
 
         if horizontal_flip:
             img_torch = F.hflip(img_torch)
@@ -70,6 +72,8 @@ class ClothesDataset(data.Dataset):
         # agnostic_mask = self.transform(agnostic_mask)
 
         mask_body_parts = self.convert_to_rgb_tensor(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png")))
+        mask_body_parts = mask_body_parts.to(self.device)
+
         if horizontal_flip:
             mask_body_parts = F.hflip(mask_body_parts)
         if zoom:
@@ -81,6 +85,7 @@ class ClothesDataset(data.Dataset):
         # print(f'Img shape: {img.shape}')
         target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
         mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
+        
         mask_tensor = self.transform(mask_tensor)
         # mask_body_parts = mask_body_parts[:3, :, :]
         # mask_body_parts = self.transform(mask_body_parts)
@@ -89,12 +94,15 @@ class ClothesDataset(data.Dataset):
         # img_masked_rgb = self.transform(img_masked_rgb)
 
         cloth = io.read_image(path.join(self.data_path, 'cloth', img_name))
+        cloth = cloth.to(self.device)
+
         if horizontal_flip:
             cloth = F.hflip(cloth)
         if jitter:
             cloth = color_jitter(cloth)
 
         cloth_mask = io.read_image(path.join(self.data_path, 'cloth-mask', img_name))
+        cloth_mask = cloth_mask.to(self.device)
         target = ApplyMaskTransform()(cloth, cloth_mask)
 
         # cloth = self.transform(cloth)
