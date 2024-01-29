@@ -13,8 +13,8 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         running_loss = 0.0
 
         for batch_idx, inputs in enumerate(train_dataloader.data_loader):
-            target = inputs ["predict"].to(device)
-            source = inputs["img_masked"].to(device)
+            target = inputs ["target"].to(device)
+            source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
@@ -34,8 +34,8 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         running_loss = 0.0
         with torch.no_grad():
             for batch_idx, inputs in enumerate(val_dataloader.data_loader):
-                target = inputs["predict"].to(device)
-                source = inputs["img_masked"].to(device)
+                target = inputs["target"].to(device)
+                source = inputs["centered_mask_body"].to(device)
 
                 outputs = model(source)
                 loss = criterion(outputs, target)
