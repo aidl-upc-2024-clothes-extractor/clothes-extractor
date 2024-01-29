@@ -81,10 +81,7 @@ class ClothesDataset(data.Dataset):
         # print(f'Img shape: {img.shape}')
         target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
         mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
-        # centered_mask_body_pil, offset = self.center_masked_area(mask_pil)
         mask_tensor = self.transform(mask_tensor)
-        # centered_mask_body = t(centered_mask_body_pil)
-        # centered_mask_body = self.transform(centered_mask_body)
         # mask_body_parts = mask_body_parts[:3, :, :]
         # mask_body_parts = self.transform(mask_body_parts)
 
@@ -123,7 +120,7 @@ class ClothesDataset(data.Dataset):
         
     @staticmethod
     def get_body_color_mask(mask_body, target_colors, img):
-        device = "cpu"
+        device = mask_body.device
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
         data = (mask_body * 255).to(torch.uint8)
         data = data.permute(1, 2, 0)
@@ -148,26 +145,6 @@ class ClothesDataset(data.Dataset):
         new_img = Image.new('RGB', img.size)
         new_img.paste(img, offset, mask=mask)
         return new_img
-
-    @staticmethod
-    def center_masked_area(mask):
-        mask_alpha = np.array(mask)[:, :, 3]
-
-        rows = np.any(mask_alpha, axis=1)
-        cols = np.any(mask_alpha, axis=0)
-        ymin, ymax = np.where(rows)[0][[0, -1]]
-        xmin, xmax = np.where(cols)[0][[0, -1]]
-
-        masked_center = ((xmin + xmax) // 2, (ymin + ymax) // 2)
-
-        img_center = (mask.width // 2, mask.height // 2)
-
-        offset = (img_center[0] - masked_center[0], img_center[1] - masked_center[1])
-
-        new_img = Image.new('RGB', mask.size)
-        new_img.paste(mask, offset, mask=mask)
-
-        return new_img, offset
 
     @staticmethod
     def convert_to_rgb_tensor(image_path):
