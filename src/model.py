@@ -13,23 +13,23 @@ class Unet(nn.Module):
         self.init_conv = ResidualConvBlock(in_channels, n_feat, is_res=True)
 
         self.down1 = UnetDown(n_feat, n_feat)
-        self.attn1 = SelfAttention(n_feat)
+        # self.attn1 = SelfAttention(n_feat)
 
         self.down2 = UnetDown(n_feat, 2 * n_feat)
-        self.attn2 = SelfAttention(2 * n_feat)
+        # self.attn2 = SelfAttention(2 * n_feat)
 
         self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
 
         self.up0 = nn.Sequential(
-            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 7, 7),
+            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 11, 7),
             nn.GroupNorm(8, 2 * n_feat),
             nn.ReLU(),
         )
 
         self.up1 = UnetUp(4 * n_feat, n_feat)
-        self.attn1up = SelfAttention(n_feat)
+        # self.attn1up = SelfAttention(n_feat)
         self.up2 = UnetUp(2 * n_feat, n_feat)
-        self.attn2up = SelfAttention(n_feat)
+        # self.attn2up = SelfAttention(n_feat)
         self.out = nn.Sequential(
             nn.Conv2d(2 * n_feat, n_feat, 3, 1, 1),
             nn.GroupNorm(8, n_feat),
@@ -42,8 +42,10 @@ class Unet(nn.Module):
 
         # Downsampling
         x = self.init_conv(x)
-        down1 = self.attn1(self.down1(x))
-        down2 = self.attn2(self.down2(down1))
+        # down1 = self.attn1(self.down1(x))
+        down1 = self.down1(x)
+        # down2 = self.attn2(self.down2(down1))
+        down2 = self.down2(down1)
 
         hiddenvec = self.to_vec(down2)
 
@@ -51,11 +53,14 @@ class Unet(nn.Module):
         up1 = self.up0(hiddenvec)
 
         condition = up1
-        up2 = self.attn1up(self.up1(condition, down2))
+        # print('S', condition.shape, down2.shape)
+        # up2 = self.attn1up(self.up1(condition, down2))
+        up2 = self.up1(condition, down2)
 
         condition = up2
 
-        up3 = self.attn2up(self.up2(condition, down1))
+        # up3 = self.attn2up(self.up2(condition, down1))
+        up3 = self.up2(condition, down1)
         out = self.out(torch.cat((up3, x), 1))
         return out
 
