@@ -170,7 +170,7 @@ class ClothesDataLoader:
 
         self.data_loader = data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle,
-                num_workers=num_workers, pin_memory=True, drop_last=True
+                num_workers=num_workers, pin_memory=False, drop_last=True
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()
