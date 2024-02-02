@@ -7,49 +7,19 @@ import argparse
 
 folders = {
     "train" : {
-        "images": [
-            "./datasets/zalando-hd-resized/train/image",
-            "./datasets/zalando-low-res/train/image",
-        ],
-        "image_parse_v3": [
-            "./datasets/zalando-hd-resized/train/image-parse-v3",
-            "./datasets/zalando-low-res/train/image-parse-v3",
-        ],
-        "cloth": [
-            "./datasets/zalando-hd-resized/train/cloth",
-            "./datasets/zalando-low-res/train/cloth",
-        ],
-        "cloth_mask": [
-            "./datasets/zalando-hd-resized/train/cloth-mask",
-            "./datasets/zalando-low-res/train/cloth-mask",
-        ],
-       "image_parse_agnostic_v3.2": [
-            "./datasets/zalando-hd-resized/train/image-parse-agnostic-v3.2",
-            "./datasets/zalando-low-res/train/image-parse-agnostic-v3.2",
-        ],
-     },
+        "images": "image",
+        "image_parse_v3": "image-parse-v3",
+        "cloth": "cloth",
+        "cloth_mask": "cloth-mask",
+        "image_parse_agnostic_v3.2": "image-parse-agnostic-v3.2",
+    },
     "test" : {
-        "images": [
-            "./datasets/zalando-hd-resized/test/image",
-            "./datasets/zalando-low-res/test/image",
-        ],
-        "image_parse_v3": [
-            "./datasets/zalando-hd-resized/test/image-parse-v3",
-            "./datasets/zalando-low-res/test/image-parse-v3",
-        ],
-        "cloth": [
-            "./datasets/zalando-hd-resized/test/cloth",
-            "./datasets/zalando-low-res/test/cloth",
-        ],
-        "cloth_mask": [
-            "./datasets/zalando-hd-resized/test/cloth-mask",
-            "./datasets/zalando-low-res/test/cloth-mask",
-        ],
-       "image_parse_agnostic_v3.2": [
-            "./datasets/zalando-hd-resized/test/image-parse-agnostic-v3.2",
-            "./datasets/zalando-low-res/test/image-parse-agnostic-v3.2",
-        ],
-     }
+        "images": "image",
+        "image_parse_v3": "image-parse-v3",
+        "cloth": "cloth",
+        "cloth_mask": "cloth-mask",
+    "image_parse_agnostic_v3.2": "image-parse-agnostic-v3.2",
+    },
 }
 
 def get_opt():
@@ -57,6 +27,8 @@ def get_opt():
 
     parser.add_argument('-f', '--files', type=int, default=None)
     parser.add_argument('-s', '--size', type=int, default=64)
+    parser.add_argument('--src_dir', type=str, default='./datasets/zalando-hd-resized')
+    parser.add_argument('--dst_dir', type=str, default='./datasets/zalando-low-res')
 
     opt = parser.parse_args()
     return opt
@@ -69,7 +41,15 @@ def add_margin(pil_img, color = (0,0,0)):
     #paste the image over it
     w, h = pil_img.size
     new_side = max(w,h)
-    result = Image.new('RGB', (new_side, new_side), color)
+    mode = pil_img.mode
+    new_mode = mode
+    if mode == 'L':
+        color = color[0]
+    if mode == 'P':
+        new_mode = 'RGB'
+    result = Image.new(mode=new_mode, size=(new_side, new_side))
+
+
     left = 0
     top = 0
     if w > h : 
@@ -110,17 +90,29 @@ def downsample_folder(src_dir: str, dst_dir: str, max_files: int = None, area: s
         dst = dst_dir + '/' + f.name
         #Save destination image
         new_image.save(dst)
+    result = [f.name for f in files]
+    return result
+
+def write_pair_file(p: str = '.', files: list = []) -> None:
+    with open(p, "w") as txt_file:
+        for fname in files:
+            txt_file.write(fname + " " + fname + "\n")
 
 def main(opt):
     for stage in folders:                           #normally Train or Test
+        files = None
         for key, data  in folders[stage].items():
-            src = data[0]
-            dst = data[1]
+            src = os.path.join(opt.src_dir,stage,data)
+            dst = os.path.join(opt.dst_dir,stage,data)
             if not Path(src).exists():
                 continue
             if not Path(dst).exists():
                 create_folder(dst)
-            downsample_folder(src_dir=src, dst_dir=dst, max_files=opt.files, area=stage+" -> " + key, img_side=opt.size)
+            if files is None:
+                files = downsample_folder(src_dir=src, dst_dir=dst, max_files=opt.files, area=stage+" -> " + key, img_side=opt.size)
+            else:
+                downsample_folder(src_dir=src, dst_dir=dst, max_files=opt.files, area=stage+" -> " + key, img_side=opt.size)
+        write_pair_file(os.path.join(opt.dst_dir, stage+"_pairs.txt"), files)
 
 if __name__ == '__main__':
     opt = get_opt()

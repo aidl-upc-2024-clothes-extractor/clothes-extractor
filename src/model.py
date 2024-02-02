@@ -7,29 +7,35 @@ class Unet(nn.Module):
     def __init__(self, in_channels, n_feat=256, num_classes: int = 10):
         super(Unet, self).__init__()
 
+        self.activate_attention = False
+
         self.in_channels = in_channels
         self.n_feat = n_feat
 
         self.init_conv = ResidualConvBlock(in_channels, n_feat, is_res=True)
 
         self.down1 = UnetDown(n_feat, n_feat)
-        # self.attn1 = SelfAttention(n_feat)
+        if self.activate_attention:
+            self.attn1 = SelfAttention(n_feat)
 
         self.down2 = UnetDown(n_feat, 2 * n_feat)
-        # self.attn2 = SelfAttention(2 * n_feat)
+        if self.activate_attention:
+            self.attn2 = SelfAttention(2 * n_feat)
 
-        self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
+        self.to_vec = nn.Sequential(nn.AvgPool2d(4), nn.GELU())
 
         self.up0 = nn.Sequential(
-            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 11, 7),
+            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 4, 4),
             nn.GroupNorm(8, 2 * n_feat),
             nn.ReLU(),
         )
 
         self.up1 = UnetUp(4 * n_feat, n_feat)
-        # self.attn1up = SelfAttention(n_feat)
+        if self.activate_attention:
+            self.attn1up = SelfAttention(n_feat)
         self.up2 = UnetUp(2 * n_feat, n_feat)
-        # self.attn2up = SelfAttention(n_feat)
+        if self.activate_attention:
+            self.attn2up = SelfAttention(n_feat)
         self.out = nn.Sequential(
             nn.Conv2d(2 * n_feat, n_feat, 3, 1, 1),
             nn.GroupNorm(8, n_feat),
@@ -39,29 +45,55 @@ class Unet(nn.Module):
         self.n_classes = num_classes
 
     def forward(self, x):
-
         # Downsampling
+        debug = False
+        if debug:
+            print(f'Entry: {x.shape}')
         x = self.init_conv(x)
-        # down1 = self.attn1(self.down1(x))
+        if debug:
+            print(f'1: {x.shape}')
+        if self.activate_attention:
+            down1 = self.attn1(self.down1(x))
         down1 = self.down1(x)
-        # down2 = self.attn2(self.down2(down1))
+        if debug:
+            print(f'down1: {down1.shape}')
+        if self.activate_attention:
+            down2 = self.attn2(self.down2(down1))
         down2 = self.down2(down1)
+        if debug:
+            print(f'down2: {down2.shape}')
 
         hiddenvec = self.to_vec(down2)
+        if debug:
+            print(f'hiddenvec: {hiddenvec.shape}')
 
         # Upsampling
         up1 = self.up0(hiddenvec)
+        if debug:
+            print(f'up1: {up1.shape}')
 
         condition = up1
-        # print('S', condition.shape, down2.shape)
-        # up2 = self.attn1up(self.up1(condition, down2))
+        if debug:
+            print(f'condition: {condition.shape}')
+            print('S', condition.shape, down2.shape)
+        if self.activate_attention:
+            up2 = self.attn1up(self.up1(condition, down2))
         up2 = self.up1(condition, down2)
+        if debug:
+            print(f'up2: {up2.shape}')
 
         condition = up2
+        if debug:
+            print(f'condition: {condition.shape}')
 
-        # up3 = self.attn2up(self.up2(condition, down1))
+        if self.activate_attention:
+            up3 = self.attn2up(self.up2(condition, down1))
         up3 = self.up2(condition, down1)
+        if debug:
+            print(f'up3: {up3.shape}')
         out = self.out(torch.cat((up3, x), 1))
+        if debug:
+            exit(0)
         return out
 
 
