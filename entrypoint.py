@@ -19,8 +19,8 @@ def main():
     print(cfg.batch_size)
 
     cfg = Config()
-    cfg.load_height = 28
-    cfg.load_width = 28
+    cfg.load_height = 64
+    cfg.load_width = 64
 
     #print the python running  directory
     print(os.getcwd())

@@ -10,10 +10,11 @@ class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
         blocks = []
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[4:9].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[9:16].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[16:23].eval())
+        #blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[:4].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[4:9].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[9:16].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[16:23].eval())
         for bl in blocks:
             for p in bl.parameters():
                 p.requires_grad = False
@@ -58,11 +59,14 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
     w = 0.3
 
     print('Start training')
+#    for epoch in tqdm(range(num_epochs), desc="Epoch", position=0):
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
 
-        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader)):
+        count = 0
+#        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader, desc="Batches", position=1, leave=False)):
+        for batch_idx, inputs in enumerate(train_dataloader.data_loader):
             target = inputs ["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
@@ -76,9 +80,13 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 
             if 0 < max_batches == batch_idx :
                 break
-
+            count += 1
+            if count%5 >= 0:
+                print(f'running loss: {running_loss/count}')
 
         avg_train_loss = running_loss / len(train_dataloader.data_loader)
+        print(f'Epoch [{epoch+1}/{num_epochs}], '
+              f'Train Loss: {avg_train_loss:.4f}, ')
 
         model.eval()
         running_loss = 0.0
@@ -94,6 +102,9 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 
                 if 0 < max_batches == batch_idx:
                     break
+
+            if count%5 >= 0:
+                print(f'running loss: {running_loss/count}')
 
         avg_val_loss = running_loss / len(val_dataloader.data_loader)
 
