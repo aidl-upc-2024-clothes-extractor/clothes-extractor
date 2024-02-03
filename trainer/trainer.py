@@ -50,10 +50,13 @@ class VGGPerceptualLoss(torch.nn.Module):
         return loss
 
 def combined_criterion(c1, c2, w, outputs, target):
-    return w * c1(outputs, target) + c2(outputs, target)
+    result = c2(outputs, target)
+    if c1 is not None:
+        result += w * c1(outputs, target)
+    return result
     
 def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
-    c1 = VGGPerceptualLoss().to(device)
+    c1 = None #VGGPerceptualLoss().to(device)
     c2 = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
