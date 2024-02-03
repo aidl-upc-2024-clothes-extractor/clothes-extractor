@@ -7,7 +7,7 @@ class Unet(nn.Module):
     def __init__(self, in_channels, n_feat=256, num_classes: int = 10):
         super(Unet, self).__init__()
 
-        self.activate_attention = False
+        self.activate_attention = True
 
         self.in_channels = in_channels
         self.n_feat = n_feat
@@ -46,51 +46,52 @@ class Unet(nn.Module):
 
     def forward(self, x):
         # Downsampling
-        debug = False
+        debug = True
         if debug:
-            print(f'Entry: {x.shape}')
+            print(f'Entry: \t\t\t{x.shape}')
         x = self.init_conv(x)
         if debug:
-            print(f'1: {x.shape}')
+            print(f'Init: \t\t\t{x.shape}')
         if self.activate_attention:
             down1 = self.attn1(self.down1(x))
         down1 = self.down1(x)
         if debug:
-            print(f'down1: {down1.shape}')
+            print(f'down1: \t\t\t{down1.shape}')
         if self.activate_attention:
             down2 = self.attn2(self.down2(down1))
         down2 = self.down2(down1)
         if debug:
-            print(f'down2: {down2.shape}')
+            print(f'down2: \t\t\t{down2.shape}')
 
         hiddenvec = self.to_vec(down2)
         if debug:
-            print(f'hiddenvec: {hiddenvec.shape}')
+            print(f'hiddenvec: \t\t{hiddenvec.shape}')
 
         # Upsampling
         up1 = self.up0(hiddenvec)
         if debug:
-            print(f'up1: {up1.shape}')
+            print(f'up1: \t\t\t{up1.shape}')
 
         condition = up1
         if debug:
-            print(f'condition: {condition.shape}')
-            print('S', condition.shape, down2.shape)
+            print(f'condition: \t\t{condition.shape}')
+            print(f'updown2: \t\t{down2.shape}')
         if self.activate_attention:
             up2 = self.attn1up(self.up1(condition, down2))
         up2 = self.up1(condition, down2)
         if debug:
-            print(f'up2: {up2.shape}')
+            print(f'up2: \t\t\t{up2.shape}')
 
         condition = up2
         if debug:
-            print(f'condition: {condition.shape}')
+            print(f'condition: \t\t{condition.shape}')
+            print(f'updown1: \t\t{down1.shape}')
 
         if self.activate_attention:
             up3 = self.attn2up(self.up2(condition, down1))
         up3 = self.up2(condition, down1)
         if debug:
-            print(f'up3: {up3.shape}')
+            print(f'up3: \t\t\t{up3.shape}')
         out = self.out(torch.cat((up3, x), 1))
         if debug:
             exit(0)
