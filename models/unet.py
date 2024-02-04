@@ -1,7 +1,9 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
+import sys
 
+debug = False
 
 class Unet(nn.Module):
     def __init__(self, in_channels, n_feat=256):
@@ -22,7 +24,7 @@ class Unet(nn.Module):
         if self.activate_attention:
             self.attn2 = SelfAttention(2 * n_feat)
 
-        self.to_vec = nn.Sequential(nn.AvgPool2d(4), nn.GELU())
+        self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
 
         self.up0 = nn.Sequential(
             nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 7, 7),
@@ -46,7 +48,7 @@ class Unet(nn.Module):
 
     def forward(self, x):
         # Downsampling
-        debug = True
+        # debug = True
         if debug:
             print(f'Entry: \t\t\t{x.shape}')
         x = self.init_conv(x)
@@ -113,17 +115,33 @@ class SelfAttention(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
+        if debug:
+            print(f'Attn -> 1x: \t\t\t{x.shape}')
+        x = x.permute(0, 2, 3, 1).view(B, H * W, C) # Shape: [B, H*W, C]
+        if debug:
+            print(f'Attn -> x: \t\t\t{x.shape}')
 
-        x = x.permute(0, 2, 3, 1).view(B, H * W, C)  # Shape: [B, H*W, C]
+        q = self.query(x) # [B, H*W, C]
+        if debug:
+            print(f'Attn -> q: \t\t\t{q.shape}')
+        k = self.key(x) # [B, H*W, C]
+        if debug:
+            print(f'Attn -> k: \t\t\t{k.shape}')
+        v = self.value(x) # [B, H*W, C]
+        if debug:
+            print(f'Attn -> v: \t\t\t{v.shape}')
 
-        q = self.query(x)  # [B, H*W, C]
-        k = self.key(x)  # [B, H*W, C]
-        v = self.value(x)  # [B, H*W, C]
-
-        attn = F.softmax(torch.bmm(q, k.transpose(1, 2)), dim=1)  # Shape: [B, H*W, H*W]
-        out = self.gamma * torch.bmm(attn, v) + x  # Shape: [B, H*W, C]
+        attn = F.softmax(torch.bmm(q, k.transpose(1,2)), dim=1) # Shape: [B, H*W, H*W]
+        if debug:
+            print(f'Attn -> attn: \t\t\t{attn.shape}')
+        out = self.gamma * torch.bmm(attn, v) + x # Shape: [B, H*W, C]
+        #out = x
+        if debug:
+            print(f'Attn -> out: \t\t\t{out.shape}')
 
         out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
+        if debug:
+            print(f'Attn -> out2: \t\t\t{out.shape}')
 
         return out
 
@@ -178,8 +196,8 @@ class UnetDown(nn.Module):
         """
         layers = [
             ResidualConvBlock(in_channels, in_channels, True),
-            ResidualConvBlock(in_channels, in_channels, True),
-            ResidualConvBlock(in_channels, out_channels),
+            ResidualConvBlock(in_channels, out_channels, True),
+            ResidualConvBlock(out_channels, out_channels),
             nn.MaxPool2d(2),
         ]
         self.model = nn.Sequential(*layers)

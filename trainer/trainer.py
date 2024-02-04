@@ -5,6 +5,7 @@ from utils import utils
 from tqdm.auto import tqdm
 
 import torchvision
+from src.model_store import ModelStore
 
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
@@ -56,10 +57,18 @@ def combined_criterion(c1, c2, w, outputs, target):
     return result
     
 def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
-    c1 = None #VGGPerceptualLoss().to(device)
+    c1 = VGGPerceptualLoss().to(device) #None
     c2 = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
+    model_storer = ModelStore()
+    loss = 0
+    ep = 0
+    reload_model = "latest"
+
+    if reload_model is not None and reload_model == "latest":
+        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=None)
+
 
     print('Start training')
 #    for epoch in tqdm(range(num_epochs), desc="Epoch", position=0):
@@ -114,6 +123,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         print(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {avg_train_loss:.4f}, '
               f'Validation Loss: {avg_val_loss:.4f}')
+        model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
 
     print('Finished Training')
     return model

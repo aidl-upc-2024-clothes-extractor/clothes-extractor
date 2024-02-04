@@ -8,7 +8,6 @@ import torch
 from models.unet import Unet
 from trainer.trainer import train_model
 
-
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available() and torch.backends.mps.is_built() and torch.device != "cuda":
@@ -19,8 +18,8 @@ def main():
     print(cfg.batch_size)
 
     cfg = Config()
-    cfg.load_height = 64
-    cfg.load_width = 64
+    #cfg.load_height = 28
+    #cfg.load_width = 28
 
     #print the python running  directory
     print(os.getcwd())
