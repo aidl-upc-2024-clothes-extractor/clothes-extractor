@@ -65,47 +65,49 @@ class Unet(nn.Module):
 
 
 class SelfAttention(nn.Module):
-    '''
+    """
     Similar to the Transformer Architecture, this network has self-attention blocks.
-    '''
+    """
+
     def __init__(self, n_channels):
-      super().__init__()
-      n_channels_out = n_channels//4
-      self.query = nn.Linear(n_channels, n_channels_out, bias=False)
-      self.key = nn.Linear(n_channels, n_channels_out, bias=False)
-      self.value = nn.Linear(n_channels, n_channels, bias=False)
-      self.gamma = nn.Parameter(torch.tensor([0.0]))
+        super().__init__()
+        n_channels_out = n_channels // 4
+        self.query = nn.Linear(n_channels, n_channels_out, bias=False)
+        self.key = nn.Linear(n_channels, n_channels_out, bias=False)
+        self.value = nn.Linear(n_channels, n_channels, bias=False)
+        self.gamma = nn.Parameter(torch.tensor([0.0]))
 
     def forward(self, x):
-      B, C, H, W = x.shape
+        B, C, H, W = x.shape
 
-      x = x.permute(0, 2, 3, 1).view(B, H * W, C) # Shape: [B, H*W, C]
+        x = x.permute(0, 2, 3, 1).view(B, H * W, C)  # Shape: [B, H*W, C]
 
-      q = self.query(x) # [B, H*W, C]
-      k = self.key(x) # [B, H*W, C]
-      v = self.value(x) # [B, H*W, C]
+        q = self.query(x)  # [B, H*W, C]
+        k = self.key(x)  # [B, H*W, C]
+        v = self.value(x)  # [B, H*W, C]
 
-      attn = F.softmax(torch.bmm(q, k.transpose(1,2)), dim=1) # Shape: [B, H*W, H*W]
-      out = self.gamma * torch.bmm(attn, v) + x # Shape: [B, H*W, C]
+        attn = F.softmax(torch.bmm(q, k.transpose(1, 2)), dim=1)  # Shape: [B, H*W, H*W]
+        out = self.gamma * torch.bmm(attn, v) + x  # Shape: [B, H*W, C]
 
-      out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
+        out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
 
-      return out
+        return out
 
 
 class ResidualConvBlock(nn.Module):
-    '''
+    """
     The following are resnet block, which consist of convolutional layers,
     followed by batch normalization and residual connections.
-    '''
+    """
+
     def __init__(
         self, in_channels: int, out_channels: int, is_res: bool = False
     ) -> None:
         super().__init__()
-        '''
+        """
         standard ResNet style convolutional block
-        '''
-        self.same_channels = in_channels==out_channels
+        """
+        self.same_channels = in_channels == out_channels
         self.is_res = is_res
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
@@ -137,14 +139,14 @@ class ResidualConvBlock(nn.Module):
 class UnetDown(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(UnetDown, self).__init__()
-        '''
+        """
         process and downscale the image feature maps
-        '''
+        """
         layers = [
             ResidualConvBlock(in_channels, in_channels, True),
             ResidualConvBlock(in_channels, in_channels, True),
             ResidualConvBlock(in_channels, out_channels),
-            nn.MaxPool2d(2)
+            nn.MaxPool2d(2),
         ]
         self.model = nn.Sequential(*layers)
 
@@ -155,9 +157,9 @@ class UnetDown(nn.Module):
 class UnetUp(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(UnetUp, self).__init__()
-        '''
+        """
         process and upscale the image feature maps
-        '''
+        """
         layers = [
             nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
             ResidualConvBlock(out_channels, out_channels, True),
@@ -169,4 +171,3 @@ class UnetUp(nn.Module):
         x = torch.cat((x, skip), 1)
         x = self.model(x)
         return x
-
