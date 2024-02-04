@@ -1,7 +1,12 @@
 import torch
 import torch.optim as optim
 from torch.nn import L1Loss
-from tqdm import tqdm
+from utils import utils
+if utils.is_notebook():
+    from tqdm.notebook import tqdm
+else:
+    from tqdm import tqdm
+
 import torchvision
 
 class VGGPerceptualLoss(torch.nn.Module):
