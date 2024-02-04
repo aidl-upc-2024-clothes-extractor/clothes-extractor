@@ -4,10 +4,10 @@ import argparse
 @dataclass
 class Config:
     # General config
-    batch_size: int = 64
+    batch_size: int = 32
     workers: int = 0
     dataset_dir: str = 'datasets/zalando-low-res'
-    num_epochs: int = 5
+    num_epochs: int = 3
     learning_rate: float = 0.0002
     num_classes: int = 10
     num_input_channels: int = 1
@@ -17,8 +17,8 @@ class Config:
     max_batches: int = 0
 
     # Data Augmentation
-    load_height: int = 64
-    load_width: int = 64
+    load_height: int = 56
+    load_width: int = 56
     horizontal_flip_prob: float = 0.5
     rotation_prob: float = 0.5
     rotation_angle: float = 10

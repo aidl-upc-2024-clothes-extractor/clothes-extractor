@@ -22,7 +22,7 @@ class ClothesDataset(data.Dataset):
             RGBAtoRGBWhiteBlack(),
             #MakeSquareWithPad(),
             ToFloatTensor(),
-            #∫transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
+            transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
         dataset_list = f'{dataset_mode}_pairs.txt'

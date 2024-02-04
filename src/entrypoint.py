@@ -7,7 +7,6 @@ import torch
 from src.model import Unet
 from src.train import train_model
 
-
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available() and torch.backends.mps.is_built() and torch.device != "cuda":
@@ -18,8 +17,8 @@ def main():
     print(cfg.batch_size)
 
     cfg = Config()
-    cfg.load_height = 64
-    cfg.load_width = 64
+    #cfg.load_height = 28
+    #cfg.load_width = 28
 
     test_dataset = ClothesDataset(cfg, "test")
     train_dataset = ClothesDataset(cfg, "train")
