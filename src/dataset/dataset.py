@@ -7,7 +7,7 @@ from PIL import Image
 import torch
 import os
 from PIL import Image
-from src.data_augmentation import RGBAtoRGBWhiteBlack, MakeSquareWithPad, ToFloatTensor, CropAlphaChannelTransform, AlphaToBlackTransform, PadToShapeTransform, SingleChannelToRGBTransform, ApplyMaskTransform, SameCropTransform, StableColorJitter, StableRotation
+from data_augmentation import RGBAtoRGBWhiteBlack, MakeSquareWithPad, ToFloatTensor, CropAlphaChannelTransform, AlphaToBlackTransform, PadToShapeTransform, SingleChannelToRGBTransform, ApplyMaskTransform, SameCropTransform, StableColorJitter, StableRotation
 
 class ClothesDataset(data.Dataset):
     '''

@@ -1,11 +1,12 @@
 import argparse
-from dataset import ClothesDataset, ClothesDataLoader
+from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
+import os
 
 import torch
-from src.model import Unet
-from src.train import train_model
+from models.model import Unet
+from train import train_model
 
 
 def main():
@@ -20,6 +21,10 @@ def main():
     cfg = Config()
     cfg.load_height = 28
     cfg.load_width = 28
+
+    #print the python running  directory
+    print(os.getcwd())
+    print(cfg.dataset_dir)
 
     test_dataset = ClothesDataset(cfg, "test")
     train_dataset = ClothesDataset(cfg, "train")
