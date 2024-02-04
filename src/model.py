@@ -4,7 +4,7 @@ from torch import nn
 
 
 class Unet(nn.Module):
-    def __init__(self, in_channels, n_feat=256, num_classes: int = 10):
+    def __init__(self, in_channels, n_feat=256):
         super(Unet, self).__init__()
 
         self.in_channels = in_channels
@@ -36,7 +36,6 @@ class Unet(nn.Module):
             nn.ReLU(),
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
-        self.n_classes = num_classes
 
     def forward(self, x):
 
