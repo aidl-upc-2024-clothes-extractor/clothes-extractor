@@ -21,7 +21,7 @@ class Unet(nn.Module):
         self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
 
         self.up0 = nn.Sequential(
-            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 11, 7),
+            nn.ConvTranspose2d(2 * n_feat, 2 * n_feat, 7, 7),
             nn.GroupNorm(8, 2 * n_feat),
             nn.ReLU(),
         )
