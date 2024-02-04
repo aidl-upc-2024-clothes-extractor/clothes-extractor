@@ -6,8 +6,8 @@ class Config:
     # General config
     batch_size: int = 32
     workers: int = 0
-    dataset_dir: str = 'datasets/zalando-low-res'
-    num_epochs: int = 3
+    dataset_dir: str = 'datasets/zalando-hd-resized'
+    num_epochs: int = 5
     learning_rate: float = 0.0002
     num_classes: int = 10
     num_input_channels: int = 1
