@@ -88,7 +88,7 @@ class ClothesDataset(data.Dataset):
         
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
-        target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
+        target_colors = [(254, 85, 0)]#, (0, 0, 85), (0,119,220), (85,51,0)]
         mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
         if debug:
             print(f'mask_tensor: {mask_tensor.shape}')
