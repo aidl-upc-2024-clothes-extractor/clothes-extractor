@@ -8,7 +8,7 @@
             "name": "Entry point",
             "type": "debugpy",
             "request": "launch",
-            "program": "src/entrypoint.py",
+            "program": "entrypoint.py",
             "args": [],
             "console": "integratedTerminal",
             "justMyCode": true
