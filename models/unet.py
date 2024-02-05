@@ -4,7 +4,7 @@ from torch import nn
 
 
 class Unet(nn.Module):
-    def __init__(self, in_channels, n_feat=256, num_classes: int = 10):
+    def __init__(self, in_channels, n_feat=256):
         super(Unet, self).__init__()
 
         self.in_channels = in_channels
@@ -13,10 +13,10 @@ class Unet(nn.Module):
         self.init_conv = ResidualConvBlock(in_channels, n_feat, is_res=True)
 
         self.down1 = UnetDown(n_feat, n_feat)
-        self.attn1 = SelfAttention(n_feat)
+        # self.attn1 = SelfAttention(n_feat)
 
         self.down2 = UnetDown(n_feat, 2 * n_feat)
-        self.attn2 = SelfAttention(2 * n_feat)
+        # self.attn2 = SelfAttention(2 * n_feat)
 
         self.to_vec = nn.Sequential(nn.AvgPool2d(7), nn.GELU())
 
@@ -27,23 +27,24 @@ class Unet(nn.Module):
         )
 
         self.up1 = UnetUp(4 * n_feat, n_feat)
-        self.attn1up = SelfAttention(n_feat)
+        # self.attn1up = SelfAttention(n_feat)
         self.up2 = UnetUp(2 * n_feat, n_feat)
-        self.attn2up = SelfAttention(n_feat)
+        # self.attn2up = SelfAttention(n_feat)
         self.out = nn.Sequential(
             nn.Conv2d(2 * n_feat, n_feat, 3, 1, 1),
             nn.GroupNorm(8, n_feat),
             nn.ReLU(),
             nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
         )
-        self.n_classes = num_classes
 
     def forward(self, x):
 
         # Downsampling
         x = self.init_conv(x)
-        down1 = self.attn1(self.down1(x))
-        down2 = self.attn2(self.down2(down1))
+        # down1 = self.attn1(self.down1(x))
+        down1 = self.down1(x)
+        # down2 = self.attn2(self.down2(down1))
+        down2 = self.down2(down1)
 
         hiddenvec = self.to_vec(down2)
 
@@ -51,57 +52,62 @@ class Unet(nn.Module):
         up1 = self.up0(hiddenvec)
 
         condition = up1
-        up2 = self.attn1up(self.up1(condition, down2))
+        # print('S', condition.shape, down2.shape)
+        # up2 = self.attn1up(self.up1(condition, down2))
+        up2 = self.up1(condition, down2)
 
         condition = up2
 
-        up3 = self.attn2up(self.up2(condition, down1))
+        # up3 = self.attn2up(self.up2(condition, down1))
+        up3 = self.up2(condition, down1)
         out = self.out(torch.cat((up3, x), 1))
         return out
 
 
 class SelfAttention(nn.Module):
-    '''
+    """
     Similar to the Transformer Architecture, this network has self-attention blocks.
-    '''
+    """
+
     def __init__(self, n_channels):
-      super().__init__()
-      n_channels_out = n_channels//4
-      self.query = nn.Linear(n_channels, n_channels_out, bias=False)
-      self.key = nn.Linear(n_channels, n_channels_out, bias=False)
-      self.value = nn.Linear(n_channels, n_channels, bias=False)
-      self.gamma = nn.Parameter(torch.tensor([0.0]))
+        super().__init__()
+        n_channels_out = n_channels // 4
+        self.query = nn.Linear(n_channels, n_channels_out, bias=False)
+        self.key = nn.Linear(n_channels, n_channels_out, bias=False)
+        self.value = nn.Linear(n_channels, n_channels, bias=False)
+        self.gamma = nn.Parameter(torch.tensor([0.0]))
 
     def forward(self, x):
-      B, C, H, W = x.shape
+        B, C, H, W = x.shape
 
-      x = x.permute(0, 2, 3, 1).view(B, H * W, C) # Shape: [B, H*W, C]
+        x = x.permute(0, 2, 3, 1).view(B, H * W, C)  # Shape: [B, H*W, C]
 
-      q = self.query(x) # [B, H*W, C]
-      k = self.key(x) # [B, H*W, C]
-      v = self.value(x) # [B, H*W, C]
+        q = self.query(x)  # [B, H*W, C]
+        k = self.key(x)  # [B, H*W, C]
+        v = self.value(x)  # [B, H*W, C]
 
-      attn = F.softmax(torch.bmm(q, k.transpose(1,2)), dim=1) # Shape: [B, H*W, H*W]
-      out = self.gamma * torch.bmm(attn, v) + x # Shape: [B, H*W, C]
+        attn = F.softmax(torch.bmm(q, k.transpose(1, 2)), dim=1)  # Shape: [B, H*W, H*W]
+        out = self.gamma * torch.bmm(attn, v) + x  # Shape: [B, H*W, C]
 
-      out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
+        out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
 
-      return out
+        return out
 
 
 class ResidualConvBlock(nn.Module):
-    '''
+    """
     The following are resnet block, which consist of convolutional layers,
     followed by batch normalization and residual connections.
-    '''
+    """
+
     def __init__(
         self, in_channels: int, out_channels: int, is_res: bool = False
     ) -> None:
         super().__init__()
-        '''
+        """
         standard ResNet style convolutional block
-        '''
-        self.same_channels = in_channels==out_channels
+        """
+        self.same_channels = in_channels == out_channels
         self.is_res = is_res
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, 1, 1),
@@ -133,14 +139,14 @@ class ResidualConvBlock(nn.Module):
 class UnetDown(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(UnetDown, self).__init__()
-        '''
+        """
         process and downscale the image feature maps
-        '''
+        """
         layers = [
             ResidualConvBlock(in_channels, in_channels, True),
             ResidualConvBlock(in_channels, in_channels, True),
             ResidualConvBlock(in_channels, out_channels),
-            nn.MaxPool2d(2)
+            nn.MaxPool2d(2),
         ]
         self.model = nn.Sequential(*layers)
 
@@ -151,9 +157,9 @@ class UnetDown(nn.Module):
 class UnetUp(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(UnetUp, self).__init__()
-        '''
+        """
         process and upscale the image feature maps
-        '''
+        """
         layers = [
             nn.ConvTranspose2d(in_channels, out_channels, 2, 2),
             ResidualConvBlock(out_channels, out_channels, True),
@@ -165,4 +171,3 @@ class UnetUp(nn.Module):
         x = torch.cat((x, skip), 1)
         x = self.model(x)
         return x
-

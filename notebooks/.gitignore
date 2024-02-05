@@ -1,4 +1,4 @@
 *.tmp
 .ipynb_checkpoints
 *.zip
-datasets
+data
