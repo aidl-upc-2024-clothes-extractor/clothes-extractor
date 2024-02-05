@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 
 # +
 cfg = Config()
-cfg.dataset_dir = "./datasets/zalando-hd-resized"
+cfg.dataset_dir = "./data/zalando-hd-resized"
 cfg.dataset_mode = "train"
 cfg.batch_size = 1
 cfg.load_height = 1024

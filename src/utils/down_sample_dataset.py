@@ -8,46 +8,46 @@ import argparse
 folders = {
     "train" : {
         "images": [
-            "./datasets/zalando-hd-resized/train/image",
-            "./datasets/zalando-low-res/train/image",
+            "./data/zalando-hd-resized/train/image",
+            "./data/zalando-low-res/train/image",
         ],
         "image_parse_v3": [
-            "./datasets/zalando-hd-resized/train/image-parse-v3",
-            "./datasets/zalando-low-res/train/image-parse-v3",
+            "./data/zalando-hd-resized/train/image-parse-v3",
+            "./data/zalando-low-res/train/image-parse-v3",
         ],
         "cloth": [
-            "./datasets/zalando-hd-resized/train/cloth",
-            "./datasets/zalando-low-res/train/cloth",
+            "./data/zalando-hd-resized/train/cloth",
+            "./data/zalando-low-res/train/cloth",
         ],
         "cloth_mask": [
-            "./datasets/zalando-hd-resized/train/cloth-mask",
-            "./datasets/zalando-low-res/train/cloth-mask",
+            "./data/zalando-hd-resized/train/cloth-mask",
+            "./data/zalando-low-res/train/cloth-mask",
         ],
        "image_parse_agnostic_v3.2": [
-            "./datasets/zalando-hd-resized/train/image-parse-agnostic-v3.2",
-            "./datasets/zalando-low-res/train/image-parse-agnostic-v3.2",
+            "./data/zalando-hd-resized/train/image-parse-agnostic-v3.2",
+            "./data/zalando-low-res/train/image-parse-agnostic-v3.2",
         ],
      },
     "test" : {
         "images": [
-            "./datasets/zalando-hd-resized/test/image",
-            "./datasets/zalando-low-res/test/image",
+            "./data/zalando-hd-resized/test/image",
+            "./data/zalando-low-res/test/image",
         ],
         "image_parse_v3": [
-            "./datasets/zalando-hd-resized/test/image-parse-v3",
-            "./datasets/zalando-low-res/test/image-parse-v3",
+            "./data/zalando-hd-resized/test/image-parse-v3",
+            "./data/zalando-low-res/test/image-parse-v3",
         ],
         "cloth": [
-            "./datasets/zalando-hd-resized/test/cloth",
-            "./datasets/zalando-low-res/test/cloth",
+            "./data/zalando-hd-resized/test/cloth",
+            "./data/zalando-low-res/test/cloth",
         ],
         "cloth_mask": [
-            "./datasets/zalando-hd-resized/test/cloth-mask",
-            "./datasets/zalando-low-res/test/cloth-mask",
+            "./data/zalando-hd-resized/test/cloth-mask",
+            "./data/zalando-low-res/test/cloth-mask",
         ],
        "image_parse_agnostic_v3.2": [
-            "./datasets/zalando-hd-resized/test/image-parse-agnostic-v3.2",
-            "./datasets/zalando-low-res/test/image-parse-agnostic-v3.2",
+            "./data/zalando-hd-resized/test/image-parse-agnostic-v3.2",
+            "./data/zalando-low-res/test/image-parse-agnostic-v3.2",
         ],
      }
 }
