@@ -25,11 +25,11 @@ import sys
 sys.path.append(os.getcwd())
 # -
 
-import src.dataset as dataset
+import src.dataset.dataset as dataset
 import importlib
 importlib.reload(dataset)
 
-from src.dataset import ClothesDataLoader, ClothesDataset
+from src.dataset.dataset import ClothesDataLoader, ClothesDataset
 from src.config import Config
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
