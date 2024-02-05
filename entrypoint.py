@@ -5,8 +5,8 @@ from argparse_dataclass import ArgumentParser
 import os
 
 import torch
-from models.model import Unet
-from train import train_model
+from models.unet import Unet
+from trainer.trainer import train_model
 
 
 def main():
