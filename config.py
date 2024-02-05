@@ -34,4 +34,8 @@ class Config:
     angle_prob: float = 0.3
     angle: float = 10
 
+    predict_image: int = 1
+    reload_model: str = "None"
+    ssim_range: float = 1.0
+
 

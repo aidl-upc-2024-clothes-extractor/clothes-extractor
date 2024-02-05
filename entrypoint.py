@@ -28,7 +28,8 @@ def visualize_nn_output(output, device, image_index=0):
 
     if output.shape[0] in [3, 4]:  # RGB or RGBA
         output = np.transpose(output, (1, 2, 0))
-
+    output -= output.min()
+    
     plt.imshow(output)
     plt.show()
 
@@ -39,9 +40,8 @@ def main():
 
     args = ArgumentParser(Config)
     cfg = args.parse_args()
-    print(cfg.batch_size)
-
-    cfg = Config()
+    print(cfg.num_epochs)
+    #cfg = Config()
     #cfg.load_height = 28
     #cfg.load_width = 28
 
@@ -57,7 +57,7 @@ def main():
 
     model = Unet(in_channels=3, n_feat=32).to(device)
 
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches)
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches, cfg.reload_model, cfg.ssim_range)
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 

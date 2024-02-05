@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 
 import torchvision
 from src.model_store import ModelStore
+from torchmetrics.image import StructuralSimilarityIndexMeasure
 
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
@@ -50,24 +51,32 @@ class VGGPerceptualLoss(torch.nn.Module):
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
 
-def combined_criterion(c1, c2, w, outputs, target):
-    result = c2(outputs, target)
+def combined_criterion(c1, c2, ssim, w, outputs, target):
+    result = 0
+    if c2 is not None:
+        result += c2(outputs, target)
     if c1 is not None:
         result += w * c1(outputs, target)
+    if ssim is not None:
+        result += (ssim.data_range-ssim(outputs, target))
     return result
     
-def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
+def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0, reload_model="None", ssim_range = 1.0):
     c1 = VGGPerceptualLoss().to(device) #None
-    c2 = L1Loss()
+    c2 = L1Loss() #None
+    ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
     model_storer = ModelStore()
     loss = 0
     ep = 0
-    reload_model = "latest"
+    print(reload_model)
+    if reload_model is not None and reload_model != "None":
+        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
     if reload_model is not None and reload_model == "latest":
-        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=None)
+        reload_model = None
+        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
 
     print('Start training')
@@ -84,7 +93,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
             optimizer.zero_grad()
 
             outputs = model(source)
-            loss = combined_criterion(c1, c2, w, outputs, target)
+            loss = combined_criterion(c1, c2, ssim, w, outputs, target)
             loss.backward()
             optimizer.step()
 
@@ -108,7 +117,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
                 source = inputs["centered_mask_body"].to(device)
 
                 outputs = model(source)
-                loss = combined_criterion(c1, c2, w, outputs, target)
+                loss = combined_criterion(c1, c2, ssim, w, outputs, target)
 
                 running_loss += loss.item()
 
@@ -123,7 +132,9 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         print(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {avg_train_loss:.4f}, '
               f'Validation Loss: {avg_val_loss:.4f}')
-        model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
+        if (epoch+1)%2 == 0:
+            model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
 
+    model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
     print('Finished Training')
     return model
