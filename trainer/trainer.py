@@ -58,7 +58,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
     w = 0.3
 
     print('Start training')
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
 
