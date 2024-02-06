@@ -1,15 +1,15 @@
 import argparse
-from dataset import ClothesDataset, ClothesDataLoader
+from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
 
 import torch
-from src.model import Unet
-from src.train import train_model
+from models.unet import  Unet
+from trainer.trainer import train_model
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.optim as optim
-from src.model_store import ModelStore
+from models.model_store import ModelStore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 
 
