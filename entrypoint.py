@@ -2,6 +2,7 @@ import argparse
 from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
+import logging
 import os
 
 import torch
@@ -34,20 +35,28 @@ def visualize_nn_output(output, device, image_index=0):
     plt.show()
 
 def main():
+    # TODO: geet error level from config
+    logger = logging.getLogger('clothes-logger')
+    logger.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    logger.addHandler(ch)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available() and torch.backends.mps.is_built() and torch.device != "cuda":
         device = torch.device("mps")
+    logger.info('device: %s', device)
 
     args = ArgumentParser(Config)
     cfg = args.parse_args()
-    print(cfg.num_epochs)
-    #cfg = Config()
-    #cfg.load_height = 28
-    #cfg.load_width = 28
+
+    logger.info('num_epochs: %s', cfg.num_epochs)
 
     #print the python running  directory
-    print(os.getcwd())
-    print(cfg.dataset_dir)
+    logger.debug('current_path: %s', os.getcwd())
+    logger.info('dataset_dir: %s', cfg.dataset_dir)
 
     test_dataset = ClothesDataset(cfg, "test")
     train_dataset = ClothesDataset(cfg, "train")

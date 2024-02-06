@@ -123,7 +123,8 @@ class ClothesDataset(data.Dataset):
             print(f'target: {target.shape}')
 
         # cloth = self.transform(cloth)
-        cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
+        # TODO: on resized seems this conversion is not needed
+        #cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
         cloth_mask = self.transform(cloth_mask)
         if debug:
             print(f'cloth_mask: {cloth_mask.shape}')

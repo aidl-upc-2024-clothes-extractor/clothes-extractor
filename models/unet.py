@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn
+import logging
 import sys
 
 debug = False
@@ -8,6 +9,8 @@ debug = False
 class Unet(nn.Module):
     def __init__(self, in_channels, n_feat=256):
         super(Unet, self).__init__()
+
+        self.logger = logging.getLogger('clothes-logger')
 
         self.activate_attention = True
 
@@ -49,51 +52,46 @@ class Unet(nn.Module):
     def forward(self, x):
         # Downsampling
         # debug = True
-        if debug:
-            print(f'Entry: \t\t\t{x.shape}')
+        self.logger.debug(f'Entry: \t\t\t{x.shape}')
         x = self.init_conv(x)
-        if debug:
-            print(f'Init: \t\t\t{x.shape}')
+
+        self.logger.debug(f'Init: \t\t\t{x.shape}')
         if self.activate_attention:
             down1 = self.attn1(self.down1(x))
         down1 = self.down1(x)
-        if debug:
-            print(f'down1: \t\t\t{down1.shape}')
+
+        self.logger.debug(f'down1: \t\t\t{down1.shape}')
         if self.activate_attention:
             down2 = self.attn2(self.down2(down1))
         down2 = self.down2(down1)
-        if debug:
-            print(f'down2: \t\t\t{down2.shape}')
+
+        self.logger.debug(f'down2: \t\t\t{down2.shape}')
 
         hiddenvec = self.to_vec(down2)
-        if debug:
-            print(f'hiddenvec: \t\t{hiddenvec.shape}')
+        self.logger.debug(f'hiddenvec: \t\t{hiddenvec.shape}')
 
         # Upsampling
         up1 = self.up0(hiddenvec)
-        if debug:
-            print(f'up1: \t\t\t{up1.shape}')
+        self.logger.debug(f'up1: \t\t\t{up1.shape}')
 
         condition = up1
-        if debug:
-            print(f'condition: \t\t{condition.shape}')
-            print(f'updown2: \t\t{down2.shape}')
+        self.logger.debug(f'condition: \t\t{condition.shape}')
+        self.logger.debug(f'updown2: \t\t{down2.shape}')
+
         if self.activate_attention:
             up2 = self.attn1up(self.up1(condition, down2))
         up2 = self.up1(condition, down2)
-        if debug:
-            print(f'up2: \t\t\t{up2.shape}')
+        self.logger.debug(f'up2: \t\t\t{up2.shape}')
 
         condition = up2
-        if debug:
-            print(f'condition: \t\t{condition.shape}')
-            print(f'updown1: \t\t{down1.shape}')
+        self.logger.debug(f'condition: \t\t{condition.shape}')
+        self.logger.debug(f'updown1: \t\t{down1.shape}')
 
         if self.activate_attention:
             up3 = self.attn2up(self.up2(condition, down1))
         up3 = self.up2(condition, down1)
-        if debug:
-            print(f'up3: \t\t\t{up3.shape}')
+        self.logger.debug(f'up3: \t\t\t{up3.shape}')
+
         out = self.out(torch.cat((up3, x), 1))
         if debug:
             exit(0)
@@ -112,36 +110,30 @@ class SelfAttention(nn.Module):
         self.key = nn.Linear(n_channels, n_channels_out, bias=False)
         self.value = nn.Linear(n_channels, n_channels, bias=False)
         self.gamma = nn.Parameter(torch.tensor([0.0]))
+        self.logger = logging.getLogger('clothes-logger')
 
     def forward(self, x):
         B, C, H, W = x.shape
-        if debug:
-            print(f'Attn -> 1x: \t\t\t{x.shape}')
+        self.logger.debug(f'Attn -> 1x: \t\t\t{x.shape}')
         x = x.permute(0, 2, 3, 1).view(B, H * W, C) # Shape: [B, H*W, C]
-        if debug:
-            print(f'Attn -> x: \t\t\t{x.shape}')
+        self.logger.debug(f'Attn -> x: \t\t\t{x.shape}')
 
         q = self.query(x) # [B, H*W, C]
-        if debug:
-            print(f'Attn -> q: \t\t\t{q.shape}')
+        self.logger.debug(f'Attn -> q: \t\t\t{q.shape}')
         k = self.key(x) # [B, H*W, C]
-        if debug:
-            print(f'Attn -> k: \t\t\t{k.shape}')
+        self.logger.debug(f'Attn -> k: \t\t\t{k.shape}')
         v = self.value(x) # [B, H*W, C]
-        if debug:
-            print(f'Attn -> v: \t\t\t{v.shape}')
+        self.logger.debug(f'Attn -> v: \t\t\t{v.shape}')
 
         attn = F.softmax(torch.bmm(q, k.transpose(1,2)), dim=1) # Shape: [B, H*W, H*W]
-        if debug:
-            print(f'Attn -> attn: \t\t\t{attn.shape}')
+        self.logger.debug(f'Attn -> attn: \t\t\t{attn.shape}')
+
         out = self.gamma * torch.bmm(attn, v) + x # Shape: [B, H*W, C]
         #out = x
-        if debug:
-            print(f'Attn -> out: \t\t\t{out.shape}')
+        self.logger.debug(f'Attn -> out: \t\t\t{out.shape}')
 
         out = out.permute(0, 2, 1).view(B, C, H, W).contiguous()
-        if debug:
-            print(f'Attn -> out2: \t\t\t{out.shape}')
+        self.logger.debug(f'Attn -> out2: \t\t\t{out.shape}')
 
         return out
 
