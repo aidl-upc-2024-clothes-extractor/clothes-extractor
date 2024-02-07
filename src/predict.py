@@ -62,9 +62,14 @@ def main():
         reload_model = cfg.reload_model
     print(reload_model)
     
-    image = train_dataset[desired_cloth]
     model, optimizer, epoch, loss = ms.load_model(model, optimizer, model_name=reload_model)
-    out = run_model_on_image(model, device, train_dataset, desired_cloth)
+    if cfg.predict_dataset == "train":
+        image = train_dataset[desired_cloth]
+        out = run_model_on_image(model, device, train_dataset, desired_cloth)
+    else:
+        image = test_dataset[desired_cloth]
+        out = run_model_on_image(model, device, test_dataset, desired_cloth)
+
     #visualize_nn_output(out, device)
         
     out = out.squeeze() 

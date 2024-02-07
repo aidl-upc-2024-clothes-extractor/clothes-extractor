@@ -55,12 +55,12 @@ def combined_criterion(c1, c2, ssim, w, outputs, target):
     if c1 is not None:
         result += w * c1(outputs, target)
     if ssim is not None:
-        result += (ssim.data_range-ssim(outputs, target))
+        result += (ssim.data_range - ssim(outputs, target))
     return result
     
 def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0, reload_model="None", ssim_range = 1.0):
     c1 = None#VGGPerceptualLoss().to(device)
-    c2 = None#L1Loss()
+    c2 = L1Loss()
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3

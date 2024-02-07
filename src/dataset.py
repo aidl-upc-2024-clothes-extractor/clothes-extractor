@@ -20,7 +20,7 @@ class ClothesDataset(data.Dataset):
         self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             RGBAtoRGBWhiteBlack(),
-            #MakeSquareWithPad(),
+            MakeSquareWithPad(),
             ToFloatTensor(),
             transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
