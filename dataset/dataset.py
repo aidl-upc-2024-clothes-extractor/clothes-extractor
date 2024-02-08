@@ -8,6 +8,7 @@ import torch
 import os
 from PIL import Image
 from data_augmentation import RGBAtoRGBWhiteBlack, MakeSquareWithPad, ToFloatTensor, CropAlphaChannelTransform, AlphaToBlackTransform, PadToShapeTransform, SingleChannelToRGBTransform, ApplyMaskTransform, SameCropTransform, StableColorJitter, StableRotation
+import logging
 
 class ClothesDataset(data.Dataset):
     '''
@@ -35,34 +36,43 @@ class ClothesDataset(data.Dataset):
                 img_names.append(img_name)
 
         self.img_names = img_names
+        self.logger = logging.getLogger('clothes-logger')
 
     def __len__(self):
         return len(self.img_names)
 
     def __getitem__(self, index):
-        debug = False
         # print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
-        #horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
-        #zoom = np.random.random() < self.cfg.crop_prob
-        #jitter = np.random.random() < self.cfg.color_jitter_prob
-        #angle = np.random.random() < self.cfg.angle_prob
-        #random_zoom = SameCropTransform(scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
-        #color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
-        #random_rotation = StableRotation(self.cfg.rotation_angle)
 
         img_torch = io.read_image(os.path.join(self.data_path, 'image', img_name))
         img_torch = img_torch.to(self.device)
-        if debug:
-            print(f'img_torch: {img_torch.shape}')
-        # if horizontal_flip:
-        #     img_torch = F.hflip(img_torch)
-        # if zoom:
-        #     img_torch = random_zoom(img_torch)
-        # if jitter:
-        #     img_torch = color_jitter(img_torch)
-        # if angle:
-        #     img_torch = random_rotation(img_torch)
+        self.logger.debug(f'img_torch: {img_torch.shape}')
+
+        horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
+        zoom = np.random.random() < self.cfg.crop_prob
+        jitter = np.random.random() < self.cfg.color_jitter_prob
+        angle = np.random.random() < self.cfg.angle_prob
+
+        random_zoom = None
+        color_jitter = None
+        random_rotation = None
+
+        if self.cfg.dataugmentation:
+            random_zoom = SameCropTransform(scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
+            color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
+            random_rotation = StableRotation(self.cfg.rotation_angle)
+
+        if self.cfg.dataugmentation:
+            if horizontal_flip:
+                img_torch = F.hflip(img_torch)
+            if zoom:
+                img_torch = random_zoom(img_torch)
+            if jitter:
+                img_torch = color_jitter(img_torch)
+            if angle:
+                img_torch = random_rotation(img_torch)
+            self.logger.debug(f'img_torch(data_augmentation): {img_torch.shape}')
 
         # img_final = self.transform(img_torch)
 
@@ -76,26 +86,25 @@ class ClothesDataset(data.Dataset):
 
         mask_body_parts = self.convert_to_rgb_tensor(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png")))
         mask_body_parts = mask_body_parts.to(self.device)
-        if debug:
-            print(f'mask_body_parts: {mask_body_parts.shape}')
+        self.logger.debug(f'mask_body_parts: {mask_body_parts.shape}')
 
-        # if horizontal_flip:
-        #     mask_body_parts = F.hflip(mask_body_parts)
-        # if zoom:
-        #     mask_body_parts = random_zoom(mask_body_parts)
-        # if angle:
-        #     mask_body_parts = random_rotation(mask_body_parts)
+        if self.cfg.dataugmentation:
+            if horizontal_flip:
+                mask_body_parts = F.hflip(mask_body_parts)
+            if zoom:
+                mask_body_parts = random_zoom(mask_body_parts)
+            if angle:
+                mask_body_parts = random_rotation(mask_body_parts)
+            self.logger.debug(f'mask_body_parts(data_augmentation): {mask_body_parts.shape}')
         
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
         target_colors = [(254, 85, 0)]#, (0, 0, 85), (0,119,220), (85,51,0)]
         mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
-        if debug:
-            print(f'mask_tensor: {mask_tensor.shape}')
+        self.logger.debug(f'mask_tensor: {mask_tensor.shape}')
     
         mask_tensor = self.transform(mask_tensor)
-        if debug:
-            print(f'mask_tensor: {mask_tensor.shape}')
+        self.logger.debug(f'mask_tensor(transformed): {mask_tensor.shape}')
 
         # mask_body_parts = mask_body_parts[:3, :, :]
         # mask_body_parts = self.transform(mask_body_parts)
@@ -105,32 +114,32 @@ class ClothesDataset(data.Dataset):
 
         cloth = io.read_image(path.join(self.data_path, 'cloth', img_name))
         cloth = cloth.to(self.device)
-        if debug:
-            print(f'cloth: {cloth.shape}')
+        self.logger.debug(f'cloth: {cloth.shape}')
 
-        # if horizontal_flip:
-        #     cloth = F.hflip(cloth)
-        # if jitter:
-        #     cloth = color_jitter(cloth)
+        if self.cfg.dataugmentation:
+            if horizontal_flip:
+                cloth = F.hflip(cloth)
+            if jitter:
+                cloth = color_jitter(cloth)
+            self.logger.debug(f'cloth(data_augmentation): {cloth.shape}')
 
         cloth_mask = io.read_image(path.join(self.data_path, 'cloth-mask', img_name))
         cloth_mask = cloth_mask.to(self.device)
-        if debug:
-            print(f'cloth_mask: {cloth_mask.shape}')
+        self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
 
         target = ApplyMaskTransform()(cloth, cloth_mask)
-        if debug:
-            print(f'target: {target.shape}')
+        self.logger.debug(f'target: {target.shape}')
 
         # cloth = self.transform(cloth)
+
         # TODO: on resized seems this conversion is not needed
         #cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
+
         cloth_mask = self.transform(cloth_mask)
-        if debug:
-            print(f'cloth_mask: {cloth_mask.shape}')
+        self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
+
         target = self.transform(target)
-        if debug:
-            print(f'target: {target.shape}')
+        self.logger.debug(f'target: {target.shape}')
 
 
         result = {
@@ -162,14 +171,10 @@ class ClothesDataset(data.Dataset):
         new_data = torch.zeros(4, img.size(1), img.size(2), dtype=torch.uint8, device=device)
         new_data[:3, :, :] = img[:3, :, :]
         new_data[3, :, :][mask] = 255
-        #print(f'new_data1: {new_data.shape}')
         
         new_data = CropAlphaChannelTransform()(new_data)
-        #print(f'new_data2: {new_data.shape}')
         new_data = AlphaToBlackTransform()(new_data)
-        #print(f'new_data3: {new_data.shape}')
         new_data = PadToShapeTransform(img.shape)(new_data)
-        #print(f'new_data4: {new_data.shape}')
         
         return new_data
     

@@ -144,17 +144,18 @@ class PadToShapeTransform:
 
         pad_vert = max((target_h - h) // 2, 0)
         pad_horiz = max((target_w - w) // 2, 0)
-        top = pad_vert
-        botton = pad_vert
-        left = pad_horiz
-        right = pad_horiz
 
-        if h + 2*pad_vert < target_h:
-            botton += 1
-        if w + 2*pad_horiz < target_w:
+        left = pad_horiz
+        top = pad_vert
+        right = pad_horiz
+        bottom = pad_vert
+
+        if h + 2 * pad_vert < target_h:
+            bottom += 1
+        if w + 2 * pad_horiz < target_w:
             right += 1
 
-        padded_img = F.pad(img, (left, top, right, botton))
+        padded_img = F.pad(img, (left, top, right, bottom))
 
         if padded_img.shape[1] > target_h or padded_img.shape[2] > target_w:
             padded_img = padded_img[:, :target_h, :target_w]

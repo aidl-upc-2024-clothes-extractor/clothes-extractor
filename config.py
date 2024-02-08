@@ -16,6 +16,7 @@ class Config:
     max_batches: int = 0
 
     # Data Augmentation
+    data_augmentation: bool = True
     load_height: int = 1024 #56
     load_width: int = 1024 #56
     horizontal_flip_prob: float = 0.5
