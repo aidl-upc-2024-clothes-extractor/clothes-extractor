@@ -40,10 +40,10 @@ def visualize_nn_output(output, device, image_index=0):
 def main():
     # TODO: geet error level from config
     logger = logging.getLogger('clothes-logger')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(logging.INFO)
 
     logger.addHandler(ch)
 
@@ -72,11 +72,11 @@ def main():
     # WANDB
     wandb_logger = WandbLogger(model)
     #
-
-
     trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger)
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
+
+    wandb_logger.end_run()
 
 if __name__ == '__main__':
     main()

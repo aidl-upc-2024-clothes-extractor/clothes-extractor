@@ -21,5 +21,7 @@ class WandbLogger:
         artifact = wandb.Artifact('model', type='model')
         artifact.add_file(checkpoint_path)
         self.run.log_artifact(artifact)
+
+    def end_run(self):
         self.run.finish()
 
