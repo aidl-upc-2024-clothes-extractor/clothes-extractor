@@ -162,3 +162,5 @@ cython_debug/
 /.python-version
 .DS_Store
 model_checkpoints/
+
+wandb

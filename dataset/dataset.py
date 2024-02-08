@@ -58,12 +58,12 @@ class ClothesDataset(data.Dataset):
         color_jitter = None
         random_rotation = None
 
-        if self.cfg.dataugmentation:
+        if self.cfg.data_augmentation:
             random_zoom = SameCropTransform(scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
             color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
             random_rotation = StableRotation(self.cfg.rotation_angle)
 
-        if self.cfg.dataugmentation:
+        if self.cfg.data_augmentation:
             if horizontal_flip:
                 img_torch = F.hflip(img_torch)
             if zoom:
@@ -88,7 +88,7 @@ class ClothesDataset(data.Dataset):
         mask_body_parts = mask_body_parts.to(self.device)
         self.logger.debug(f'mask_body_parts: {mask_body_parts.shape}')
 
-        if self.cfg.dataugmentation:
+        if self.cfg.data_augmentation:
             if horizontal_flip:
                 mask_body_parts = F.hflip(mask_body_parts)
             if zoom:
@@ -116,7 +116,7 @@ class ClothesDataset(data.Dataset):
         cloth = cloth.to(self.device)
         self.logger.debug(f'cloth: {cloth.shape}')
 
-        if self.cfg.dataugmentation:
+        if self.cfg.data_augmentation:
             if horizontal_flip:
                 cloth = F.hflip(cloth)
             if jitter:
