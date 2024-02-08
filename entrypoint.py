@@ -12,6 +12,9 @@ from trainer.trainer import train_model
 import matplotlib.pyplot as plt
 import numpy as np
 
+from wandb_logger import WandbLogger
+
+
 def run_model_on_image(model, device, dataset, image_index):
     model.eval()
 
@@ -66,7 +69,12 @@ def main():
 
     model = Unet(in_channels=3, n_feat=32).to(device)
 
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches, cfg.reload_model, cfg.ssim_range)
+    # WANDB
+    wandb_logger = WandbLogger(model)
+    #
+
+
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger)
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 

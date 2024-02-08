@@ -4,6 +4,7 @@ import torch.optim as optim
 import os
 from datetime import datetime
 from pathlib import Path
+import wandb_logger
 
 """
  Class that store and recovers a model to/from disk
@@ -31,6 +32,7 @@ class ModelStore():
             # Create all the path with all the structure
             p.mkdir(parents=True, exist_ok=True)
 
+
     """
     Save a model in the disk
     model: Model to be stored on disk
@@ -40,6 +42,8 @@ class ModelStore():
     model_name: the name you want for your model, the file will contain it. Default name in place
     The file where the model will be stored, it will contains the date and time in the name in the format:
     yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt
+    
+    Return the name of the persisted file
     """
     def save_model(self, model: nn.Module,  optimizer: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
         # we create a prefix with current datetime
@@ -54,6 +58,8 @@ class ModelStore():
             'loss': loss,
         }
         torch.save(saving_dict, filename)
+
+        return filename
 
     """
     Load a model from disk. In order to read properly the model and optimizer, they have to be created previously and send as parameters

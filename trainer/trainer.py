@@ -3,6 +3,8 @@ import torch.optim as optim
 from torch.nn import L1Loss
 from utils import utils
 from tqdm.auto import tqdm
+from config import Config
+from wandb_logger import WandbLogger
 
 import torchvision
 from models.model_store import ModelStore
@@ -60,8 +62,15 @@ def combined_criterion(c1, c2, ssim, w, outputs, target):
     if ssim is not None:
         result += (ssim.data_range-ssim(outputs, target))
     return result
-    
-def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0, reload_model="None", ssim_range = 1.0):
+
+
+def train_model(model, device, train_dataloader, val_dataloader, cfg: Config, wandb_logger: WandbLogger):
+    num_epochs = cfg.num_epochs
+    learning_rate = cfg.learning_rate
+    max_batches = cfg.max_batches
+    reload_model = cfg.reload_model
+    ssim_range = cfg.ssim_range
+
     c1 = VGGPerceptualLoss().to(device) #None
     c2 = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
@@ -86,7 +95,6 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         running_loss = 0.0
 
         count = 0
-#        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader, desc="Batches", position=1, leave=False)):
         for batch_idx, inputs in enumerate(train_dataloader.data_loader):
             target = inputs ["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
@@ -132,9 +140,13 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         print(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {avg_train_loss:.4f}, '
               f'Validation Loss: {avg_val_loss:.4f}')
-        if (epoch+1)%2 == 0:
-            model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
 
-    model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
+        if (epoch+1)%2 == 0:
+            checkpoint_file = model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
+            wandb_logger.save_model(checkpoint_file)
+
+    checkpoint_file = model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
+    wandb_logger.save_model(checkpoint_file)
+
     print('Finished Training')
     return model

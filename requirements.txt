@@ -6,3 +6,5 @@ Pillow==10.2.0
 torchvision==0.16.2
 argparse-dataclass==2.0.0
 tqdm==4.66.1
+tensorboard==2.15.1
+wandb==0.16.3
