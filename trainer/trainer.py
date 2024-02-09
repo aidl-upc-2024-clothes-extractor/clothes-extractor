@@ -3,8 +3,9 @@ import torch.optim as optim
 from torch.nn import L1Loss
 from utils import utils
 from tqdm.auto import tqdm
-
+from models.model_store import ModelStore
 import torchvision
+
 
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
@@ -20,18 +21,26 @@ class VGGPerceptualLoss(torch.nn.Module):
         self.blocks = torch.nn.ModuleList(blocks)
         self.transform = torch.nn.functional.interpolate
         self.resize = resize
-        self.register_buffer("mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1))
-        self.register_buffer("std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1))
+        self.register_buffer(
+            "mean", torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        )
+        self.register_buffer(
+            "std", torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+        )
 
     def forward(self, input, target, feature_layers=[0, 1, 2, 3], style_layers=[]):
         if input.shape[1] != 3:
             input = input.repeat(1, 3, 1, 1)
             target = target.repeat(1, 3, 1, 1)
-        input = (input-self.mean) / self.std
-        target = (target-self.mean) / self.std
+        input = (input - self.mean) / self.std
+        target = (target - self.mean) / self.std
         if self.resize:
-            input = self.transform(input, mode='bilinear', size=(224, 224), align_corners=False)
-            target = self.transform(target, mode='bilinear', size=(224, 224), align_corners=False)
+            input = self.transform(
+                input, mode="bilinear", size=(224, 224), align_corners=False
+            )
+            target = self.transform(
+                target, mode="bilinear", size=(224, 224), align_corners=False
+            )
         loss = 0.0
         x = input
         y = target
@@ -48,22 +57,33 @@ class VGGPerceptualLoss(torch.nn.Module):
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
 
+
 def combined_criterion(c1, c2, w, outputs, target):
     return w * c1(outputs, target) + c2(outputs, target)
-    
-def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
+
+
+def train_model(
+    model,
+    device,
+    train_dataloader,
+    val_dataloader,
+    num_epochs,
+    learning_rate,
+    max_batches=0,
+    model_store: ModelStore=None
+):
     c1 = VGGPerceptualLoss().to(device)
     c2 = L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
 
-    print('Start training')
+    print("Start training")
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
 
         for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader)):
-            target = inputs ["target"].to(device)
+            target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
 
@@ -74,9 +94,8 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 
             running_loss += loss.item()
 
-            if 0 < max_batches == batch_idx :
+            if 0 < max_batches == batch_idx:
                 break
-
 
         avg_train_loss = running_loss / len(train_dataloader.data_loader)
 
@@ -97,9 +116,16 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 
         avg_val_loss = running_loss / len(val_dataloader.data_loader)
 
-        print(f'Epoch [{epoch+1}/{num_epochs}], '
-              f'Train Loss: {avg_train_loss:.4f}, '
-              f'Validation Loss: {avg_val_loss:.4f}')
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}], "
+            f"Train Loss: {avg_train_loss:.4f}, "
+            f"Validation Loss: {avg_val_loss:.4f}"
+        )
 
-    print('Finished Training')
+        if model_store is not None:
+            model_store.save_model(
+                model, optimizer, epoch, avg_train_loss
+            )
+
+    print("Finished Training")
     return model

@@ -12,13 +12,13 @@ class Config:
     num_classes: int = 10
     num_input_channels: int = 1
     num_val_samples: int = 25
+    load_height: int = 1024
+    load_width: int = 1024
 
     # For development allow setting number of batches to not run the whole dataset
     max_batches: int = 0
 
     # Data Augmentation
-    load_height: int = 1024
-    load_width: int = 1024
     horizontal_flip_prob: float = 0.5
     rotation_prob: float = 0.5
     rotation_angle: float = 10

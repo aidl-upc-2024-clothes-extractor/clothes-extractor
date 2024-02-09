@@ -6,6 +6,7 @@ import os
 
 import torch
 from models.unet import Unet
+import models.model_store as model_store
 from trainer.trainer import train_model
 
 
@@ -19,8 +20,8 @@ def main():
     print(cfg.batch_size)
 
     cfg = Config()
-    cfg.load_height = 28
-    cfg.load_width = 28
+    cfg.load_height = 224
+    cfg.load_width = 224
 
     #print the python running  directory
     print(os.getcwd())
@@ -34,7 +35,9 @@ def main():
 
     model = Unet(in_channels=3, n_feat=32).to(device)
 
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches)
+    model_store_unet_1 = model_store.ModelStore(model_name="unet_1")
+
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches, model_store=model_store_unet_1)
 
 
 if __name__ == '__main__':
