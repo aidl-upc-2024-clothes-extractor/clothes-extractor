@@ -48,7 +48,7 @@ class ModelStore():
             loss (float): The current loss.
         """
         prefix = f'{datetime.now():%Y%m%d_%H%M}'
-        filename = os.path.join(self.path, prefix + "_e" + epoch + "_" + self.model_name + ".pt")
+        filename = os.path.join(self.path, prefix + "_e" + str(epoch) + "_" + self.model_name + ".pt")
         saving_dict = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
