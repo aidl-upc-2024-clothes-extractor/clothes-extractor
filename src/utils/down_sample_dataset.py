@@ -27,8 +27,8 @@ def get_opt():
 
     parser.add_argument('-f', '--files', type=int, default=None)
     parser.add_argument('-s', '--size', type=int, default=64)
-    parser.add_argument('--src_dir', type=str, default='./datasets/zalando-hd-resized')
-    parser.add_argument('--dst_dir', type=str, default='./datasets/zalando-low-res')
+    parser.add_argument('--src_dir', type=str, default='./data/zalando-hd-resized')
+    parser.add_argument('--dst_dir', type=str, default='./data/zalando-low-res')
 
     opt = parser.parse_args()
     return opt
