@@ -41,7 +41,7 @@ def main():
 
     print("Done")
 
-    model_store_unet_1 = model_store.ModelStore(model_name="unet_1")
+    model_store_unet_1 = model_store.ModelStore(model_name="smp.unet.efficientnet-b0.imagenet")
     model = smp.Unet(
         encoder_name="efficientnet-b0",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
