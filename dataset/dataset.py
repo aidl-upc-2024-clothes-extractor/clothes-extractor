@@ -84,8 +84,9 @@ class ClothesDataset(data.Dataset):
         
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
-        target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
-        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
+        # target_colors = [(254, 85, 0), (0, 0, 85), (0,119,220), (85,51,0)]
+        target_colors = [(254, 85, 0)] # Only orange
+        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch).to(self.device)
         
         mask_tensor = self.transform(mask_tensor)
         # mask_body_parts = mask_body_parts[:3, :, :]
@@ -104,7 +105,7 @@ class ClothesDataset(data.Dataset):
 
         cloth_mask = io.read_image(path.join(self.data_path, 'cloth-mask', img_name))
         cloth_mask = cloth_mask.to(self.device)
-        target = ApplyMaskTransform()(cloth, cloth_mask)
+        target = ApplyMaskTransform()(cloth, cloth_mask).to(self.device)
 
         # cloth = self.transform(cloth)
         cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
