@@ -61,7 +61,7 @@ class ModelStore():
         }
         torch.save(saving_dict, filename)
 
-def load_model(self, model: nn.Module, optimizer: optim, path: str = None):
+def load_model(model: nn.Module, optimizer: optim, path: str = None):
     """
     Load a model from disk.
 
