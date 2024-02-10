@@ -41,6 +41,7 @@ class ModelStore():
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
 
+
     def save_model(self, model: nn.Module, optimizer: optim, epoch: int, loss: float):
         """
         Save a model to disk.
@@ -91,3 +92,4 @@ def load_model(model: nn.Module, optimizer: optim, path: str = None):
     else:
         raise FileNotFoundError(f"File {full_file_name} does not exist")
     return model, optimizer, epoch, loss
+

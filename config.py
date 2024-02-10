@@ -4,12 +4,11 @@ import argparse
 @dataclass
 class Config:
     # General config
-    batch_size: int = 64
-    workers: int = 1
+    batch_size: int = 64 #16
+    workers: int = 0
     dataset_dir: str = 'data/zalando-hd-resized'
-    num_epochs: int = 5
+    num_epochs: int = 20
     learning_rate: float = 0.0002
-    num_classes: int = 10
     num_input_channels: int = 1
     num_val_samples: int = 25
     load_height: int = 1024
@@ -19,10 +18,11 @@ class Config:
     max_batches: int = 0
 
     # Data Augmentation
-    horizontal_flip_prob: float = 0
-    rotation_prob: float = 0
+    data_augmentation: bool = False
+    horizontal_flip_prob: float = 0.5
+    rotation_prob: float = 0.5
     rotation_angle: float = 10
-    crop_prob: float = 0
+    crop_prob: float = 0.5
     min_crop_factor: float = 0.65
     max_crop_factor: float = 0.92
     brightness: float = 0.15
@@ -30,10 +30,12 @@ class Config:
     saturation: float = 0.3
     hue: float = 0.05
     color_jitter_prob: float = 0
-    angle_prob: float = 0
+    angle_prob: float = 0.5
     angle: float = 10
 
     # Other config
-    continue_from: str = None # Path to model checkpoint to continue training
+    predict_image: int = 1
+    reload_model: str = None
+    ssim_range: float = 1.0
 
 

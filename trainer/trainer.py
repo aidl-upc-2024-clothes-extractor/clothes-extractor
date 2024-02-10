@@ -1,21 +1,45 @@
+from tqdm.auto import tqdm
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn import Module
 from torch.nn import L1Loss
-from utils import utils
-from tqdm.auto import tqdm
-from models.model_store import ModelStore
 import torchvision
+from torchmetrics.image import StructuralSimilarityIndexMeasure
+
+from models.model_store import ModelStore
+from config import Config
+from models.wandb_store import WandbStorer
+from metrics.logger import Logger
+from utils.utils import DatasetType
+from models.model_store import ModelStore
 
 
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
         blocks = []
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[4:9].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[9:16].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[16:23].eval())
+        # blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
+        blocks.append(
+            torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
+            .features[:4]
+            .eval()
+        )
+        blocks.append(
+            torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
+            .features[4:9]
+            .eval()
+        )
+        blocks.append(
+            torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
+            .features[9:16]
+            .eval()
+        )
+        blocks.append(
+            torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
+            .features[16:23]
+            .eval()
+        )
         for bl in blocks:
             for p in bl.parameters():
                 p.requires_grad = False
@@ -59,9 +83,22 @@ class VGGPerceptualLoss(torch.nn.Module):
         return loss
 
 
-def combined_criterion(c1, c2, w, outputs, target):
-    return w * c1(outputs, target) + c2(outputs, target)
-
+def combined_criterion(
+    c1_loss: torch.nn.Module,
+    c2_loss: torch.nn.Module,
+    ssim: StructuralSimilarityIndexMeasure,
+    w: float,
+    outputs,
+    target,
+):
+    result = 0
+    if c2_loss is not None:
+        result += c2_loss(outputs, target)
+    if c1_loss is not None:
+        result += w * c1_loss(outputs, target)
+    if ssim is not None:
+        result += ssim.data_range - ssim(outputs, target)
+    return result
 
 def train_model(
     optimizer: optim.Optimizer,
@@ -69,62 +106,105 @@ def train_model(
     device,
     train_dataloader,
     val_dataloader,
-    num_epochs: int,
-    max_batches: int,
-    model_store: ModelStore=None,
-    start_from_epoch: int=0,
+    cfg: Config,
+    logger: Logger,
+    remote_model_store: WandbStorer,
+    local_model_store: ModelStore = None,
+    start_from_epoch: int = 0,
 ):
-    c1 = VGGPerceptualLoss().to(device)
-    c2 = L1Loss().to(device)
-    w = 0.3
+    num_epochs = cfg.num_epochs
+    learning_rate = cfg.learning_rate
+    max_batches = cfg.max_batches
+    reload_model = cfg.reload_model
+    ssim_range = cfg.ssim_range
+
+    c1_loss = VGGPerceptualLoss().to(device)  # None
+    c2_loss = L1Loss()  # None
+    ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
+    epoch = start_from_epoch
 
     print("Training started")
     for epoch in range(start_from_epoch, num_epochs):
         model.train()
-        running_loss = 0.0
+        train_loss = forward_step(
+            device,
+            model,
+            train_dataloader.data_loader,
+            DatasetType.TRAIN,
+            c1_loss,
+            c2_loss,
+            ssim,
+            optimizer,
+            max_batches=max_batches,
+        )
+        train_loss_avg = np.mean(train_loss)
+        if local_model_store is not None:
+            local_model_store.save_model(model, optimizer, epoch, train_loss_avg)
 
-        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader)):
+        model.eval()
+        val_loss = forward_step(
+            device,
+            model,
+            val_dataloader.data_loader,
+            DatasetType.VALIDATION,
+            c1_loss,
+            c2_loss,
+            ssim,
+            optimizer,
+            max_batches=max_batches,
+        )
+        val_loss_avg = np.mean(val_loss)
+
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}], "
+            f"Train Loss: {train_loss_avg:.4f}, "
+            f"Validation Loss: {val_loss_avg:.4f}"
+        )
+
+        if (epoch + 1) % 2 == 0 or epoch + 1 == num_epochs:
+            checkpoint_file = local_model_store.save_model(
+                model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg
+            )
+            remote_model_store.save_model(checkpoint_file)
+
+        logger.log_training(epoch, train_loss_avg, val_loss_avg)
+
+    print("Training completed!")
+    return model
+
+
+def forward_step(
+    device,
+    model: torch.nn.Module,
+    loader: torch.utils.data.DataLoader,
+    dataset_type: DatasetType,
+    c1Loss: torch.nn.Module,
+    c2Loss: torch.nn.Module,
+    ssim: StructuralSimilarityIndexMeasure,
+    optimizer: torch.optim.Optimizer,
+    max_batches: int = 0,
+):
+    w = 0.3
+    loss_list = []
+
+    for batch_idx, inputs in enumerate(tqdm(loader)):
+        if 0 < max_batches == batch_idx:
+            break
+        if dataset_type == DatasetType.TRAIN:
             target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
-            loss = combined_criterion(c1, c2, w, outputs, target)
+            loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
             loss.backward()
             optimizer.step()
-
-            running_loss += loss.item()
-
-            if 0 < max_batches == batch_idx:
-                break
-
-        avg_train_loss = running_loss / len(train_dataloader.data_loader)
-
-        model.eval()
-        running_loss = 0.0
-        with torch.no_grad():
-            for batch_idx, inputs in enumerate(val_dataloader.data_loader):
+        else:
+            with torch.no_grad():
                 target = inputs["target"].to(device)
                 source = inputs["centered_mask_body"].to(device)
-
                 outputs = model(source)
-                loss = combined_criterion(c1, c2, w, outputs, target)
+                loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
+        loss_list.append(loss.item())
 
-                running_loss += loss.item()
-
-                if 0 < max_batches == batch_idx:
-                    break
-
-        avg_val_loss = running_loss / len(val_dataloader.data_loader)
-
-        print(
-            f"Epoch [{epoch+1}/{num_epochs}], "
-            f"Train Loss: {avg_train_loss:.4f}, "
-            f"Validation Loss: {avg_val_loss:.4f}"
-        )
-
-        if model_store is not None:
-            model_store.save_model(model, optimizer, epoch, avg_train_loss)
-
-    print("Training completed!")
-    return model
+    return loss_list

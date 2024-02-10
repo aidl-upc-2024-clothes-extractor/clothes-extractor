@@ -5,6 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Entry point CPU",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--batch-size=1",
+                "--num-epochs=1",
+                "--load-height=32",
+                "--load-width=32",
+                "--learning-rate=0.001",
+                "--workers=0",
+                "--max-batches=1",
+                "--angle-prob=0",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Entry point",
             "type": "debugpy",
             "request": "launch",
@@ -15,7 +33,6 @@
                 "--load-height=224",
                 "--load-width=224",
                 "--learning-rate=0.0001",
-                "--num-epochs=25",
                 "--num-val-samples=10",
                 "--num-input-channels=1",
                 "--num-classes=10",
@@ -37,7 +54,6 @@
                 "--load-height=224",
                 "--load-width=224",
                 "--learning-rate=0.0001",
-                "--num-epochs=25",
                 "--num-val-samples=10",
                 "--num-input-channels=1",
                 "--num-classes=10",
