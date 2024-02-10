@@ -1,9 +1,9 @@
-import argparse
 from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
 import logging
 import os
+from datetime import datetime
 
 import torch
 from models.unet import Unet
@@ -11,6 +11,10 @@ from trainer.trainer import train_model
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+import wandb
+from models.wandb_store import WandbStorer
+from metrics.wandb_logger import WandbLogger
 
 def run_model_on_image(model, device, dataset, image_index):
     model.eval()
@@ -37,10 +41,10 @@ def visualize_nn_output(output, device, image_index=0):
 def main():
     # TODO: geet error level from config
     logger = logging.getLogger('clothes-logger')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(logging.INFO)
 
     logger.addHandler(ch)
 
@@ -66,9 +70,25 @@ def main():
 
     model = Unet(in_channels=3, n_feat=32).to(device)
 
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches, cfg.reload_model, cfg.ssim_range)
+    # WANDB
+    wandb.login()
+    wandb_run = wandb.init(
+        project="clothes-extractor",
+        entity="clothes-extractor",
+    )
+    wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+
+    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
+    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
+
+    wandb_storer = WandbStorer(wandb_run)
+    wandb_logger = WandbLogger(wandb_run)
+
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger, wandb_storer)
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
+
+    wandb_run.finish
 
 if __name__ == '__main__':
     main()

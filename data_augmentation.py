@@ -14,7 +14,7 @@ class SameCropTransform:
     def __call__(self, img):
         if self.i is None or self.j is None or self.h is None or self.w is None:
             self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
-                img, scale=self.scale, ratio=(1.0, 1.0), antialias=True)
+                img, scale=self.scale, ratio=(1.0, 1.0))
         
         _, h, w = img.size()
         img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, (h, w))

@@ -24,12 +24,13 @@ class ModelStore():
     # path: is the folder where all the checkpoints will be stored and will be used as prefix in all operations
     def __init__(self, path: str = "./model_checkpoints"):
         self.path = path
-        # In case the path that you indicates doesn't exists, the object will create it.
+        # In case the path that you indicate doesn't exist, the object will create it.
         # You don't need to create all the folders in the path, the class will create all the structure
         p = Path(path)
         if not p.exists():
             # Create all the path with all the structure
             p.mkdir(parents=True, exist_ok=True)
+
 
     """
     Save a model in the disk
@@ -40,6 +41,8 @@ class ModelStore():
     model_name: the name you want for your model, the file will contain it. Default name in place
     The file where the model will be stored, it will contains the date and time in the name in the format:
     yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt
+    
+    Return the name of the persisted file
     """
     def save_model(self, model: nn.Module,  optimizer: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
         # we create a prefix with current datetime
@@ -54,6 +57,8 @@ class ModelStore():
             'loss': loss,
         }
         torch.save(saving_dict, filename)
+
+        return filename
 
     """
     Load a model from disk. In order to read properly the model and optimizer, they have to be created previously and send as parameters
