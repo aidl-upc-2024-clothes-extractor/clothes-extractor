@@ -4,7 +4,6 @@ import torch.optim as optim
 import os
 from datetime import datetime
 from pathlib import Path
-import wandb_logger
 
 """
  Class that store and recovers a model to/from disk
@@ -25,7 +24,7 @@ class ModelStore():
     # path: is the folder where all the checkpoints will be stored and will be used as prefix in all operations
     def __init__(self, path: str = "./model_checkpoints"):
         self.path = path
-        # In case the path that you indicates doesn't exists, the object will create it.
+        # In case the path that you indicate doesn't exist, the object will create it.
         # You don't need to create all the folders in the path, the class will create all the structure
         p = Path(path)
         if not p.exists():

@@ -1,9 +1,9 @@
-import argparse
 from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
 import logging
 import os
+from datetime import datetime
 
 import torch
 from models.unet import Unet
@@ -12,8 +12,9 @@ from trainer.trainer import train_model
 import matplotlib.pyplot as plt
 import numpy as np
 
-from wandb_logger import WandbLogger
-
+import wandb
+from models.wandb_store import WandbStorer
+from metrics.wandb_logger import WandbLogger
 
 def run_model_on_image(model, device, dataset, image_index):
     model.eval()
@@ -70,13 +71,24 @@ def main():
     model = Unet(in_channels=3, n_feat=32).to(device)
 
     # WANDB
-    wandb_logger = WandbLogger(model)
-    #
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger)
+    wandb.login()
+    wandb_run = wandb.init(
+        project="clothes-extractor",
+        entity="clothes-extractor",
+    )
+    wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+
+    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
+    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
+
+    wandb_storer = WandbStorer(wandb_run)
+    wandb_logger = WandbLogger(wandb_run)
+
+    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger, wandb_storer)
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
-    wandb_logger.end_run()
+    wandb_run.finish
 
 if __name__ == '__main__':
     main()

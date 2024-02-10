@@ -1,10 +1,11 @@
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn import L1Loss
-from utils import utils
-from tqdm.auto import tqdm
 from config import Config
-from wandb_logger import WandbLogger
+from models.wandb_store import WandbStorer
+from metrics.logger import Logger
+from utils.utils import DatasetType
 
 import torchvision
 from models.model_store import ModelStore
@@ -53,100 +54,143 @@ class VGGPerceptualLoss(torch.nn.Module):
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
 
-def combined_criterion(c1, c2, ssim, w, outputs, target):
+
+def combined_criterion(
+        c1_loss: torch.nn.Module,
+        c2_loss: torch.nn.Module,
+        ssim: StructuralSimilarityIndexMeasure,
+        w: float,
+        outputs,
+        target,
+):
     result = 0
-    if c2 is not None:
-        result += c2(outputs, target)
-    if c1 is not None:
-        result += w * c1(outputs, target)
+    if c2_loss is not None:
+        result += c2_loss(outputs, target)
+    if c1_loss is not None:
+        result += w * c1_loss(outputs, target)
     if ssim is not None:
         result += (ssim.data_range-ssim(outputs, target))
     return result
 
 
-def train_model(model, device, train_dataloader, val_dataloader, cfg: Config, wandb_logger: WandbLogger):
+def train_model(
+        model,
+        device,
+        train_dataloader,
+        val_dataloader,
+        cfg: Config,
+        logger: Logger,
+        model_storer: WandbStorer,
+):
     num_epochs = cfg.num_epochs
     learning_rate = cfg.learning_rate
     max_batches = cfg.max_batches
     reload_model = cfg.reload_model
     ssim_range = cfg.ssim_range
 
-    c1 = VGGPerceptualLoss().to(device) #None
-    c2 = L1Loss() #None
+    c1_loss = VGGPerceptualLoss().to(device) #None
+    c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    w = 0.3
-    model_storer = ModelStore()
-    loss = 0
-    ep = 0
+
+    m_storer = ModelStore()
+
     print(reload_model)
     if reload_model is not None and reload_model != "None":
-        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+        model, optimizer, epoch, loss = m_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
     if reload_model is not None and reload_model == "latest":
         reload_model = None
-        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+        model, optimizer, epoch, loss = m_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
 
     print('Start training')
-#    for epoch in tqdm(range(num_epochs), desc="Epoch", position=0):
     for epoch in range(num_epochs):
         model.train()
-        running_loss = 0.0
+        train_loss = forward_step(
+            device,
+            model,
+            train_dataloader.data_loader,
+            DatasetType.TRAIN,
+            c1_loss,
+            c2_loss,
+            ssim,
+            optimizer,
+        )
+        train_loss_avg = np.mean(train_loss)
 
-        count = 0
-        for batch_idx, inputs in enumerate(train_dataloader.data_loader):
-            target = inputs ["target"].to(device)
+        model.eval()
+        val_loss = forward_step(
+            device,
+            model,
+            val_dataloader.data_loader,
+            DatasetType.VALIDATION,
+            c1_loss,
+            c2_loss,
+            ssim,
+            optimizer,
+        )
+        val_loss_avg = np.mean(val_loss)
+
+        print(f'Epoch [{epoch+1}/{num_epochs}], '
+              f'Train Loss: {train_loss_avg:.4f}, '
+              f'Validation Loss: {val_loss_avg:.4f}')
+
+        if (epoch+1) % 2 == 0:
+            checkpoint_file = m_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
+            model_storer.save_model(checkpoint_file)
+
+    checkpoint_file = m_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
+    model_storer.save_model(checkpoint_file)
+
+    print('Finished Training')
+    return model
+
+def forward_step(
+        device,
+        model: torch.nn.Module,
+        loader: torch.utils.data.DataLoader,
+        dataset_type: DatasetType,
+        c1Loss: torch.nn.Module,
+        c2Loss: torch.nn.Module,
+        ssim: StructuralSimilarityIndexMeasure,
+        optimizer: torch.optim.Optimizer,
+):
+    w = 0.3
+
+    loss_list = []
+    #count = 0
+
+    for batch_idx, inputs in enumerate(loader):
+        if dataset_type == DatasetType.TRAIN:
+            target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
-            loss = combined_criterion(c1, c2, ssim, w, outputs, target)
+            loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
             loss.backward()
             optimizer.step()
+        else:
+            with torch.no_grad():
+                target = inputs["target"].to(device)
+                source = inputs["centered_mask_body"].to(device)
+                outputs = model(source)
+                loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
 
-            running_loss += loss.item()
-
+        """
+           running_loss += loss.item()
+         
             if 0 < max_batches == batch_idx :
                 break
+                
             count += 1
             if count%5 >= 0:
                 print(f'running loss: {running_loss/count}')
 
-        avg_train_loss = running_loss / len(train_dataloader.data_loader)
-        print(f'Epoch [{epoch+1}/{num_epochs}], '
-              f'Train Loss: {avg_train_loss:.4f}, ')
-
-        model.eval()
-        running_loss = 0.0
-        with torch.no_grad():
-            for batch_idx, inputs in enumerate(val_dataloader.data_loader):
-                target = inputs["target"].to(device)
-                source = inputs["centered_mask_body"].to(device)
-
-                outputs = model(source)
-                loss = combined_criterion(c1, c2, ssim, w, outputs, target)
-
-                running_loss += loss.item()
-
-                if 0 < max_batches == batch_idx:
-                    break
-
-            if count%5 >= 0:
-                print(f'running loss: {running_loss/count}')
-
-        avg_val_loss = running_loss / len(val_dataloader.data_loader)
-
-        print(f'Epoch [{epoch+1}/{num_epochs}], '
-              f'Train Loss: {avg_train_loss:.4f}, '
-              f'Validation Loss: {avg_val_loss:.4f}')
-
-        if (epoch+1)%2 == 0:
-            checkpoint_file = model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
-            wandb_logger.save_model(checkpoint_file)
-
-    checkpoint_file = model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
-    wandb_logger.save_model(checkpoint_file)
-
-    print('Finished Training')
-    return model
+            logger.log_reconstruction_training(
+                model, epoch, train_loss_avg
+            )
+        """
+        loss_list.append(loss.item())
+    return loss_list
