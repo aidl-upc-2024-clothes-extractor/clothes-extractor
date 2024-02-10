@@ -50,6 +50,13 @@ def main():
     ).to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
+    epoch = 0
+    if cfg.continue_from:
+        model, optimizer, epoch, loss = model_store.load_model(
+            model=model, optimizer=optimizer, path=cfg.continue_from
+        )
+        print(f"Loaded model from ${cfg.continue_from} at epoch {epoch} with loss {loss}")
+
     trained_model = train_model(
         optimizer=optimizer,
         model=model,
@@ -59,6 +66,7 @@ def main():
         num_epochs=cfg.num_epochs,
         max_batches=cfg.max_batches,
         model_store=model_store_unet_1,
+        start_from_epoch=epoch,
     )
 
 

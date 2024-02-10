@@ -25,6 +25,17 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Continue training",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--continue-from=model_checkpoints/20240210_0144_e24_unet_1.pt",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

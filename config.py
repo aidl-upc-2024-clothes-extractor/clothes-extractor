@@ -33,4 +33,7 @@ class Config:
     angle_prob: float = 0
     angle: float = 10
 
+    # Other config
+    continue_from: str = None # Path to model checkpoint to continue training
+
 

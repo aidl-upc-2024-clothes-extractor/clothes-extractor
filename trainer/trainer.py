@@ -71,14 +71,15 @@ def train_model(
     val_dataloader,
     num_epochs: int,
     max_batches: int,
-    model_store: ModelStore=None
+    model_store: ModelStore=None,
+    start_from_epoch: int=0,
 ):
     c1 = VGGPerceptualLoss().to(device)
     c2 = L1Loss().to(device)
     w = 0.3
 
     print("Training started")
-    for epoch in range(num_epochs):
+    for epoch in range(start_from_epoch, num_epochs):
         model.train()
         running_loss = 0.0
 
