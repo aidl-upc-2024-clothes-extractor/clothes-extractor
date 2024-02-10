@@ -35,7 +35,6 @@
                 "--learning-rate=0.0001",
                 "--num-val-samples=10",
                 "--num-input-channels=1",
-                "--num-classes=10",
                 "--workers=0",
                 "--max-batches=1000",
                 "--angle-prob=0",
