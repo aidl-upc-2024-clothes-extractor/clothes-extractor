@@ -5,15 +5,18 @@ from utils import utils
 from tqdm.auto import tqdm
 
 import torchvision
+from models.model_store import ModelStore
+from torchmetrics.image import StructuralSimilarityIndexMeasure
 
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
         blocks = []
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[4:9].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[9:16].eval())
-        blocks.append(torchvision.models.vgg16(pretrained=True).features[16:23].eval())
+        #blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[:4].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[4:9].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[9:16].eval())
+        blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[16:23].eval())
         for bl in blocks:
             for p in bl.parameters():
                 p.requires_grad = False
@@ -48,27 +51,49 @@ class VGGPerceptualLoss(torch.nn.Module):
                 loss += torch.nn.functional.l1_loss(gram_x, gram_y)
         return loss
 
-def combined_criterion(c1, c2, w, outputs, target):
-    return w * c1(outputs, target) + c2(outputs, target)
+def combined_criterion(c1, c2, ssim, w, outputs, target):
+    result = 0
+    if c2 is not None:
+        result += c2(outputs, target)
+    if c1 is not None:
+        result += w * c1(outputs, target)
+    if ssim is not None:
+        result += (ssim.data_range-ssim(outputs, target))
+    return result
     
-def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0):
-    c1 = VGGPerceptualLoss().to(device)
-    c2 = L1Loss()
+def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0, reload_model="None", ssim_range = 1.0):
+    c1 = VGGPerceptualLoss().to(device) #None
+    c2 = L1Loss() #None
+    ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
+    model_storer = ModelStore()
+    loss = 0
+    ep = 0
+    print(reload_model)
+    if reload_model is not None and reload_model != "None":
+        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+
+    if reload_model is not None and reload_model == "latest":
+        reload_model = None
+        model, optimizer, epoch, loss = model_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+
 
     print('Start training')
+#    for epoch in tqdm(range(num_epochs), desc="Epoch", position=0):
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
 
-        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader)):
+        count = 0
+#        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader, desc="Batches", position=1, leave=False)):
+        for batch_idx, inputs in enumerate(train_dataloader.data_loader):
             target = inputs ["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
-            loss = combined_criterion(c1, c2, w, outputs, target)
+            loss = combined_criterion(c1, c2, ssim, w, outputs, target)
             loss.backward()
             optimizer.step()
 
@@ -76,9 +101,13 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 
             if 0 < max_batches == batch_idx :
                 break
-
+            count += 1
+            if count%5 >= 0:
+                print(f'running loss: {running_loss/count}')
 
         avg_train_loss = running_loss / len(train_dataloader.data_loader)
+        print(f'Epoch [{epoch+1}/{num_epochs}], '
+              f'Train Loss: {avg_train_loss:.4f}, ')
 
         model.eval()
         running_loss = 0.0
@@ -88,18 +117,24 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
                 source = inputs["centered_mask_body"].to(device)
 
                 outputs = model(source)
-                loss = combined_criterion(c1, c2, w, outputs, target)
+                loss = combined_criterion(c1, c2, ssim, w, outputs, target)
 
                 running_loss += loss.item()
 
                 if 0 < max_batches == batch_idx:
                     break
 
+            if count%5 >= 0:
+                print(f'running loss: {running_loss/count}')
+
         avg_val_loss = running_loss / len(val_dataloader.data_loader)
 
         print(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {avg_train_loss:.4f}, '
               f'Validation Loss: {avg_val_loss:.4f}')
+        if (epoch+1)%2 == 0:
+            model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
 
+    model_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=avg_train_loss)
     print('Finished Training')
     return model

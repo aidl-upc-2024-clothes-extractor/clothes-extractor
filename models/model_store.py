@@ -5,19 +5,20 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-# Class that store and recovers a model to/from disk
-# Values stored and recovered are: model, optimizer, epoch and loss
-# Usage:
-#   m = Model(...)
-#   o = optim(...)
-#   ms = ModelStorer() # We use the default folder value
-#   .........
-#   ms.save_model(m, o, epoch, loss, "mymodel") # It will create a file yyyy_mm_dd_HH_MM_SS_mymodel.pt
-#   .........
-#   m1 = Model(....)
-#   o1 = optim(....)
-#   m1, 01, epoch1, loss1 = ms.load_model(m1, o1) # it will read the most recent file
-
+"""
+ Class that store and recovers a model to/from disk
+ Values stored and recovered are: model, optimizer, epoch and loss
+ Usage:
+   m = Model(...)
+   o = optim(...)
+   ms = ModelStorer() # We use the default folder value
+   .........
+   ms.save_model(m, o, epoch, loss, "mymodel") # It will create a file yyyy_mm_dd_HH_MM_SS_mymodel.pt
+   .........
+   m1 = Model(....)
+   o1 = optim(....)
+   m1, 01, epoch1, loss1 = ms.load_model(m1, o1) # it will read the most recent file
+"""
 class ModelStore():
     # Intializing the class. Defaulta path in case you don't send anyone. 
     # path: is the folder where all the checkpoints will be stored and will be used as prefix in all operations
@@ -30,14 +31,16 @@ class ModelStore():
             # Create all the path with all the structure
             p.mkdir(parents=True, exist_ok=True)
 
-    # Save a model in the disk
-    # model: Model to be stored on disk
-    # optimizer: When you store a model you need to store the state of the optimizer
-    # epoch: epoch number
-    # loss: current loss
-    # model_name: the name you want for your model, the file will contain it. Default name in place
-    # The file where the model will be stored, it will contains the date and time in the name in the format:
-    # yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt
+    """
+    Save a model in the disk
+    model: Model to be stored on disk
+    optimizer: When you store a model you need to store the state of the optimizer
+    epoch: epoch number
+    loss: current loss
+    model_name: the name you want for your model, the file will contain it. Default name in place
+    The file where the model will be stored, it will contains the date and time in the name in the format:
+    yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt
+    """
     def save_model(self, model: nn.Module,  optimizer: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
         # we create a prefix with current datetime
         prefix = f'{datetime.now():%Y_%m_%d_%H_%M_%S}'
@@ -51,12 +54,15 @@ class ModelStore():
             'loss': loss,
         }
         torch.save(saving_dict, filename)
-    # Load a model from disk. In order to read properly the model and optimizer, they have to be created previously and send as parameters
-    # model: nn.Module object representing your nn. It has to have been instantiated with exactly the same model that is in the disk
-    # optimizer: torch.optim object representing the optimizer. It has to be the same that it is in the disk
-    # model_name: Name of the file to be read from disk, in case no argument is passed the most recent file stored will be loaded
-    #       the filename has the format yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt in case you don't send the name you want to read
-    #       the file with the latest yyyy_mm_dd_HH_MM_SS will be loaded
+
+    """
+    Load a model from disk. In order to read properly the model and optimizer, they have to be created previously and send as parameters
+    model: nn.Module object representing your nn. It has to have been instantiated with exactly the same model that is in the disk
+    optimizer: torch.optim object representing the optimizer. It has to be the same that it is in the disk
+    model_name: Name of the file to be read from disk, in case no argument is passed the most recent file stored will be loaded
+        the filename has the format yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt in case you don't send the name you want to read
+        the file with the latest yyyy_mm_dd_HH_MM_SS will be loaded
+    """
     def load_model(self, model: nn.Module,  optimizer: optim, model_name: str = None):
         loss = 0.0
         epoch = 0

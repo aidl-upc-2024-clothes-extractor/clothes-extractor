@@ -14,7 +14,7 @@ class SameCropTransform:
     def __call__(self, img):
         if self.i is None or self.j is None or self.h is None or self.w is None:
             self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
-                img, scale=self.scale, ratio=(1.0, 1.0))
+                img, scale=self.scale, ratio=(1.0, 1.0), antialias=True)
         
         _, h, w = img.size()
         img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, (h, w))
@@ -144,8 +144,18 @@ class PadToShapeTransform:
 
         pad_vert = max((target_h - h) // 2, 0)
         pad_horiz = max((target_w - w) // 2, 0)
-        
-        padded_img = F.pad(img, (pad_horiz, pad_horiz, pad_vert, pad_vert))
+
+        left = pad_horiz
+        top = pad_vert
+        right = pad_horiz
+        bottom = pad_vert
+
+        if h + 2 * pad_vert < target_h:
+            bottom += 1
+        if w + 2 * pad_horiz < target_w:
+            right += 1
+
+        padded_img = F.pad(img, (left, top, right, bottom))
 
         if padded_img.shape[1] > target_h or padded_img.shape[2] > target_w:
             padded_img = padded_img[:, :target_h, :target_w]
