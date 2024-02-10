@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+_DEFAULT_CHECKPOINT_PATH = "./model_checkpoints"
+
 class ModelStore():
     """
     Class that stores and recovers a model to/from disk.
@@ -22,7 +24,7 @@ class ModelStore():
         m1, 01, epoch1, loss1 = ms.load_model(m1, o1) # it will read the most recent file
     """
 
-    def __init__(self, path: str = "./model_checkpoints", model_name: str = "default_model_name"):
+    def __init__(self, path: str = None, model_name: str = "default_model_name"):
         """
         Initialize the ModelStore class.
 
@@ -31,6 +33,8 @@ class ModelStore():
                         Default is "./model_checkpoints".
             model_name (str): The default name for the model. Default is "default_model_name".
         """
+        if path is None:
+            path = _DEFAULT_CHECKPOINT_PATH
         self.path = path
         self.model_name = model_name
         p = Path(path)
@@ -57,25 +61,27 @@ class ModelStore():
         }
         torch.save(saving_dict, filename)
 
-def load_model(self, model: nn.Module, optimizer: optim, model_name: str = None):
+def load_model(self, model: nn.Module, optimizer: optim, path: str = None):
     """
     Load a model from disk.
 
     Args:
         model (nn.Module): The nn.Module object representing your neural network.
         optimizer (optim): The torch.optim object representing the optimizer.
-        model_name (str): The name of the file to be read from disk. If not provided, the most recent file stored will be loaded.
+        path (str): The name of the file to be read from disk. If not provided, the most recent file stored will be loaded.
 
     Returns:
         Tuple[nn.Module, optim, int, float]: The loaded model, optimizer, epoch, and loss.
     """
     loss = 0.0
     epoch = 0
-    if model_name is None:
-        p_check = Path(self.path)
+    if path is None:
+        p_check = Path(_DEFAULT_CHECKPOINT_PATH)
         files = sorted(p_check.glob('*'))
-        model_name = files[-1].name
-    full_file_name = os.path.join(self.path,model_name)
+        path = files[-1].name
+        full_file_name = os.path.join(_DEFAULT_CHECKPOINT_PATH, path)
+    else:
+        full_file_name = path
     if Path(full_file_name).exists():
         checkpoint = torch.load(full_file_name)
         model.load_state_dict(checkpoint['model_state_dict'])

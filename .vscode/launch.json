@@ -9,7 +9,20 @@
             "type": "debugpy",
             "request": "launch",
             "program": "entrypoint.py",
-            "args": [],
+            "args": [
+                "--batch-size=32",
+                "--num-epochs=25",
+                "--load-height=224",
+                "--load-width=224",
+                "--learning-rate=0.0001",
+                "--num-epochs=25",
+                "--num-val-samples=10",
+                "--num-input-channels=1",
+                "--num-classes=10",
+                "--workers=0",
+                "--max-batches=1000",
+                "--angle-prob=0",
+            ],
             "console": "integratedTerminal",
             "justMyCode": true
         }

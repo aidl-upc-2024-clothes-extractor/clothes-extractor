@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+from torch.nn import Module
 from torch.nn import L1Loss
 from utils import utils
 from tqdm.auto import tqdm
@@ -63,21 +64,20 @@ def combined_criterion(c1, c2, w, outputs, target):
 
 
 def train_model(
-    model,
+    optimizer: optim.Optimizer,
+    model: Module,
     device,
     train_dataloader,
     val_dataloader,
-    num_epochs,
-    learning_rate,
-    max_batches=0,
+    num_epochs: int,
+    max_batches: int,
     model_store: ModelStore=None
 ):
     c1 = VGGPerceptualLoss().to(device)
-    c2 = L1Loss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    c2 = L1Loss().to(device)
     w = 0.3
 
-    print("Start training")
+    print("Training started")
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
@@ -123,9 +123,7 @@ def train_model(
         )
 
         if model_store is not None:
-            model_store.save_model(
-                model, optimizer, epoch, avg_train_loss
-            )
+            model_store.save_model(model, optimizer, epoch, avg_train_loss)
 
-    print("Finished Training")
+    print("Training completed!")
     return model
