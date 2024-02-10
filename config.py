@@ -19,10 +19,10 @@ class Config:
     max_batches: int = 0
 
     # Data Augmentation
-    horizontal_flip_prob: float = 0.5
-    rotation_prob: float = 0.5
+    horizontal_flip_prob: float = 0
+    rotation_prob: float = 0
     rotation_angle: float = 10
-    crop_prob: float = 0.5
+    crop_prob: float = 0
     min_crop_factor: float = 0.65
     max_crop_factor: float = 0.92
     brightness: float = 0.15
@@ -30,7 +30,7 @@ class Config:
     saturation: float = 0.3
     hue: float = 0.05
     color_jitter_prob: float = 0
-    angle_prob: float = 0.3
+    angle_prob: float = 0
     angle: float = 10
 
 
