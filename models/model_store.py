@@ -88,4 +88,6 @@ def load_model(model: nn.Module, optimizer: optim, path: str = None):
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
+    else:
+        raise FileNotFoundError(f"File {full_file_name} does not exist")
     return model, optimizer, epoch, loss
