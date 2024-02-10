@@ -136,12 +136,11 @@ def train_model(
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
 
-        if (epoch+1) % 2 == 0:
+        if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
             checkpoint_file = m_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
             model_storer.save_model(checkpoint_file)
 
-    checkpoint_file = m_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
-    model_storer.save_model(checkpoint_file)
+        logger.log_training(epoch, train_loss_avg, val_loss_avg)
 
     print('Finished Training')
     return model
@@ -157,9 +156,7 @@ def forward_step(
         optimizer: torch.optim.Optimizer,
 ):
     w = 0.3
-
     loss_list = []
-    #count = 0
 
     for batch_idx, inputs in enumerate(loader):
         if dataset_type == DatasetType.TRAIN:
@@ -177,20 +174,6 @@ def forward_step(
                 source = inputs["centered_mask_body"].to(device)
                 outputs = model(source)
                 loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
-
-        """
-           running_loss += loss.item()
-         
-            if 0 < max_batches == batch_idx :
-                break
-                
-            count += 1
-            if count%5 >= 0:
-                print(f'running loss: {running_loss/count}')
-
-            logger.log_reconstruction_training(
-                model, epoch, train_loss_avg
-            )
-        """
         loss_list.append(loss.item())
+
     return loss_list

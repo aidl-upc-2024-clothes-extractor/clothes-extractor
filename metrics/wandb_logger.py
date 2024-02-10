@@ -24,9 +24,7 @@ class WandbLogger(Logger):
             epoch: int,
             train_loss_avg: np.ndarray,
             val_loss_avg: np.ndarray,
-            train_acc_avg: np.ndarray,
-            val_acc_avg: np.ndarray,
-            fig: plt.Figure,
     ):
-        raise NotImplementedError
+        wandb.log(data={"val_loss": val_loss_avg}, step=epoch)
+        wandb.log(data={"train_loss": train_loss_avg}, step=epoch)
 

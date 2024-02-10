@@ -11,8 +11,5 @@ class Logger:
         epoch: int,
         train_loss_avg: np.ndarray,
         val_loss_avg: np.ndarray,
-        train_acc_avg: np.ndarray,
-        val_acc_avg: np.ndarray,
-        fig: plt.Figure,
     ):
         raise NotImplementedError
