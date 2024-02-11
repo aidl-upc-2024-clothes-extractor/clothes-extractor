@@ -62,8 +62,10 @@ def main():
     logger.debug('current_path: %s', os.getcwd())
     logger.info('dataset_dir: %s', cfg.dataset_dir)
 
-    test_dataset = ClothesDataset(cfg, "test")
-    train_dataset = ClothesDataset(cfg, "train")
+    dataset_device = cfg.dataset_device
+    if dataset_device == "default": dataset_device = device
+    test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
+    train_dataset = ClothesDataset(cfg, "train", device=dataset_device)
 
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
