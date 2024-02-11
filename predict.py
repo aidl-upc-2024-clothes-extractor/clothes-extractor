@@ -51,8 +51,8 @@ def main():
     test_dataset = ClothesDataset(cfg, "test")
     train_dataset = ClothesDataset(cfg, "train")
 
-    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
-    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
+    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
+    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
 
     model = Unet(in_channels=3, n_feat=32).to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)

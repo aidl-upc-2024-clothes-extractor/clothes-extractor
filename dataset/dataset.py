@@ -194,12 +194,12 @@ class ClothesDataset(data.Dataset):
         
 
 class ClothesDataLoader:
-    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1):
+    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False):
         super(ClothesDataLoader, self).__init__()
 
         self.data_loader = data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle,
-                num_workers=num_workers, pin_memory=True, drop_last=True
+                num_workers=num_workers, pin_memory=pin_memory, drop_last=True
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()
