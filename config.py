@@ -36,5 +36,6 @@ class Config:
     predict_image: int = 1
     reload_model: str = None
     ssim_range: float = 1.0
+    dissable_wandb: bool = False
 
 

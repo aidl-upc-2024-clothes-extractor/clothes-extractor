@@ -18,6 +18,7 @@
                 "--learning-rate=0.001",
                 "--workers=0",
                 "--max-batches=1",
+                "--dissable-wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

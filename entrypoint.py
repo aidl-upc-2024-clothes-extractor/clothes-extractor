@@ -19,7 +19,9 @@ import models.model_store as model_store
 from trainer.trainer import train_model
 
 from models.wandb_store import WandbStorer
+from models.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
+from metrics.local_logger import LocalLogger
 
 def run_model_on_image(model, device, dataset, image_index):
     model.eval()
@@ -100,18 +102,22 @@ def main():
         print(f"Loaded model from ${cfg.reload_model} at epoch {epoch} with loss {loss}")
 
     # WANDB
-    wandb.login()
-    wandb_run = wandb.init(
-        project="clothes-extractor",
-        entity="clothes-extractor",
-    )
-    wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+    if cfg.dissable_wandb:
+        wandb_storer = DummyWandbStorer()
+        wandb_logger = LocalLogger()
+    else:
+        wandb.login()
+        wandb_run = wandb.init(
+            project="clothes-extractor",
+            entity="clothes-extractor",
+        )
+        wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
 
-    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
-    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
+        # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
+        wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
-    wandb_storer = WandbStorer(wandb_run)
-    wandb_logger = WandbLogger(wandb_run)
+        wandb_storer = WandbStorer(wandb_run)
+        wandb_logger = WandbLogger(wandb_run)
 
     trained_model = train_model(
         optimizer=optimizer,
