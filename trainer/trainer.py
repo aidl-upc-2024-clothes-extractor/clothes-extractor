@@ -85,7 +85,7 @@ def train_model(
     cfg: Config,
     logger: Logger,
     remote_model_store: WandbStorer,
-    local_model_store: ModelStore = None,
+    local_model_store: ModelStore,
     start_from_epoch: int = 0,
 ):
     num_epochs = cfg.num_epochs
@@ -96,8 +96,6 @@ def train_model(
     c1_loss = VGGPerceptualLoss().to(device) #None
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
-
-    local_storer = ModelStore()
 
     print("Training started")
     epoch = start_from_epoch
@@ -146,11 +144,9 @@ def train_model(
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
         
-        if local_model_store is not None:
-            local_model_store.save_model(model, optimizer, epoch, train_loss_avg)
 
+        checkpoint_file = local_model_store.save_model(model, optimizer, epoch, train_loss_avg)
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
             remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg)
