@@ -93,15 +93,15 @@ def train_model(
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    m_storer = ModelStore()
+    local_storer = ModelStore()
 
     print(reload_model)
     if reload_model is not None and reload_model != "None":
-        model, optimizer, epoch, loss = m_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
     if reload_model is not None and reload_model == "latest":
         reload_model = None
-        model, optimizer, epoch, loss = m_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
 
 
     print('Start training')
@@ -137,7 +137,7 @@ def train_model(
               f'Validation Loss: {val_loss_avg:.4f}')
 
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            checkpoint_file = m_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
+            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
             model_storer.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg)
