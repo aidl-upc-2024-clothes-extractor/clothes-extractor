@@ -30,11 +30,11 @@ def run_model_on_image(model, device, dataset, image_index):
     image = dataset[image_index]
     image = image["centered_mask_body"].to(device).unsqueeze(0)
 
-
     with torch.no_grad():
         output = model(image)
 
     return output
+
 
 def visualize_nn_output(output, device, image_index=0):
     output = output[image_index].squeeze().detach().cpu().numpy()
@@ -42,16 +42,17 @@ def visualize_nn_output(output, device, image_index=0):
     if output.shape[0] in [3, 4]:  # RGB or RGBA
         output = np.transpose(output, (1, 2, 0))
     output -= output.min()
-    
+
     plt.imshow(output)
     plt.show()
+
 
 def main():
     args = ArgumentParser(Config)
     cfg = args.parse_args()
 
     # TODO: geet error level from config
-    logger = logging.getLogger('clothes-logger')
+    logger = logging.getLogger("clothes-logger")
     logger.setLevel(logging.INFO)
 
     ch = logging.StreamHandler()
@@ -69,23 +70,36 @@ def main():
             device = torch.device("mps")
     else:
         device = torch.device(cfg.device)
-    
-    logger.info('device: %s', device)
-    logger.info('num_epochs: %s', cfg.num_epochs)
-    logger.debug('current_path: %s', os.getcwd())
-    logger.info('dataset_dir: %s', cfg.dataset_dir)
+
+    logger.info("device: %s", device)
+    logger.info("num_epochs: %s", cfg.num_epochs)
+    logger.debug("current_path: %s", os.getcwd())
+    logger.info("dataset_dir: %s", cfg.dataset_dir)
 
     print("Loading dataset...")
     dataset_device = cfg.dataset_device
-    if dataset_device == "default": dataset_device = device
+    if dataset_device == "default":
+        dataset_device = device
     test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
     train_dataset = ClothesDataset(cfg, "train", device=dataset_device)
 
-    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
-    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
+    test_dataloader = ClothesDataLoader(
+        test_dataset,
+        cfg.batch_size,
+        num_workers=cfg.workers,
+        pin_memory=cfg.dataloader_pin_memory,
+    )
+    train_dataloader = ClothesDataLoader(
+        train_dataset,
+        batch_size=cfg.batch_size,
+        num_workers=cfg.workers,
+        pin_memory=cfg.dataloader_pin_memory,
+    )
     print("Done")
 
-    model_store_unet_1 = model_store.ModelStore(model_name="smp.unet.efficientnet-b0.imagenet")
+    model_store_unet_1 = model_store.ModelStore(
+        model_name="smp.unet.efficientnet-b0.imagenet"
+    )
     model = smp.Unet(
         encoder_name="efficientnet-b0",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
@@ -106,7 +120,9 @@ def main():
             model=model, optimizer=optimizer, path=cfg.reload_model
         )
         epoch += 1
-        print(f"Loaded model from ${cfg.reload_model} at epoch {epoch} with loss {loss}")
+        print(
+            f"Loaded model from ${cfg.reload_model} at epoch {epoch} with loss {loss}"
+        )
 
     # WANDB
     if cfg.dissable_wandb:
@@ -120,7 +136,7 @@ def main():
         )
         wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
-        wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
+        wandb_run.watch(models=model)  # , log=UtLiteral["gradients", "weights"])
 
         wandb_storer = WandbStorer(wandb_run)
         wandb_logger = WandbLogger(wandb_run)
@@ -143,6 +159,7 @@ def main():
 
     if cfg.dissable_wandb is False:
         wandb_run.finish()
+
 
 if __name__ == "__main__":
     main()
