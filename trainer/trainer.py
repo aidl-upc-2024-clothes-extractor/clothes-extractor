@@ -6,6 +6,8 @@ from config import Config
 from models.wandb_store import WandbStorer
 from metrics.logger import Logger
 from utils.utils import DatasetType
+from tqdm import tqdm
+import math
 
 import torchvision
 from models.model_store import ModelStore
@@ -59,7 +61,7 @@ def combined_criterion(
         c1_loss: torch.nn.Module,
         c2_loss: torch.nn.Module,
         ssim: StructuralSimilarityIndexMeasure,
-        w: float,
+        c1_weight: float,
         outputs,
         target,
 ):
@@ -67,7 +69,7 @@ def combined_criterion(
     if c2_loss is not None:
         result += c2_loss(outputs, target)
     if c1_loss is not None:
-        result += w * c1_loss(outputs, target)
+        result += c1_weight * c1_loss(outputs, target)
     if ssim is not None:
         result += (ssim.data_range-ssim(outputs, target))
     return result
@@ -105,7 +107,15 @@ def train_model(
 
 
     print('Start training')
-    for epoch in range(num_epochs):
+    epochs = tqdm(range(num_epochs), desc="Epochs")
+    training_steps = math.ceil(len(train_dataloader.data_loader) / cfg.batch_size)
+    validation_steps = math.ceil(len(val_dataloader.data_loader) / cfg.batch_size)
+    training_progress = tqdm(total=training_steps, desc="Training progress")
+    validation_progress = tqdm(total=validation_steps, desc="Validation progress")
+
+    for epoch in epochs:
+        training_progress.reset()
+        validation_progress.reset()
         model.train()
         train_loss = forward_step(
             device,
@@ -154,8 +164,10 @@ def forward_step(
         c2Loss: torch.nn.Module,
         ssim: StructuralSimilarityIndexMeasure,
         optimizer: torch.optim.Optimizer,
+        training_progress: tqdm,
+        validation_progress: tqdm
 ):
-    w = 0.3
+    perceptual_weight = 0.3
     loss_list = []
 
     for batch_idx, inputs in enumerate(loader):
@@ -163,17 +175,18 @@ def forward_step(
             target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
-
             outputs = model(source)
-            loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
+            loss = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
             loss.backward()
             optimizer.step()
+            training_progress.update()
         else:
             with torch.no_grad():
                 target = inputs["target"].to(device)
                 source = inputs["centered_mask_body"].to(device)
                 outputs = model(source)
-                loss = combined_criterion(c1Loss, c2Loss, ssim, w, outputs, target)
+                loss = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
+            validation_progress.update()
         loss_list.append(loss.item())
 
     return loss_list
