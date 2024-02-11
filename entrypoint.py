@@ -88,7 +88,7 @@ def main():
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
-    wandb_run.finish
+    wandb_run.finish()
 
 if __name__ == '__main__':
     main()
