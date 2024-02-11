@@ -93,7 +93,7 @@ def train_model(
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     
-    model, optimizer, epoch, loss = get_model(device)
+    model, optimizer, epoch, loss = get_model(cfg, device)
     # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
     wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
