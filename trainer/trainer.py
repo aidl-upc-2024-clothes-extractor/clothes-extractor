@@ -146,7 +146,7 @@ def train_model(
         )
         val_loss_avg = np.mean(val_loss)
 
-        print(f'Epoch [{epoch+1}/{num_epochs}], '
+        tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
 
