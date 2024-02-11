@@ -4,7 +4,6 @@ from models.model_store import ModelStore
 import torch.optim as optim
 
 def get_model(cfg: Config, device: str):
-    device = cfg.device
     learning_rate = cfg.learning_rate
     model = Unet(in_channels=3, n_feat=32).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
