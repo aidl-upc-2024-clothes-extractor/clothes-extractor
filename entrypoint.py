@@ -6,8 +6,8 @@ import os
 from datetime import datetime
 
 import torch
-from models.unet import Unet
 from trainer.trainer import train_model
+from model_instantiate import get_model
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,7 +70,7 @@ def main():
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
 
-    model = Unet(in_channels=3, n_feat=32).to(device)
+    model = get_model(device)
 
     # WANDB
     wandb.login()
