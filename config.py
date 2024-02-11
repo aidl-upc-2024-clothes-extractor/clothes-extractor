@@ -9,8 +9,6 @@ class Config:
     dataset_dir: str = 'data/zalando-hd-resized'
     num_epochs: int = 20
     learning_rate: float = 0.0002
-    num_input_channels: int = 1
-    num_val_samples: int = 25
     load_height: int = 1024
     load_width: int = 1024
 
@@ -34,6 +32,7 @@ class Config:
     angle: float = 10
 
     # Other config
+    device: str = None
     predict_image: int = 1
     reload_model: str = None
     ssim_range: float = 1.0

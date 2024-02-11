@@ -56,13 +56,16 @@ def main():
 
     logger.addHandler(ch)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # if (
-    #     torch.backends.mps.is_available()
-    #     and torch.backends.mps.is_built()
-    #     and torch.device != "cuda"
-    # ):
-    #     device = torch.device("mps")
+    if cfg.device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if (
+            torch.backends.mps.is_available()
+            and torch.backends.mps.is_built()
+            and torch.device != "cuda"
+        ):
+            device = torch.device("mps")
+    else:
+        device = torch.device(cfg.device)
     logger.info('device: %s', device)
 
     logger.info('num_epochs: %s', cfg.num_epochs)
