@@ -133,10 +133,10 @@ class ClothesDataset(data.Dataset):
         # cloth = self.transform(cloth)
 
         # TODO: on resized seems this conversion is not needed
-        #cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
+        # cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
 
-        cloth_mask = self.transform(cloth_mask)
-        self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
+        # cloth_mask = self.transform(cloth_mask)
+        # self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
 
         target = self.transform(target)
         self.logger.debug(f'target: {target.shape}')
@@ -151,7 +151,7 @@ class ClothesDataset(data.Dataset):
             # 'mask_body_parts': mask_body_parts,
             'centered_mask_body': mask_tensor,
             # 'cloth': cloth,
-            'cloth_mask': cloth_mask,
+            # 'cloth_mask': cloth_mask,
             'target': target
         }
         return result
