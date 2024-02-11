@@ -36,6 +36,7 @@
                 "--learning-rate=0.0001",
                 "--workers=0",
                 "--max-batches=1000",
+                "--dissable-wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -53,6 +54,7 @@
                 "--learning-rate=0.0001",
                 "--workers=0",
                 "--continue-from=model_checkpoints/20240210_0144_e24_unet_1.pt",
+                "--dissable-wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
