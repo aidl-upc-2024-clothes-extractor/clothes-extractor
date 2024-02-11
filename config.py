@@ -9,8 +9,8 @@ class Config:
     dataloader_pin_memory: bool = False
     dataset_pairs_dir: str = 'data'
     dataset_dir: str = 'data/zalando-hd-resized'
-    num_epochs: int = 20
-    learning_rate: float = 0.0002
+    num_epochs: int = 30
+    learning_rate: float = 0.0003
     num_input_channels: int = 1
     num_val_samples: int = 25
 
@@ -19,12 +19,12 @@ class Config:
 
     # Data Augmentation
     data_augmentation: bool = True
-    load_height: int = 1024 #56
-    load_width: int = 1024 #56
+    load_height: int = 128 #56
+    load_width: int = 128 #56
     horizontal_flip_prob: float = 0.5
     rotation_prob: float = 0.5
     rotation_angle: float = 10
-    crop_prob: float = 0.5
+    crop_prob: float = 0.25
     min_crop_factor: float = 0.65
     max_crop_factor: float = 0.92
     brightness: float = 0.15
@@ -32,7 +32,7 @@ class Config:
     saturation: float = 0.3
     hue: float = 0.05
     color_jitter_prob: float = 0
-    angle_prob: float = 0.3
+    angle_prob: float = 0.2
     angle: float = 10
 
     predict_image: int = 1
