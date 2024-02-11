@@ -61,6 +61,8 @@ class ModelStore():
             'loss': loss,
         }
         torch.save(saving_dict, filename)
+        return filename
+
 
 def load_model(model: nn.Module, optimizer: optim, path: str = None):
     """

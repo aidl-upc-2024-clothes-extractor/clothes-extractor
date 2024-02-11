@@ -21,16 +21,16 @@ class ClothesDataset(data.Dataset):
         self.data_path = path.join(cfg.dataset_dir, dataset_mode)
         self.transform = transforms.Compose([
             RGBAtoRGBWhiteBlack(),
-            #MakeSquareWithPad(),
+            MakeSquareWithPad(),
             ToFloatTensor(),
-            transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
+            transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
         dataset_list = f'{dataset_mode}_pairs.txt'
 
         # load data list
         img_names = []
-        with open(path.join(cfg.dataset_dir, dataset_list), 'r') as f:
+        with open(path.join(cfg.dataset_pairs_dir, dataset_list), 'r') as f:
             for line in f.readlines():
                 img_name, c_name = line.strip().split()
                 img_names.append(img_name)
@@ -100,7 +100,7 @@ class ClothesDataset(data.Dataset):
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
         target_colors = [(254, 85, 0)]#, (0, 0, 85), (0,119,220), (85,51,0)]
-        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch).to(self.device)
+        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
         self.logger.debug(f'mask_tensor: {mask_tensor.shape}')
     
         mask_tensor = self.transform(mask_tensor)
@@ -127,16 +127,16 @@ class ClothesDataset(data.Dataset):
         cloth_mask = cloth_mask.to(self.device)
         self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
 
-        target = ApplyMaskTransform()(cloth, cloth_mask).to(self.device)
+        target = ApplyMaskTransform()(cloth, cloth_mask)
         self.logger.debug(f'target: {target.shape}')
 
         # cloth = self.transform(cloth)
 
         # TODO: on resized seems this conversion is not needed
-        #cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
+        # cloth_mask = SingleChannelToRGBTransform()(cloth_mask)
 
-        cloth_mask = self.transform(cloth_mask)
-        self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
+        # cloth_mask = self.transform(cloth_mask)
+        # self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
 
         target = self.transform(target)
         self.logger.debug(f'target: {target.shape}')
@@ -151,7 +151,7 @@ class ClothesDataset(data.Dataset):
             # 'mask_body_parts': mask_body_parts,
             'centered_mask_body': mask_tensor,
             # 'cloth': cloth,
-            'cloth_mask': cloth_mask,
+            # 'cloth_mask': cloth_mask,
             'target': target
         }
         return result
@@ -194,12 +194,12 @@ class ClothesDataset(data.Dataset):
         
 
 class ClothesDataLoader:
-    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1):
+    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False):
         super(ClothesDataLoader, self).__init__()
 
         self.data_loader = data.DataLoader(
                 dataset, batch_size=batch_size, shuffle=shuffle,
-                num_workers=num_workers, pin_memory=True, drop_last=True
+                num_workers=num_workers, pin_memory=pin_memory, drop_last=True
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()

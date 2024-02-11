@@ -23,6 +23,7 @@ from models.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
 
+
 def run_model_on_image(model, device, dataset, image_index):
     model.eval()
 
@@ -68,20 +69,20 @@ def main():
             device = torch.device("mps")
     else:
         device = torch.device(cfg.device)
+    
     logger.info('device: %s', device)
-
     logger.info('num_epochs: %s', cfg.num_epochs)
-
-    #print the python running  directory
     logger.debug('current_path: %s', os.getcwd())
     logger.info('dataset_dir: %s', cfg.dataset_dir)
 
     print("Loading dataset...")
-    test_dataset = ClothesDataset(cfg, "test", device=device)
-    train_dataset = ClothesDataset(cfg, "train", device=device)
+    dataset_device = cfg.dataset_device
+    if dataset_device == "default": dataset_device = device
+    test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
+    train_dataset = ClothesDataset(cfg, "train", device=dataset_device)
 
-    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
-    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
+    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
+    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
     print("Done")
 
     model_store_unet_1 = model_store.ModelStore(model_name="smp.unet.efficientnet-b0.imagenet")
@@ -94,7 +95,12 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
     epoch = 0
-    if cfg.reload_model:
+    if cfg.reload_model is not None:
+        print(reload_model)
+
+        if reload_model is "latest":
+            reload_model = None
+
         model, optimizer, epoch, loss = model_store.load_model(
             model=model, optimizer=optimizer, path=cfg.reload_model
         )
@@ -112,7 +118,6 @@ def main():
             entity="clothes-extractor",
         )
         wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
-
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
         wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
@@ -135,7 +140,8 @@ def main():
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
-    wandb_run.finish
+    if wandb_run is not None:
+        wandb_run.finish()
 
 if __name__ == "__main__":
     main()

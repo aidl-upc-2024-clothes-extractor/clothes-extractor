@@ -2,3 +2,5 @@
 *
 # Except this file
 !.gitignore
+!test_pairs.txt
+!train_pairs.txt
