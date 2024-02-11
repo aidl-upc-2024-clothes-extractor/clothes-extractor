@@ -8,6 +8,7 @@ from metrics.logger import Logger
 from utils.utils import DatasetType
 from tqdm import tqdm
 import math
+from model_instantiate import get_model
 
 import torchvision
 from models.model_store import ModelStore
@@ -76,35 +77,27 @@ def combined_criterion(
 
 
 def train_model(
-        model,
         device,
         train_dataloader,
         val_dataloader,
+        wandb_run,
         cfg: Config,
         logger: Logger,
         model_storer: WandbStorer,
 ):
     num_epochs = cfg.num_epochs
-    learning_rate = cfg.learning_rate
     max_batches = cfg.max_batches
-    reload_model = cfg.reload_model
     ssim_range = cfg.ssim_range
 
     c1_loss = VGGPerceptualLoss().to(device) #None
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    model, optimizer, epoch, loss = get_model(device)
+    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
+    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
     local_storer = ModelStore()
-
-    print(reload_model)
-    if reload_model is not None and reload_model != "None":
-        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
-
-    if reload_model is not None and reload_model == "latest":
-        reload_model = None
-        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
-
 
     print('Start training')
     epochs = tqdm(range(num_epochs), desc="Epochs")

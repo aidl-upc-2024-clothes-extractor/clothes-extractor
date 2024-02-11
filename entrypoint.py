@@ -7,7 +7,6 @@ from datetime import datetime
 
 import torch
 from trainer.trainer import train_model
-from model_instantiate import get_model
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,8 +69,6 @@ def main():
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
 
-    model = get_model(device)
-
     # WANDB
     wandb.login()
     wandb_run = wandb.init(
@@ -80,14 +77,11 @@ def main():
     )
     wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
 
-    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
-    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
-
     wandb_storer = WandbStorer(wandb_run)
     wandb_logger = WandbLogger(wandb_run)
 
-    trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg, wandb_logger, wandb_storer)
-    out = run_model_on_image(model, device, train_dataset, 2)
+    trained_model = train_model(device, train_dataloader, test_dataloader, wandb_run, cfg, wandb_logger, wandb_storer)
+    out = run_model_on_image(trained_model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
     wandb_run.finish()

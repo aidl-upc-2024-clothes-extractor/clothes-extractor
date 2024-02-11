@@ -58,7 +58,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     ms = ModelStore()
     reload_model = None
-    if cfg.reload_model != "None" and  cfg.reload_model != "latest":
+    if cfg.reload_model != "None" and cfg.reload_model != "latest":
         reload_model = cfg.reload_model
     print(reload_model)
     
