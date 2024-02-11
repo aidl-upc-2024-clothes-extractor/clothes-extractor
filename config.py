@@ -4,24 +4,21 @@ import argparse
 @dataclass
 class Config:
     # General config
-    batch_size: int = 64 #16
+    batch_size: int = 64
     workers: int = 0
-    dataloader_pin_memory: bool = False
-    dataset_device: str = 'cpu'
-    dataset_pairs_dir: str = 'data'
     dataset_dir: str = 'data/zalando-hd-resized'
     num_epochs: int = 30
     learning_rate: float = 0.0003
-    num_input_channels: int = 1
-    num_val_samples: int = 25
+    load_height: int = 224 # Must be divisible by 32
+    load_width: int = 224 # Must be divisible by 32
+    dataloader_pin_memory: bool = False
+    dataset_pairs_dir: str = 'data'
 
     # For development allow setting number of batches to not run the whole dataset
     max_batches: int = 0
 
     # Data Augmentation
-    data_augmentation: bool = True
-    load_height: int = 128 #56
-    load_width: int = 128 #56
+    data_augmentation: bool = False
     horizontal_flip_prob: float = 0.5
     rotation_prob: float = 0.5
     rotation_angle: float = 10
@@ -36,8 +33,12 @@ class Config:
     angle_prob: float = 0.2
     angle: float = 10
 
-    predict_image: int = 1
-    reload_model: str = "None"
+    # Other config
+    device: str = None
+    dataset_device: str = 'cpu'
+    predict_image: int = 1 #  Image index to predict
+    reload_model: str = None
     ssim_range: float = 1.0
+    dissable_wandb: bool = False
 
 

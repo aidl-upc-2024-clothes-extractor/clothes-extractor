@@ -44,10 +44,6 @@ def main():
     print(cfg.num_epochs)
     desired_cloth = cfg.predict_image 
 
-    #cfg = Config()
-    #cfg.load_height = 28
-    #cfg.load_width = 28
-
     test_dataset = ClothesDataset(cfg, "test")
     train_dataset = ClothesDataset(cfg, "train")
 
@@ -58,7 +54,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     ms = ModelStore()
     reload_model = None
-    if cfg.reload_model != "None" and  cfg.reload_model != "latest":
+    if cfg.reload_model != None and cfg.reload_model != "latest":
         reload_model = cfg.reload_model
     print(reload_model)
     

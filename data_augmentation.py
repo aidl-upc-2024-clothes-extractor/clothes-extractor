@@ -3,6 +3,7 @@ from torchvision import transforms
 import numpy as np
 import torch
 
+
 class SameCropTransform:
     def __init__(self, scale=(0.8, 1.0)):
         self.scale = scale
@@ -14,18 +15,24 @@ class SameCropTransform:
     def __call__(self, img):
         if self.i is None or self.j is None or self.h is None or self.w is None:
             self.i, self.j, self.h, self.w = transforms.RandomResizedCrop.get_params(
-                img, scale=self.scale, ratio=(1.0, 1.0))
-        
+                img, scale=self.scale, ratio=(1.0, 1.0)
+            )
+
         _, h, w = img.size()
         img_resized = F.resized_crop(img, self.i, self.j, self.h, self.w, (h, w))
 
         return img_resized
 
+
 class StableColorJitter:
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
-        jitter = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
-        self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue = transforms.ColorJitter.get_params(
-            jitter.brightness, jitter.contrast, jitter.saturation, jitter.hue
+        jitter = transforms.ColorJitter(
+            brightness=brightness, contrast=contrast, saturation=saturation, hue=hue
+        )
+        self.fn_idx, self.brightness, self.contrast, self.saturation, self.hue = (
+            transforms.ColorJitter.get_params(
+                jitter.brightness, jitter.contrast, jitter.saturation, jitter.hue
+            )
         )
 
     def __call__(self, img):
@@ -45,12 +52,14 @@ class StableColorJitter:
 
         return img
 
+
 class StableRotation:
     def __init__(self, angle=0):
         self.angle = np.random.uniform(-angle, angle)
 
     def __call__(self, img):
         return F.rotate(img, self.angle)
+
 
 class MakeSquareWithPad:
     def __init__(self, fill=0):
@@ -69,7 +78,7 @@ class MakeSquareWithPad:
             padding_bottom = max_side - height - padding_top
 
         padding = (padding_left, padding_top, padding_right, padding_bottom)
-        return F.pad(img, padding, fill=self.fill, padding_mode='constant')
+        return F.pad(img, padding, fill=self.fill, padding_mode="constant")
 
 
 class ToFloatTensor(object):
@@ -81,7 +90,8 @@ class ToFloatTensor(object):
         return tensor.float()
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
+
 
 class RGBAtoRGBWhiteBlack:
 
@@ -98,13 +108,13 @@ class RGBAtoRGBWhiteBlack:
         else:
             return img
 
+
 class SingleChannelToRGBTransform:
     def __call__(self, img):
         if img.shape[0] != 1:
             raise ValueError("Image must have a single channel")
 
         return img.repeat(3, 1, 1)
-
 
 
 class CropAlphaChannelTransform:
@@ -162,6 +172,7 @@ class PadToShapeTransform:
 
         return padded_img
 
+
 class ApplyMaskTransform:
     def __call__(self, img, mask):
         if img.shape[1:] != mask.shape[1:]:
@@ -174,36 +185,40 @@ class ApplyMaskTransform:
         return torch.where(mask > 0, img, black_background)
 
 
-
 def plot_alpha_channel(img):
     from matplotlib import pyplot as plt
+
     if img.shape[0] < 4:
         raise ValueError("Image does not have an alpha channel")
 
     alpha_channel = img[-1]
 
-    plt.imshow(alpha_channel, cmap='gray')
+    plt.imshow(alpha_channel, cmap="gray")
     plt.title("Alpha Channel")
     plt.colorbar()
     plt.show()
+
 
 def plot_alpha_channel_raw(img):
 
     if len(img.shape) != 3:
         raise ValueError("Image is not 3D")
-    
+
     if img.shape[0] != 1:
         raise ValueError("Image does not have an alpha channel")
-    
+
     img = img[0]
     from matplotlib import pyplot as plt
-    plt.imshow(img, cmap='gray')
+
+    plt.imshow(img, cmap="gray")
     plt.title("Alpha Channel")
     plt.colorbar()
     plt.show()
 
+
 def plot_rgb(img):
     from matplotlib import pyplot as plt
+
     if img.shape[0] < 3:
         raise ValueError("Image does not have an RGB channel")
 

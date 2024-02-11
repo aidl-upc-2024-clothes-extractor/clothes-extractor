@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.nn import Module
 from torch.nn import L1Loss
 from config import Config
 from models.wandb_store import WandbStorer
@@ -76,38 +77,29 @@ def combined_criterion(
 
 
 def train_model(
-        model,
-        device,
-        train_dataloader,
-        val_dataloader,
-        cfg: Config,
-        logger: Logger,
-        model_storer: WandbStorer,
+    optimizer: optim.Optimizer,
+    model: Module,
+    device,
+    train_dataloader,
+    val_dataloader,
+    cfg: Config,
+    logger: Logger,
+    remote_model_store: WandbStorer,
+    local_model_store: ModelStore,
+    start_from_epoch: int = 0,
 ):
     num_epochs = cfg.num_epochs
     learning_rate = cfg.learning_rate
     max_batches = cfg.max_batches
-    reload_model = cfg.reload_model
     ssim_range = cfg.ssim_range
 
     c1_loss = VGGPerceptualLoss().to(device) #None
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    local_storer = ModelStore()
-
-    print(reload_model)
-    if reload_model is not None and reload_model != "None":
-        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
-
-    if reload_model is not None and reload_model == "latest":
-        reload_model = None
-        model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
-
-
-    print('Start training')
-    epochs = tqdm(range(num_epochs), desc="Epochs")
+    print("Training started")
+    epoch = start_from_epoch
+    epochs = tqdm(range(start_from_epoch, num_epochs), desc="Epochs")
     training_steps = len(train_dataloader.data_loader)
     validation_steps = len(val_dataloader.data_loader)
     training_progress = tqdm(total=training_steps, desc="Training progress")
@@ -127,7 +119,8 @@ def train_model(
             ssim,
             optimizer,
             training_progress,
-            validation_progress
+            validation_progress,
+            max_batches=max_batches,
         )
         train_loss_avg = np.mean(train_loss)
 
@@ -142,21 +135,23 @@ def train_model(
             ssim,
             optimizer,
             training_progress,
-            validation_progress
+            validation_progress,
+            max_batches=max_batches
         )
         val_loss_avg = np.mean(val_loss)
 
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
+        
 
+        checkpoint_file = local_model_store.save_model(model, optimizer, epoch, train_loss_avg)
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
-            model_storer.save_model(checkpoint_file)
+            remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg)
 
-    print('Finished Training')
+    print("Training completed!")
     return model
 
 def forward_step(
@@ -169,12 +164,15 @@ def forward_step(
         ssim: StructuralSimilarityIndexMeasure,
         optimizer: torch.optim.Optimizer,
         training_progress: tqdm,
-        validation_progress: tqdm
+        validation_progress: tqdm,
+        max_batches: int = 0,
 ):
     perceptual_weight = 0.3
     loss_list = []
 
     for batch_idx, inputs in enumerate(loader):
+        if 0 < max_batches == batch_idx:
+            break
         if dataset_type == DatasetType.TRAIN:
             target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
