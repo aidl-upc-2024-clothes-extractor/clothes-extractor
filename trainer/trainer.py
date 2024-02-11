@@ -126,6 +126,8 @@ def train_model(
             c2_loss,
             ssim,
             optimizer,
+            training_progress,
+            validation_progress
         )
         train_loss_avg = np.mean(train_loss)
 
@@ -139,6 +141,8 @@ def train_model(
             c2_loss,
             ssim,
             optimizer,
+            training_progress,
+            validation_progress
         )
         val_loss_avg = np.mean(val_loss)
 
