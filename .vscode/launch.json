@@ -11,11 +11,10 @@
             "program": "entrypoint.py",
             "args": [
                 "--device=cpu",
-                "--batch-size=1",
+                "--batch-size=2",
                 "--num-epochs=1",
                 "--load-height=32",
                 "--load-width=32",
-                "--learning-rate=0.001",
                 "--workers=0",
                 "--max-batches=1",
                 "--dissable-wandb"

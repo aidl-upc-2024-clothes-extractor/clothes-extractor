@@ -92,13 +92,14 @@ def main():
         in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
         classes=3,  # model output channels (number of classes in your dataset)
     ).to(device)
+
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
     epoch = 0
     if cfg.reload_model is not None:
         print(reload_model)
 
-        if reload_model is "latest":
+        if reload_model == "latest":
             reload_model = None
 
         model, optimizer, epoch, loss = model_store.load_model(
@@ -140,7 +141,7 @@ def main():
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
-    if wandb_run is not None:
+    if cfg.dissable_wandb is False:
         wandb_run.finish()
 
 if __name__ == "__main__":
