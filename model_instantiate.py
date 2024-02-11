@@ -9,7 +9,7 @@ def get_model(cfg: Config, device: str):
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     local_storer = ModelStore()
-
+    reload_model = cfg.reload_model
     print(reload_model)
     if reload_model is not None and reload_model != "None":
         model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
