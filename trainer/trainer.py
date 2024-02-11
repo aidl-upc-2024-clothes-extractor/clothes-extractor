@@ -108,8 +108,8 @@ def train_model(
 
     print('Start training')
     epochs = tqdm(range(num_epochs), desc="Epochs")
-    training_steps = math.ceil(len(train_dataloader.data_loader) / cfg.batch_size)
-    validation_steps = math.ceil(len(val_dataloader.data_loader) / cfg.batch_size)
+    training_steps = len(train_dataloader.data_loader)
+    validation_steps = len(val_dataloader.data_loader)
     training_progress = tqdm(total=training_steps, desc="Training progress")
     validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
