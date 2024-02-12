@@ -26,9 +26,15 @@ class WandbLogger(Logger):
         val_loss_avg: np.ndarray,
         ssim: np.ndarray,
         perceptual: np.ndarray,
+        train_generator_loss_avg: np.ndarray,
+        eval_generator_loss_avg: np.ndarray,
+        train_discriminator_loss_avg: np.ndarray,
     ):
         wandb.log(data={"val_loss": val_loss_avg}, step=epoch)
         wandb.log(data={"train_loss": train_loss_avg}, step=epoch)
         wandb.log(data={"val_ssim": ssim}, step=epoch)
         wandb.log(data={"val_perceptual": perceptual}, step=epoch)
+        wandb.log(data={"train_generator_loss": train_generator_loss_avg}, step=epoch)
+        wandb.log(data={"eval_generator_loss": eval_generator_loss_avg}, step=epoch)
+        wandb.log(data={"train_discriminator_loss": train_discriminator_loss_avg}, step=epoch)
 

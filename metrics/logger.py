@@ -13,5 +13,8 @@ class Logger:
         val_loss_avg: np.ndarray,
         ssim: np.ndarray,
         perceptual: np.ndarray,
+        train_generator_loss_avg: np.ndarray,
+        eval_generator_loss_avg: np.ndarray,
+        train_discriminator_loss_avg: np.ndarray,
     ):
         raise NotImplementedError
