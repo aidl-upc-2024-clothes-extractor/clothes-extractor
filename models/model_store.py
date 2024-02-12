@@ -26,7 +26,7 @@ class ModelStore():
         m1, 01, epoch1, loss1 = ms.load_model(m1, o1) # it will read the most recent file
     """
 
-    def __init__(self, path: str = None, model_name: str = "default_model_name", wabdb_id:str = None):
+    def __init__(self, path: str = None, model_name: str = "default_model_name", max_models_to_keep: int = None, wabdb_id:str = None):
         """
         Initialize the ModelStore class.
 
@@ -40,6 +40,8 @@ class ModelStore():
         self.path = path
         self.model_name = model_name
         self.wabdb_id = wabdb_id
+        self.max_models_to_keep = max_models_to_keep
+        self.models_saved = []
         p = Path(path)
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
@@ -67,6 +69,13 @@ class ModelStore():
             'config': cfg
         }
         torch.save(saving_dict, filename)
+        if self.max_models_to_keep is not None:
+            self.models_saved.sort(key=lambda x: x[1])
+            if len(self.models_saved) + 1 > self.max_models_to_keep:
+                os.remove(self.models_saved.pop(-1)[0])
+
+            self.models_saved.append((filename, loss))
+
         return filename
 
 def load_previous_config(path: str = None):

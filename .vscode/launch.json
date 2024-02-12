@@ -17,7 +17,9 @@
                 "--load-width=32",
                 "--workers=0",
                 "--max-batches=1",
-                "--model-name=test-wabdb-continue"
+                "--model-name=test-wabdb-continue",
+                "--disable-wandb",
+                "--max-models-to-keep=4"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

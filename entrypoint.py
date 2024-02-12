@@ -156,7 +156,8 @@ def main():
 
     local_model_store = model_store.ModelStore(
         model_name=cfg.model_name,
-        wabdb_id=wabdb_id
+        wabdb_id=wabdb_id,
+        max_models_to_keep=cfg.max_models_to_keep
     )
     trained_model = train_model(
         optimizer=optimizer,
