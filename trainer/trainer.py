@@ -179,7 +179,7 @@ def forward_step(
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
             outputs = model(source)
-            loss, _, _ = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
+            loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
             loss.backward()
             optimizer.step()
             training_progress.update()
