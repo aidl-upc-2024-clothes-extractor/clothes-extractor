@@ -13,9 +13,11 @@ def get_model(cfg: Config, device: str):
     print(reload_model)
     if reload_model is not None and reload_model != "None":
         model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
-
-    if reload_model is not None and reload_model == "latest":
+    elif reload_model is not None and reload_model == "latest":
         reload_model = None
         model, optimizer, epoch, loss = local_storer.load_model(model=model, optimizer=optimizer, model_name=reload_model)
+    else:
+        epoch = 0
+        loss = 0
 
     return model, optimizer, epoch, loss
