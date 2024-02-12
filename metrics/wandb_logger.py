@@ -20,11 +20,15 @@ class WandbLogger(Logger):
 
 
     def log_training(
-            self,
-            epoch: int,
-            train_loss_avg: np.ndarray,
-            val_loss_avg: np.ndarray,
+        self,
+        epoch: int,
+        train_loss_avg: np.ndarray,
+        val_loss_avg: np.ndarray,
+        ssim: np.ndarray,
+        perceptual: np.ndarray,
     ):
         wandb.log(data={"val_loss": val_loss_avg}, step=epoch)
         wandb.log(data={"train_loss": train_loss_avg}, step=epoch)
+        wandb.log(data={"val_ssim": ssim}, step=epoch)
+        wandb.log(data={"val_perceptual": perceptual}, step=epoch)
 

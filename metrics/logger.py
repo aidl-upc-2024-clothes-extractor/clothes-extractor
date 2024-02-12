@@ -11,5 +11,7 @@ class Logger:
         epoch: int,
         train_loss_avg: np.ndarray,
         val_loss_avg: np.ndarray,
+        ssim: np.ndarray,
+        perceptual: np.ndarray,
     ):
         raise NotImplementedError
