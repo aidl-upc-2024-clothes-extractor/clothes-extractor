@@ -167,7 +167,7 @@ def train_model(
             checkpoint_file = local_storer.save_model(model=model, optimizer=optimizerG, epoch=epoch, loss=train_loss_avg)
             model_storer.save_model(checkpoint_file)
 
-        logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg)
+        logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
 
     print('Finished Training')
     return model
