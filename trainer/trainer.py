@@ -128,6 +128,7 @@ def train_model(
         )
         train_loss_avg = np.mean(train_loss)
 
+
         model.eval()
         val_loss, percetual_loss, ssim_loss = forward_step(
             device,
@@ -142,6 +143,8 @@ def train_model(
             validation_progress
         )
         val_loss_avg = np.mean(val_loss)
+        percetual_loss_avg = np.mean(percetual_loss)
+        ssim_loss_avg = np.mean(ssim_loss)
 
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
@@ -151,7 +154,7 @@ def train_model(
             checkpoint_file = local_storer.save_model(model=model, optimizer=optimizer, epoch=epoch, loss=train_loss_avg)
             model_storer.save_model(checkpoint_file)
 
-        logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss, ssim_loss)
+        logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg)
 
     print('Finished Training')
     return model
