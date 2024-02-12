@@ -75,7 +75,7 @@ def combined_criterion(
         result += l1_loss(outputs, target)
     if perceptual_loss is not None:
         perceptual = c1_weight * perceptual_loss(outputs, target)
-        # result += perceptual
+        result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))
         # result += ssim_res
@@ -248,9 +248,7 @@ def forward_step(
             # Calculate gradients for G
             D_G_z2 = output.mean().item()
             # Update G
-            optimizer.zero_grad()
-            outputs = model(source)
-            loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, outputs, target)
+            loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, fake, target)
             loss.backward()
             optimizer.step()
             training_progress.update()
