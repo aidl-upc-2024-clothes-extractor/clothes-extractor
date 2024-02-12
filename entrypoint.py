@@ -51,7 +51,16 @@ def main():
     args = ArgumentParser(Config)
     cfg = args.parse_args()
 
-    # TODO: geet error level from config
+    reload_model = cfg.reload_model
+    if reload_model is not None:
+        old_cfg = model_store.load_previous_config(reload_model)
+        print(f"Reading previous config from {reload_model}")
+        for a in dir(old_cfg):
+            if not a.startswith('__'):
+                print(f"    {a}: {getattr(old_cfg, a)}")
+        cfg = old_cfg
+            
+    # TODO: get error level from config
     logger = logging.getLogger("clothes-logger")
     logger.setLevel(logging.INFO)
 
@@ -97,9 +106,6 @@ def main():
     )
     print("Done")
 
-    model_store_unet_1 = model_store.ModelStore(
-        model_name="smp.unet.efficientnet-b0.imagenet"
-    )
     model = smp.Unet(
         encoder_name="efficientnet-b0",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
         encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
@@ -110,37 +116,47 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
     epoch = 0
-    if cfg.reload_model is not None:
-        print(reload_model)
-
-        if reload_model == "latest":
-            reload_model = None
-
-        model, optimizer, epoch, loss = model_store.load_model(
-            model=model, optimizer=optimizer, path=cfg.reload_model
+    wabdb_id = None
+    resume=None
+    if reload_model is not None:
+        model, optimizer, epoch, loss, val_loss = model_store.load_model(
+            model=model, optimizer=optimizer, path=reload_model
         )
         epoch += 1
-        print(
-            f"Loaded model from ${cfg.reload_model} at epoch {epoch} with loss {loss}"
-        )
+        print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
 
     # WANDB
-    if cfg.dissable_wandb:
+    wabdb_id = None
+    wandb_run_name = None
+    if cfg.disable_wandb:
         wandb_storer = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
+        if reload_model is not None:
+            wabdb_id = model_store.load_previous_wabdb_id(reload_model)
+        if wabdb_id is not None:
+            resume=True
         wandb.login()
+        wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
         wandb_run = wandb.init(
             project="clothes-extractor",
             entity="clothes-extractor",
+            id=wabdb_id,
+            name=wandb_run_name,
+            resume=resume
         )
-        wandb_run.name = f'{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+        wabdb_id = wandb_run.id
+
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
         wandb_run.watch(models=model)  # , log=UtLiteral["gradients", "weights"])
 
         wandb_storer = WandbStorer(wandb_run)
         wandb_logger = WandbLogger(wandb_run)
 
+    local_model_store = model_store.ModelStore(
+        model_name=cfg.model_name,
+        wabdb_id=wabdb_id
+    )
     trained_model = train_model(
         optimizer=optimizer,
         model=model,
@@ -150,14 +166,14 @@ def main():
         cfg=cfg,
         logger=wandb_logger,
         remote_model_store=wandb_storer,
-        local_model_store=model_store_unet_1,
+        local_model_store=local_model_store,
         start_from_epoch=epoch,
     )
 
     out = run_model_on_image(model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
-    if cfg.dissable_wandb is False:
+    if cfg.disable_wandb is False:
         wandb_run.finish()
 
 

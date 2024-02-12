@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+from config import Config
+
 _DEFAULT_CHECKPOINT_PATH = "./model_checkpoints"
 
 class ModelStore():
@@ -24,7 +26,7 @@ class ModelStore():
         m1, 01, epoch1, loss1 = ms.load_model(m1, o1) # it will read the most recent file
     """
 
-    def __init__(self, path: str = None, model_name: str = "default_model_name"):
+    def __init__(self, path: str = None, model_name: str = "default_model_name", wabdb_id:str = None):
         """
         Initialize the ModelStore class.
 
@@ -37,12 +39,13 @@ class ModelStore():
             path = _DEFAULT_CHECKPOINT_PATH
         self.path = path
         self.model_name = model_name
+        self.wabdb_id = wabdb_id
         p = Path(path)
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
 
 
-    def save_model(self, model: nn.Module, optimizer: optim, epoch: int, loss: float):
+    def save_model(self, cfg: Config,  model: nn.Module, optimizer: optim, epoch: int, loss: float, val_loss: float):
         """
         Save a model to disk.
 
@@ -59,10 +62,45 @@ class ModelStore():
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'loss': loss,
+            'val_loss': val_loss,
+            'wabdb_id': self.wabdb_id,
+            'config': cfg
         }
         torch.save(saving_dict, filename)
         return filename
 
+def load_previous_config(path: str = None):
+    if path is None or path == "latest":
+        p_check = Path(_DEFAULT_CHECKPOINT_PATH)
+        files = sorted(p_check.glob('*'))
+        path = files[-1].name
+        full_file_name = os.path.join(_DEFAULT_CHECKPOINT_PATH, path)
+    else:
+        full_file_name = path
+    if Path(full_file_name).exists():
+        checkpoint = torch.load(full_file_name)
+        config = checkpoint['config']
+
+    else:
+        raise FileNotFoundError(f"File {full_file_name} does not exist")
+    return config
+
+
+def load_previous_wabdb_id(path: str = None):
+    if path is None:
+        p_check = Path(_DEFAULT_CHECKPOINT_PATH)
+        files = sorted(p_check.glob('*'))
+        path = files[-1].name
+        full_file_name = os.path.join(_DEFAULT_CHECKPOINT_PATH, path)
+    else:
+        full_file_name = path
+    if Path(full_file_name).exists():
+        checkpoint = torch.load(full_file_name)
+        wabdb_id = checkpoint['wabdb_id']
+
+    else:
+        raise FileNotFoundError(f"File {full_file_name} does not exist")
+    return wabdb_id
 
 def load_model(model: nn.Module, optimizer: optim, path: str = None):
     """
@@ -91,7 +129,9 @@ def load_model(model: nn.Module, optimizer: optim, path: str = None):
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
+        val_loss = checkpoint['val_loss']
+
     else:
         raise FileNotFoundError(f"File {full_file_name} does not exist")
-    return model, optimizer, epoch, loss
+    return model, optimizer, epoch, loss, val_loss
 

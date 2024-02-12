@@ -12,12 +12,23 @@
             "args": [
                 "--device=cpu",
                 "--batch-size=2",
-                "--num-epochs=1",
+                "--num-epochs=100",
                 "--load-height=32",
                 "--load-width=32",
                 "--workers=0",
                 "--max-batches=1",
-                "--dissable-wandb"
+                "--model-name=test-wabdb-continue"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Continue run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--reload-model=model_checkpoints/20240212_1358_e11_test-wabdb-continue.pt",
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -35,7 +46,7 @@
                 "--learning-rate=0.0001",
                 "--workers=0",
                 "--max-batches=1000",
-                "--dissable-wandb"
+                "--disable-wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -53,7 +64,7 @@
                 "--learning-rate=0.0001",
                 "--workers=0",
                 "--continue-from=model_checkpoints/20240210_0144_e24_unet_1.pt",
-                "--dissable-wandb"
+                "--disable-wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

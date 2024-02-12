@@ -98,8 +98,7 @@ def train_model(
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
     print("Training started")
-    epoch = start_from_epoch
-    epochs = tqdm(range(start_from_epoch, num_epochs), desc="Epochs")
+    epochs = tqdm(range(num_epochs), desc="Epochs", initial=start_from_epoch)
     training_steps = len(train_dataloader.data_loader)
     validation_steps = len(val_dataloader.data_loader)
     training_progress = tqdm(total=training_steps, desc="Training progress")
@@ -145,7 +144,7 @@ def train_model(
               f'Validation Loss: {val_loss_avg:.4f}')
         
 
-        checkpoint_file = local_model_store.save_model(model, optimizer, epoch, train_loss_avg)
+        checkpoint_file = local_model_store.save_model(cfg, model, optimizer, epoch, train_loss_avg, val_loss_avg)
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
             remote_model_store.save_model(checkpoint_file)
 

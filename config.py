@@ -39,6 +39,7 @@ class Config:
     predict_image: int = 1 #  Image index to predict
     reload_model: str = None
     ssim_range: float = 1.0
-    dissable_wandb: bool = False
+    disable_wandb: bool = False
+    model_name: str = "default"
 
 
