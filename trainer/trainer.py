@@ -59,21 +59,26 @@ class VGGPerceptualLoss(torch.nn.Module):
 
 
 def combined_criterion(
-        c1_loss: torch.nn.Module,
-        c2_loss: torch.nn.Module,
+        perceptual_loss: torch.nn.Module,
+        l1_loss: torch.nn.Module,
         ssim: StructuralSimilarityIndexMeasure,
         c1_weight: float,
         outputs,
         target,
 ):
     result = 0
-    if c2_loss is not None:
-        result += c2_loss(outputs, target)
-    if c1_loss is not None:
-        result += c1_weight * c1_loss(outputs, target)
+    perceptual = 0
+    ssim_res = 0
+    if l1_loss is not None:
+        result += l1_loss(outputs, target)
+    if perceptual_loss is not None:
+        perceptual = c1_weight * perceptual_loss(outputs, target)
+        result += perceptual
     if ssim is not None:
-        result += (ssim.data_range-ssim(outputs, target))
-    return result
+        ssim_res = (ssim.data_range-ssim(outputs, target))
+        result += ssim_res
+    return result, perceptual, ssim_res
+
 
 
 def train_model(
@@ -108,7 +113,7 @@ def train_model(
         training_progress.reset()
         validation_progress.reset()
         model.train()
-        train_loss = forward_step(
+        train_loss, _, _ = forward_step(
             device,
             model,
             train_dataloader.data_loader,
@@ -124,7 +129,7 @@ def train_model(
         train_loss_avg = np.mean(train_loss)
 
         model.eval()
-        val_loss = forward_step(
+        val_loss, perceptual_loss, ssim_loss = forward_step(
             device,
             model,
             val_dataloader.data_loader,
@@ -138,6 +143,9 @@ def train_model(
             max_batches=max_batches
         )
         val_loss_avg = np.mean(val_loss)
+        perceptual_loss_avg = np.mean(perceptual_loss)
+        ssim_loss_avg = np.mean(ssim_loss)
+
 
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
@@ -148,7 +156,8 @@ def train_model(
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
             remote_model_store.save_model(checkpoint_file)
 
-        logger.log_training(epoch, train_loss_avg, val_loss_avg)
+        logger.log_training(epoch, train_loss_avg, val_loss_avg, perceptual_loss_avg, ssim_loss_avg)
+
 
     print("Training completed!")
     return model
@@ -168,6 +177,9 @@ def forward_step(
 ):
     perceptual_weight = 0.3
     loss_list = []
+    perceptual_list = []
+    ssim_list = []
+
 
     for batch_idx, inputs in enumerate(loader):
         if 0 < max_batches == batch_idx:
@@ -177,7 +189,7 @@ def forward_step(
             source = inputs["centered_mask_body"].to(device)
             optimizer.zero_grad()
             outputs = model(source)
-            loss = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
+            loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
             loss.backward()
             optimizer.step()
             training_progress.update()
@@ -186,8 +198,10 @@ def forward_step(
                 target = inputs["target"].to(device)
                 source = inputs["centered_mask_body"].to(device)
                 outputs = model(source)
-                loss = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
+                loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
             validation_progress.update()
         loss_list.append(loss.item())
+        perceptual_list.append(perceptual.item())
+        ssim_list.append(ssim_res.item())
 
-    return loss_list
+    return loss_list, perceptual_list, ssim_list
