@@ -60,7 +60,7 @@ def combined_criterion(c1, c2, ssim, w, outputs, target):
     
 def train_model(model, device, train_dataloader, val_dataloader, num_epochs, learning_rate, max_batches=0, reload_model="None", ssim_range = 1.0):
     c1 = None#VGGPerceptualLoss().to(device)
-    c2 = L1Loss()
+    c2 = L1Loss().to(device)
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     w = 0.3
@@ -86,7 +86,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
 #        for batch_idx, inputs in enumerate(tqdm(train_dataloader.data_loader, desc="Batches", position=1, leave=False)):
         for batch_idx, inputs in enumerate(train_dataloader.data_loader):
             target = inputs ["target"].to(device)
-            source = inputs["centered_mask_body"].to(device)
+            source = inputs["composed_centered_mask_body"].to(device)
             optimizer.zero_grad()
 
             outputs = model(source)
@@ -111,7 +111,7 @@ def train_model(model, device, train_dataloader, val_dataloader, num_epochs, lea
         with torch.no_grad():
             for batch_idx, inputs in enumerate(val_dataloader.data_loader):
                 target = inputs["target"].to(device)
-                source = inputs["centered_mask_body"].to(device)
+                source = inputs["composed_centered_mask_body"].to(device)
 
                 outputs = model(source)
                 loss = combined_criterion(c1, c2, ssim, w, outputs, target)

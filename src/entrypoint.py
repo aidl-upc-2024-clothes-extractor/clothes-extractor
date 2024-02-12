@@ -49,7 +49,7 @@ def main():
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
 
-    model = Unet(in_channels=3, n_feat=32).to(device)
+    model = Unet(in_channels=5, n_feat=32).to(device)
 
     trained_model = train_model(model, device, train_dataloader, test_dataloader, cfg.num_epochs, cfg.learning_rate, cfg.max_batches, cfg.reload_model, cfg.ssim_range)
     out = run_model_on_image(model, device, train_dataset, 2)

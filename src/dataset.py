@@ -6,7 +6,6 @@ from torchvision.transforms import functional as F
 from PIL import Image
 import torch
 import os
-from PIL import Image
 from src.data_augmentation import RGBAtoRGBWhiteBlack, MakeSquareWithPad, ToFloatTensor, CropAlphaChannelTransform, AlphaToBlackTransform, PadToShapeTransform, SingleChannelToRGBTransform, ApplyMaskTransform, SameCropTransform, StableColorJitter, StableRotation
 
 class ClothesDataset(data.Dataset):
@@ -25,6 +24,13 @@ class ClothesDataset(data.Dataset):
             transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
+        self.transform5 = transforms.Compose([
+            RGBAtoRGBWhiteBlack(),
+            MakeSquareWithPad(),
+            ToFloatTensor(),
+            transforms.Resize((cfg.load_height, cfg.load_width),antialias=True),
+            transforms.Normalize((0.5, 0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5, 0.5))
+        ])
         dataset_list = f'{dataset_mode}_pairs.txt'
 
         # load data list
@@ -40,6 +46,11 @@ class ClothesDataset(data.Dataset):
         return len(self.img_names)
 
     def __getitem__(self, index):
+        hair_color = (254,0,0)
+        t_shirt_color = (254,85,0)
+        neck_color = (85,51,0)
+        botton_color = (0,85,85)
+        face_color = (0,0,254)
         debug = False
         # print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
@@ -73,9 +84,12 @@ class ClothesDataset(data.Dataset):
         # if angle:
         #     agnostic_mask = random_rotation(agnostic_mask)
         # agnostic_mask = self.transform(agnostic_mask)
-
+        mask_body_parts_img = Image.open(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png"))).convert('L')
+        mask_body_parts_tensor = torch.squeeze(transforms.ToTensor()(mask_body_parts_img))
         mask_body_parts = self.convert_to_rgb_tensor(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png")))
         mask_body_parts = mask_body_parts.to(self.device)
+        reference_parts = self.get_mask_by_color(mask_body_parts,[face_color, neck_color]).to(self.device)
+        hide_parts = self.get_mask_by_color(mask_body_parts,[hair_color, botton_color]).to(self.device)
         if debug:
             print(f'mask_body_parts: {mask_body_parts.shape}')
 
@@ -89,14 +103,19 @@ class ClothesDataset(data.Dataset):
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
         target_colors = [(254, 85, 0)]#, (0, 0, 85), (0,119,220), (85,51,0)]
-        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
+        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch).to(self.device)
         if debug:
             print(f'mask_tensor: {mask_tensor.shape}')
     
+        composed_mask_tensor = torch.cat((mask_tensor.clone(), reference_parts[None,:,:], hide_parts[None,:,:]),dim=0)
+        
         mask_tensor = self.transform(mask_tensor)
+        composed_mask_tensor  = self.transform5(composed_mask_tensor)
         if debug:
             print(f'mask_tensor: {mask_tensor.shape}')
-
+            print(f'composed_mask_tensor: {composed_mask_tensor.shape}')
+        
+        
         # mask_body_parts = mask_body_parts[:3, :, :]
         # mask_body_parts = self.transform(mask_body_parts)
 
@@ -118,7 +137,7 @@ class ClothesDataset(data.Dataset):
         if debug:
             print(f'cloth_mask: {cloth_mask.shape}')
 
-        target = ApplyMaskTransform()(cloth, cloth_mask)
+        target = ApplyMaskTransform()(cloth, cloth_mask).to(self.device)
         if debug:
             print(f'target: {target.shape}')
 
@@ -138,15 +157,38 @@ class ClothesDataset(data.Dataset):
             # 'img_masked': img_masked_rgb,
             # 'agnostic_mask': agnostic_mask,
             # 'mask_body': mask_tensor,
-            # 'mask_body_parts': mask_body_parts,
+            'mask_body_parts': mask_body_parts,
             'centered_mask_body': mask_tensor,
+            'composed_centered_mask_body': composed_mask_tensor,
+            'full_centered_mask_body': mask_body_parts_tensor,
             # 'cloth': cloth,
-            'cloth_mask': cloth_mask,
+            #'cloth_mask': cloth_mask,
+            'reference_mask': reference_parts,
+            'hide_mask': hide_parts,
             'target': target
         }
         return result
     
-        
+    @staticmethod
+    def get_mask_by_color(img_tensor, colors):
+        black = torch.tensor([0,0,0]).to(torch.uint8)
+        white = torch.tensor([255, 255, 255]).to(torch.uint8)        
+        #print(img_tensor.max())
+        device = img_tensor.device
+        result = torch.zeros(img_tensor.shape[1], img_tensor.shape[2], 3, dtype=torch.uint8, device=device)
+        #data = (img_tensor.clone() * 255).to(torch.uint8).permute(1,2,0)
+        #print(data.shape)
+        #data[torch.any(data[:,:] != black)] = black
+        for color in colors:
+            color = torch.tensor(color).to(torch.uint8)
+            data = (img_tensor.clone() * 255).to(torch.uint8).permute(1,2,0)
+            condition = torch.any(data != color, dim=-1)
+            data[condition] = black
+            condition = torch.all(data == color, dim=-1)
+            data[condition] = white
+            result += data
+        return result.permute(2,0,1)[0]
+    
     @staticmethod
     def get_body_color_mask(mask_body, target_colors, img):
         device = mask_body.device

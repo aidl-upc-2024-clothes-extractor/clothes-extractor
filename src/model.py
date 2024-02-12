@@ -42,7 +42,8 @@ class Unet(nn.Module):
             nn.Conv2d(2 * n_feat, n_feat, 3, 1, 1),
             nn.GroupNorm(8, n_feat),
             nn.ReLU(),
-            nn.Conv2d(n_feat, self.in_channels, 3, 1, 1),
+#            nn.Conv2d(n_feat, self.in_channels , 3, 1, 1),
+            nn.Conv2d(n_feat, 3 , 3, 1, 1),
         )
         self.n_classes = num_classes
 
@@ -94,6 +95,9 @@ class Unet(nn.Module):
         if debug:
             print(f'up3: \t\t\t{up3.shape}')
         out = self.out(torch.cat((up3, x), 1))
+        if debug:
+            print(f'Init: \t\t\t{x.shape}')
+            print(f'out: \t\t\t{out.shape}')
         if debug:
             exit(0)
         return out

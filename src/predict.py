@@ -17,7 +17,7 @@ def run_model_on_image(model, device, dataset, image_index):
     model.eval()
     
     image = dataset[image_index]
-    image = image["centered_mask_body"].to(device).unsqueeze(0)
+    image = image["composed_centered_mask_body"].to(device).unsqueeze(0)
 
     
     with torch.no_grad():
@@ -54,7 +54,7 @@ def main():
     test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers)
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
 
-    model = Unet(in_channels=3, n_feat=32).to(device)
+    model = Unet(in_channels=5, n_feat=32).to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     ms = ModelStore()
     reload_model = None
@@ -77,19 +77,19 @@ def main():
     # out -= out.min()
     #out /= out.max()
     image["out"] = out
+    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    print(ssim(torch.unsqueeze(image["out"].to(device),0), torch.unsqueeze(image["target"].to(device),0)))
 
     # image_keys = ["img", "cloth", "cloth_mask", "predict", "agnostic_mask", "mask_body_parts", "mask_body", "centered_mask_body", "img_masked"]
-    image_keys = ["target", "centered_mask_body", "cloth_mask",  "out"]
+    image_keys = ["target", "out"]
     fig, axes = plt.subplots(1, len(image_keys))
 
     for ax, key in zip(axes, image_keys):
+
         image[key] -= image[key].min()
         ax.imshow(image[key].cpu().permute(1, 2, 0))
         ax.axis('off')
         ax.set_title(key, rotation=90, fontsize=10)
-    print(image["out"].shape)
-    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
-    print(ssim(torch.unsqueeze(image["out"].to(device),0), torch.unsqueeze(image["target"].to(device),0)))
     plt.show()
 
 if __name__ == '__main__':
