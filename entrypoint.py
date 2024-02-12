@@ -18,7 +18,7 @@ from models.unet import Unet
 import models.model_store as model_store
 from trainer.trainer import train_model
 
-from models.wandb_store import WandbStorer
+from models.wandb_store import WandbStore
 from models.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
@@ -129,7 +129,7 @@ def main():
     wabdb_id = None
     wandb_run_name = None
     if cfg.disable_wandb:
-        wandb_storer = DummyWandbStorer()
+        wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
         if reload_model is not None:
@@ -150,7 +150,7 @@ def main():
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
         wandb_run.watch(models=model)  # , log=UtLiteral["gradients", "weights"])
 
-        wandb_storer = WandbStorer(wandb_run)
+        wandb_store = WandbStore(wandb_run)
         wandb_logger = WandbLogger(wandb_run)
 
     local_model_store = model_store.ModelStore(
@@ -165,7 +165,7 @@ def main():
         val_dataloader=test_dataloader,
         cfg=cfg,
         logger=wandb_logger,
-        remote_model_store=wandb_storer,
+        remote_model_store=wandb_store,
         local_model_store=local_model_store,
         start_from_epoch=epoch,
     )

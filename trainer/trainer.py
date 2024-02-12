@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.nn import Module
 from torch.nn import L1Loss
 from config import Config
-from models.wandb_store import WandbStorer
+from models.wandb_store import WandbStore
 from metrics.logger import Logger
 from utils.utils import DatasetType
 from tqdm import tqdm
@@ -84,7 +84,7 @@ def train_model(
     val_dataloader,
     cfg: Config,
     logger: Logger,
-    remote_model_store: WandbStorer,
+    remote_model_store: WandbStore,
     local_model_store: ModelStore,
     start_from_epoch: int = 0,
 ):

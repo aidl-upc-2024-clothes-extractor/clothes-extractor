@@ -2,7 +2,7 @@ import torch.nn as nn
 import wandb
 
 
-class WandbStorer:
+class WandbStore:
 
     def __init__(
         self,
