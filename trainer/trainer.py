@@ -80,7 +80,7 @@ def combined_criterion(
         ssim_res = (ssim.data_range-ssim(outputs, target))
         # result += ssim_res
     if errG is not None:
-        result += errG
+        result += errG * 0.7
     return result, perceptual, ssim_res
 
 
