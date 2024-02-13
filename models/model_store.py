@@ -44,7 +44,7 @@ class ModelStore():
     
     Return the name of the persisted file
     """
-    def save_model(self, model: nn.Module,  optimizer: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
+    def save_model(self, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
         # we create a prefix with current datetime
         prefix = f'{datetime.now():%Y_%m_%d_%H_%M_%S}'
         # Prepare the full filename
@@ -54,6 +54,8 @@ class ModelStore():
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
+            'discriminator_state_dict': discriminator.state_dict(),
+            'optimizerD_state_dict': optimizerD.state_dict(),
             'loss': loss,
         }
         torch.save(saving_dict, filename)
@@ -68,7 +70,7 @@ class ModelStore():
         the filename has the format yyyy_mm_dd_HH_MM_SS_<<Provided model name>>.pt in case you don't send the name you want to read
         the file with the latest yyyy_mm_dd_HH_MM_SS will be loaded
     """
-    def load_model(self, model: nn.Module,  optimizer: optim, model_name: str = None):
+    def load_model(self, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, model_name: str = None):
         loss = 0.0
         epoch = 0
         if model_name is None:
@@ -83,6 +85,8 @@ class ModelStore():
             checkpoint = torch.load(full_file_name)
             model.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
+            optimizerD.load_state_dict(checkpoint['optimizerD_state_dict'])
             epoch = checkpoint['epoch']
             loss = checkpoint['loss']
             # Don't forget to assign the returned values to your model and optimizer

@@ -9,7 +9,6 @@ from utils.utils import DatasetType
 from tqdm import tqdm
 import math
 from model_instantiate import get_model
-from models.discriminator import Discriminator
 
 import torchvision
 from models.model_store import ModelStore
@@ -78,9 +77,9 @@ def combined_criterion(
         result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))
-        # result += ssim_res
+        result += ssim_res
     if errG is not None:
-        result += errG * 0.7
+        result += errG * 0.4
     return result, perceptual, ssim_res
 
 
@@ -101,9 +100,7 @@ def train_model(
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
     
-    model, optimizerG, epoch, loss = get_model(cfg, device)
-    discriminator = Discriminator(ngpu=1).to(device)
-    optimizerD = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    model, optimizerG, discriminator, optimizerD, epoch, loss = get_model(cfg, device)
     # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
     wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
@@ -164,7 +161,7 @@ def train_model(
               f'Validation Loss: {val_loss_avg:.4f}')
 
         if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizerG, epoch=epoch, loss=train_loss_avg)
+            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizerG, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg)
             model_storer.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
