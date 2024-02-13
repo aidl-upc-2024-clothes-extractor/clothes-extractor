@@ -129,7 +129,7 @@ class AlphaToBlackTransform:
         alpha = img[3].unsqueeze(0)
         rgb = img[:3]
 
-        background = torch.zeros_like(rgb)
+        background = torch.randn_like(rgb) * torch.std(rgb) + torch.mean(rgb)
 
         return torch.where(alpha > 0, rgb, background)
 
