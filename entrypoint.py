@@ -2,7 +2,6 @@ import argparse
 from argparse_dataclass import ArgumentParser
 import logging
 import os
-from tqdm.auto import tqdm
 from datetime import datetime
 
 import torch

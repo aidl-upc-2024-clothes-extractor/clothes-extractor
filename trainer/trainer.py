@@ -7,7 +7,7 @@ from config import Config
 from models.wandb_store import WandbStore
 from metrics.logger import Logger
 from utils.utils import DatasetType
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import math
 
 import torchvision
@@ -103,13 +103,16 @@ def train_model(
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
     print("Training started")
-    epochs = tqdm(range(num_epochs), desc="Epochs", initial=start_from_epoch)
+    epochs = tqdm(total=num_epochs, desc="Epochs", initial=start_from_epoch)
     training_steps = len(train_dataloader.data_loader)
     validation_steps = len(val_dataloader.data_loader)
     training_progress = tqdm(total=training_steps, desc="Training progress")
     validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
-    for epoch in epochs:
+    for epoch in range(num_epochs):
+        # Fix for tqdm not starting from start_from_epoch
+        if epoch < start_from_epoch:
+            continue
         training_progress.reset()
         validation_progress.reset()
         model.train()
@@ -157,6 +160,7 @@ def train_model(
             remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, perceptual_loss_avg, ssim_loss_avg)
+        epochs.update()
 
 
     print("Training completed!")
