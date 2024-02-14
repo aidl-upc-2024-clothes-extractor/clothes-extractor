@@ -205,7 +205,7 @@ def forward_step(
             b_size = target.size(0)
             pred = model(source)
             i1 = target
-            i2 = pred
+            i2 = pred.detach()
             random_side = np.random.randint(0, 2)
             label = torch.full((b_size,), real_first_label, dtype=torch.float, device=device)
             if random_side != 0:
