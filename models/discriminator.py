@@ -33,9 +33,10 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.main1 = DiscriminatorReduction()
         self.main2 = DiscriminatorReduction()
+        self.main3 = DiscriminatorReduction()
         self.flatten = nn.Flatten()
         self.fc1 = nn.Sequential(
-            nn.Linear(NDF * 4 * 8 * 8, 1024),
+            nn.Linear(NDF * 4 * 8 * 8 * 3, 1024),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout(0.3),
             nn.Linear(1024, 1),
@@ -45,17 +46,20 @@ class Discriminator(nn.Module):
     def resize(self, im):
         return nn.functional.interpolate(im, size=(128, 128), mode='bilinear', align_corners=True)
     
-    def forward(self, i1, i2):
+    def forward(self, i1, i2, source):
         i1 = self.resize(i1)
         i2 = self.resize(i2)
+        source = self.resize(source)
 
         i1 = self.main1(i1)
         i2 = self.main2(i2)
+        source = self.main3(source)
 
         i1 = self.flatten(i1)
         i2 = self.flatten(i2)
+        source = self.flatten(source)
 
-        concated = torch.cat((i1, i2), 1)
+        concated = torch.cat((i1, i2, source), 1)
         
         return self.fc1(concated)
         

@@ -212,7 +212,7 @@ def forward_step(
                 i1, i2 = i2, i1
                 label.fill_(real_second_label)
             # Forward pass real batch through D
-            output = discriminator(i1, i2).view(-1)
+            output = discriminator(i1, i2, source).view(-1)
             # Calculate loss on all-real batch
             errD = Dcriterion(output, label)
             # Calculate gradients for D in backward pass
@@ -228,7 +228,7 @@ def forward_step(
             if random_side != 0:
                 i1, i2 = i2, i1
             # Since we just updated D, perform another forward pass of all-fake batch through D
-            output = discriminator(i1, i2).view(-1)
+            output = discriminator(i1, i2, source).view(-1)
             # Calculate G's loss based on this output
             errG = Dcriterion(output, label)
             # Calculate gradients for G
@@ -241,11 +241,16 @@ def forward_step(
             discriminator_loss.append(errD.item())
         else:
             with torch.no_grad():
-                outputs = model(source)
-                output = discriminator(outputs).view(-1)
-                label = torch.full((output.size(0),), real_second_label, dtype=torch.float, device=device)
+                pred = model(source)
+                i1 = target
+                i2 = pred
+                random_side = np.random.randint(0, 2)
+                if random_side != 0:
+                    i1, i2 = i2, i1
+                output = discriminator(i1, i2, source).view(-1)
+                label = torch.full((output.size(0),), optimum_label, dtype=torch.float, device=device)
                 errG = Dcriterion(output, label)
-                loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, outputs, target)
+                loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
             validation_progress.update()
         loss_list.append(loss.item())
         perceptual_list.append(perceptual.item())
