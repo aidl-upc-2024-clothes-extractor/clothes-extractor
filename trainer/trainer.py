@@ -9,6 +9,7 @@ from metrics.logger import Logger
 from utils.utils import DatasetType
 from tqdm.auto import tqdm
 import math
+from dataset.dataset import ClothesDataset, ClothesDataLoader
 
 import torchvision
 from models.model_store import ModelStore
@@ -72,7 +73,8 @@ def combined_criterion(
     if l1_loss is not None:
         result += l1_loss(outputs, target)
     if perceptual_loss is not None:
-        perceptual = c1_weight * perceptual_loss(outputs, target)
+        # It is important to unnormalize the images before passing them to the perceptual loss
+        perceptual = c1_weight * perceptual_loss(ClothesDataset.unnormalize(outputs) , ClothesDataset.unnormalize(target))
         result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))

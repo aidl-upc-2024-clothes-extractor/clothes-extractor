@@ -28,6 +28,9 @@ class ClothesDataset(data.Dataset):
     dataset_mode must be 'test' or 'train'
     """
 
+    def unnormalize(self, img):
+        return img * 0.5 + 0.5
+    
     def __init__(self, cfg, dataset_mode, device="cpu"):
         super(ClothesDataset).__init__()
         self.cfg = cfg
@@ -37,9 +40,9 @@ class ClothesDataset(data.Dataset):
             [
                 RGBAtoRGBWhiteBlack(),
                 MakeSquareWithPad(),
-                ToFloatTensor(),
+                ToFloatTensor(), # From 255 to 0 - 1
                 transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # From 0 - 1 to -1 - 1
             ]
         )
         dataset_list = f"{dataset_mode}_pairs.txt"
