@@ -53,8 +53,7 @@ def main():
     cfg = args.parse_args()
 
     reload_model = cfg.reload_model
-    reload_config = cfg.reload_config if cfg.reload_config is not None else (reload_model is not None)
-    if reload_config is not None:
+    if reload_model is not None:
         old_cfg = model_store.load_previous_config(reload_model)
         print(f"Reading previous config from {reload_model}")
         for a in dir(old_cfg):
