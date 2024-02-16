@@ -155,6 +155,8 @@ def main():
     trained_model = train_model(
         optimizer=optimizer,
         model=model,
+        optimizerD=optimizerD,
+        discriminator=discriminator,
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=test_dataloader,
