@@ -115,8 +115,8 @@ def main():
     model, optimizer, discriminator, optimizerD = get_model(cfg, device)
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
-            model=model, optimizer=optimizer, path=reload_model,
-            discriminator=discriminator, optimizerD=optimizerD, model_name=reload_model
+            model=model, optimizer=optimizer, model_name=reload_model,
+            discriminator=discriminator, optimizerD=optimizerD
         )
         epoch += 1
         print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
