@@ -46,7 +46,7 @@ class ModelStore():
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
 
-    def save_model(self, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, epoch: int, loss: float, model_name: str = "default_model_name"):
+    def save_model(self, cfg: Config, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, epoch: int, loss: float, val_loss:float, model_name: str = "default_model_name"):
         """
         Save a model to disk.
 

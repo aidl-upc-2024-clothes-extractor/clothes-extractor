@@ -170,7 +170,7 @@ def train_model(
         
 
         if (epoch+1) % cfg.checkpoint_save_frequency == 0 or epoch+1 == num_epochs:
-            checkpoint_file = local_model_store.save_model(model=model, optimizer=optimizer, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg)
+            checkpoint_file = local_model_store.save_model(cfg=cfg, model=model, optimizer=optimizer, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
             remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
