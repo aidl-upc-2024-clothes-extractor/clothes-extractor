@@ -132,6 +132,7 @@ def main():
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         wandb.login()
         wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
+        print(f'Starting wandb run with name {wandb_run_name} and id {wabdb_id} and resume={resume}')
         wandb_run = wandb.init(
             project="clothes-extractor",
             entity="clothes-extractor",
