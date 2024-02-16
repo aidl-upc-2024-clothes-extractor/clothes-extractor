@@ -128,7 +128,7 @@ def main():
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
-        if resume is not None:
+        if resume is not False:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         wandb.login()
         wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
