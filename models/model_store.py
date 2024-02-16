@@ -110,14 +110,13 @@ def load_previous_wabdb_id(path: str = None):
 def load_model(model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, path: str = None):
     loss = 0.0
     epoch = 0
-    if model_name is None:
-        # In case no filename is provided the most recent file will be loaded
-        p_check = Path(path)
-        # Get the list of files in the model folder
+    if path is None:
+        p_check = Path(_DEFAULT_CHECKPOINT_PATH)
         files = sorted(p_check.glob('*'))
-        # Once the list is sorted from older to newer we take the newer (last possition of array)
-        model_name = files[-1].name
-    full_file_name = os.path.join(path,model_name)
+        path = files[-1].name
+        full_file_name = os.path.join(_DEFAULT_CHECKPOINT_PATH, path)
+    else:
+        full_file_name = path
     if Path(full_file_name).exists():
         checkpoint = torch.load(full_file_name)
         model.load_state_dict(checkpoint['model_state_dict'])
