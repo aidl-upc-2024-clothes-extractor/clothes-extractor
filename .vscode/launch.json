@@ -5,11 +5,69 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Entry point CPU",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--device=cpu",
+                "--batch-size=2",
+                "--num-epochs=100",
+                "--load-height=32",
+                "--load-width=32",
+                "--workers=0",
+                "--max-batches=1",
+                "--model-name=test-wabdb-continue",
+                "--disable-wandb",
+                "--max-models-to-keep=4"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Continue run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--reload-model=model_checkpoints/20240212_1358_e11_test-wabdb-continue.pt",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Entry point",
             "type": "debugpy",
             "request": "launch",
             "program": "entrypoint.py",
-            "args": [],
+            "args": [
+                "--batch-size=32",
+                "--num-epochs=25",
+                "--load-height=224",
+                "--load-width=224",
+                "--learning-rate=0.0001",
+                "--workers=0",
+                "--max-batches=1000",
+                "--disable-wandb"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Continue training",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "entrypoint.py",
+            "args": [
+                "--batch-size=32",
+                "--num-epochs=25",
+                "--load-height=224",
+                "--load-width=224",
+                "--learning-rate=0.0001",
+                "--workers=0",
+                "--continue-from=model_checkpoints/20240210_0144_e24_unet_1.pt",
+                "--disable-wandb"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true
         }

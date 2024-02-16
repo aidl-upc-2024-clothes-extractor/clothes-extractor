@@ -18,7 +18,6 @@ class WandbLogger(Logger):
     ):
         self.run = wandb_run
 
-
     def log_training(
         self,
         epoch: int,

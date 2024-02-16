@@ -7,36 +7,55 @@ from PIL import Image
 import torch
 import os
 from PIL import Image
-from data_augmentation import RGBAtoRGBWhiteBlack, MakeSquareWithPad, ToFloatTensor, CropAlphaChannelTransform, AlphaToBlackTransform, PadToShapeTransform, SingleChannelToRGBTransform, ApplyMaskTransform, SameCropTransform, StableColorJitter, StableRotation
+from data_augmentation import (
+    RGBAtoRGBWhiteBlack,
+    MakeSquareWithPad,
+    ToFloatTensor,
+    CropAlphaChannelTransform,
+    AlphaToBlackTransform,
+    PadToShapeTransform,
+    SingleChannelToRGBTransform,
+    ApplyMaskTransform,
+    SameCropTransform,
+    StableColorJitter,
+    StableRotation,
+)
 import logging
 
+
 class ClothesDataset(data.Dataset):
-    '''
+    """
     dataset_mode must be 'test' or 'train'
-    '''
-    def __init__(self, cfg, dataset_mode, device='cpu'):
+    """
+
+    def unnormalize(self, img):
+        return img * 0.5 + 0.5
+    
+    def __init__(self, cfg, dataset_mode, device="cpu"):
         super(ClothesDataset).__init__()
         self.cfg = cfg
         self.device = device
         self.data_path = path.join(cfg.dataset_dir, dataset_mode)
-        self.transform = transforms.Compose([
-            RGBAtoRGBWhiteBlack(),
-            MakeSquareWithPad(),
-            ToFloatTensor(),
-            transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
-        dataset_list = f'{dataset_mode}_pairs.txt'
+        self.transform = transforms.Compose(
+            [
+                RGBAtoRGBWhiteBlack(),
+                MakeSquareWithPad(),
+                ToFloatTensor(), # From 255 to 0 - 1
+                transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # From 0 - 1 to -1 - 1
+            ]
+        )
+        dataset_list = f"{dataset_mode}_pairs.txt"
 
         # load data list
         img_names = []
-        with open(path.join(cfg.dataset_pairs_dir, dataset_list), 'r') as f:
+        with open(path.join(cfg.dataset_pairs_dir, dataset_list), "r") as f:
             for line in f.readlines():
                 img_name, c_name = line.strip().split()
                 img_names.append(img_name)
 
         self.img_names = img_names
-        self.logger = logging.getLogger('clothes-logger')
+        self.logger = logging.getLogger("clothes-logger")
 
     def __len__(self):
         return len(self.img_names)
@@ -45,9 +64,9 @@ class ClothesDataset(data.Dataset):
         # print('Loading image: {}'.format(self.img_names[index]), index)
         img_name = self.img_names[index]
 
-        img_torch = io.read_image(os.path.join(self.data_path, 'image', img_name))
+        img_torch = io.read_image(os.path.join(self.data_path, "image", img_name))
         img_torch = img_torch.to(self.device)
-        self.logger.debug(f'img_torch: {img_torch.shape}')
+        self.logger.debug(f"img_torch: {img_torch.shape}")
 
         horizontal_flip = np.random.random() < self.cfg.horizontal_flip_prob
         zoom = np.random.random() < self.cfg.crop_prob
@@ -59,8 +78,15 @@ class ClothesDataset(data.Dataset):
         random_rotation = None
 
         if self.cfg.data_augmentation:
-            random_zoom = SameCropTransform(scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor))
-            color_jitter = StableColorJitter(self.cfg.brightness, self.cfg.contrast, self.cfg.saturation, self.cfg.hue)
+            random_zoom = SameCropTransform(
+                scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor)
+            )
+            color_jitter = StableColorJitter(
+                self.cfg.brightness,
+                self.cfg.contrast,
+                self.cfg.saturation,
+                self.cfg.hue,
+            )
             random_rotation = StableRotation(self.cfg.rotation_angle)
 
         if self.cfg.data_augmentation:
@@ -72,7 +98,7 @@ class ClothesDataset(data.Dataset):
                 img_torch = color_jitter(img_torch)
             if angle:
                 img_torch = random_rotation(img_torch)
-            self.logger.debug(f'img_torch(data_augmentation): {img_torch.shape}')
+            self.logger.debug(f"img_torch(data_augmentation): {img_torch.shape}")
 
         # img_final = self.transform(img_torch)
 
@@ -84,9 +110,13 @@ class ClothesDataset(data.Dataset):
         #     agnostic_mask = random_rotation(agnostic_mask)
         # agnostic_mask = self.transform(agnostic_mask)
 
-        mask_body_parts = self.convert_to_rgb_tensor(path.join(self.data_path, 'image-parse-v3', img_name.replace(".jpg",".png")))
+        mask_body_parts = self.convert_to_rgb_tensor(
+            path.join(
+                self.data_path, "image-parse-v3", img_name.replace(".jpg", ".png")
+            )
+        )
         mask_body_parts = mask_body_parts.to(self.device)
-        self.logger.debug(f'mask_body_parts: {mask_body_parts.shape}')
+        self.logger.debug(f"mask_body_parts: {mask_body_parts.shape}")
 
         if self.cfg.data_augmentation:
             if horizontal_flip:
@@ -95,16 +125,20 @@ class ClothesDataset(data.Dataset):
                 mask_body_parts = random_zoom(mask_body_parts)
             if angle:
                 mask_body_parts = random_rotation(mask_body_parts)
-            self.logger.debug(f'mask_body_parts(data_augmentation): {mask_body_parts.shape}')
-        
+            self.logger.debug(
+                f"mask_body_parts(data_augmentation): {mask_body_parts.shape}"
+            )
+
         # print(f'Mask body parts shape: {mask_body_parts.shape}')
         # print(f'Img shape: {img.shape}')
-        target_colors = [(254, 85, 0)]#, (0, 0, 85), (0,119,220), (85,51,0)]
-        mask_tensor = self.get_body_color_mask(mask_body_parts, target_colors, img_torch)
-        self.logger.debug(f'mask_tensor: {mask_tensor.shape}')
-    
+        target_colors = [(254, 85, 0)]  # , (0, 0, 85), (0,119,220), (85,51,0)]
+        mask_tensor = self.get_body_color_mask(
+            mask_body_parts, target_colors, img_torch
+        )
+        self.logger.debug(f"mask_tensor: {mask_tensor.shape}")
+
         mask_tensor = self.transform(mask_tensor)
-        self.logger.debug(f'mask_tensor(transformed): {mask_tensor.shape}')
+        self.logger.debug(f"mask_tensor(transformed): {mask_tensor.shape}")
 
         # mask_body_parts = mask_body_parts[:3, :, :]
         # mask_body_parts = self.transform(mask_body_parts)
@@ -112,23 +146,23 @@ class ClothesDataset(data.Dataset):
         # img_masked_rgb = self.adjust_at_offset(img_pil, offset, mask=mask)
         # img_masked_rgb = self.transform(img_masked_rgb)
 
-        cloth = io.read_image(path.join(self.data_path, 'cloth', img_name))
+        cloth = io.read_image(path.join(self.data_path, "cloth", img_name))
         cloth = cloth.to(self.device)
-        self.logger.debug(f'cloth: {cloth.shape}')
+        self.logger.debug(f"cloth: {cloth.shape}")
 
         if self.cfg.data_augmentation:
             if horizontal_flip:
                 cloth = F.hflip(cloth)
             if jitter:
                 cloth = color_jitter(cloth)
-            self.logger.debug(f'cloth(data_augmentation): {cloth.shape}')
+            self.logger.debug(f"cloth(data_augmentation): {cloth.shape}")
 
-        cloth_mask = io.read_image(path.join(self.data_path, 'cloth-mask', img_name))
+        cloth_mask = io.read_image(path.join(self.data_path, "cloth-mask", img_name))
         cloth_mask = cloth_mask.to(self.device)
-        self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
+        self.logger.debug(f"cloth_mask: {cloth_mask.shape}")
 
         target = ApplyMaskTransform()(cloth, cloth_mask)
-        self.logger.debug(f'target: {target.shape}')
+        self.logger.debug(f"target: {target.shape}")
 
         # cloth = self.transform(cloth)
 
@@ -139,67 +173,73 @@ class ClothesDataset(data.Dataset):
         # self.logger.debug(f'cloth_mask: {cloth_mask.shape}')
 
         target = self.transform(target)
-        self.logger.debug(f'target: {target.shape}')
-
+        self.logger.debug(f"target: {target.shape}")
 
         result = {
-            'img_name': img_name,
+            "img_name": img_name,
             # 'img': img_final,
             # 'img_masked': img_masked_rgb,
             # 'agnostic_mask': agnostic_mask,
             # 'mask_body': mask_tensor,
             # 'mask_body_parts': mask_body_parts,
-            'centered_mask_body': mask_tensor,
+            "centered_mask_body": mask_tensor,
             # 'cloth': cloth,
             # 'cloth_mask': cloth_mask,
-            'target': target
+            "target": target,
         }
         return result
-    
-        
+
     @staticmethod
     def get_body_color_mask(mask_body, target_colors, img):
         device = mask_body.device
         target_colors = torch.tensor(target_colors, device=device, dtype=torch.uint8)
         data = (mask_body * 255).to(torch.uint8)
         data = data.permute(1, 2, 0)
-        
+
         X = data[:, :, None, :3]
         intermediate = torch.all(X == target_colors, dim=-1)
         mask = torch.any(intermediate, dim=-1)
 
-        new_data = torch.zeros(4, img.size(1), img.size(2), dtype=torch.uint8, device=device)
+        new_data = torch.zeros(
+            4, img.size(1), img.size(2), dtype=torch.uint8, device=device
+        )
         new_data[:3, :, :] = img[:3, :, :]
         new_data[3, :, :][mask] = 255
-        
+
         new_data = CropAlphaChannelTransform()(new_data)
         new_data = AlphaToBlackTransform()(new_data)
         new_data = PadToShapeTransform(img.shape)(new_data)
-        
+
         return new_data
-    
+
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):
-        new_img = Image.new('RGB', img.size)
+        new_img = Image.new("RGB", img.size)
         new_img.paste(img, offset, mask=mask)
         return new_img
 
     @staticmethod
     def convert_to_rgb_tensor(image_path):
         image = Image.open(image_path)
-        if image.mode == 'P':
-            image = image.convert('RGB')
+        if image.mode == "P":
+            image = image.convert("RGB")
         transform = transforms.ToTensor()
         return transform(image)
-        
+
 
 class ClothesDataLoader:
-    def __init__(self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False):
+    def __init__(
+        self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False
+    ):
         super(ClothesDataLoader, self).__init__()
 
         self.data_loader = data.DataLoader(
-                dataset, batch_size=batch_size, shuffle=shuffle,
-                num_workers=num_workers, pin_memory=pin_memory, drop_last=True
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            drop_last=True,
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()

@@ -1,14 +1,16 @@
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.nn import Module
 from torch.nn import L1Loss
 from config import Config
-from models.wandb_store import WandbStorer
+from models.wandb_store import WandbStore
 from metrics.logger import Logger
 from utils.utils import DatasetType
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import math
 from model_instantiate import get_model
+from dataset.dataset import ClothesDataset, ClothesDataLoader
 
 import torchvision
 from models.model_store import ModelStore
@@ -71,9 +73,10 @@ def combined_criterion(
     perceptual = 0
     ssim_res = 0
     if l1_loss is not None:
-        result += l1_loss(outputs, target)
+        result += 100 * l1_loss(outputs, target)
     if perceptual_loss is not None:
-        perceptual = c1_weight * perceptual_loss(outputs, target)
+        # It is important to unnormalize the images before passing them to the perceptual loss
+        perceptual = c1_weight * perceptual_loss(ClothesDataset.unnormalize(outputs) , ClothesDataset.unnormalize(target))
         # result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))
@@ -83,14 +86,20 @@ def combined_criterion(
     return result, perceptual, ssim_res
 
 
+
 def train_model(
-        device,
-        train_dataloader,
-        val_dataloader,
-        wandb_run,
-        cfg: Config,
-        logger: Logger,
-        model_storer: WandbStorer,
+    optimizer: optim.Optimizer,
+    model: Module,
+    optimizerD: optim.Optimizer,
+    discriminator: Module,
+    device,
+    train_dataloader,
+    val_dataloader,
+    cfg: Config,
+    logger: Logger,
+    remote_model_store: WandbStore,
+    local_model_store: ModelStore,
+    start_from_epoch: int = 0,
 ):
     num_epochs = cfg.num_epochs
     max_batches = cfg.max_batches
@@ -99,21 +108,18 @@ def train_model(
     c1_loss = VGGPerceptualLoss().to(device) #None
     c2_loss = L1Loss() #None
     ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
-    
-    model, optimizerG, discriminator, optimizerD, epoch, loss = get_model(cfg, device)
-    # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
-    wandb_run.watch(models=model) #, log=UtLiteral["gradients", "weights"])
 
-    local_storer = ModelStore()
-
-    print('Start training')
-    epochs = tqdm(range(num_epochs), desc="Epochs")
+    print("Training started")
+    epochs = tqdm(total=num_epochs, desc="Epochs", initial=start_from_epoch)
     training_steps = len(train_dataloader.data_loader)
     validation_steps = len(val_dataloader.data_loader)
     training_progress = tqdm(total=training_steps, desc="Training progress")
     validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
-    for epoch in epochs:
+    for epoch in range(num_epochs):
+        # Fix for tqdm not starting from start_from_epoch
+        if epoch < start_from_epoch:
+            continue
         training_progress.reset()
         validation_progress.reset()
         model.train()
@@ -125,11 +131,12 @@ def train_model(
             c1_loss,
             c2_loss,
             ssim,
-            optimizerG,
+            optimizer,
             training_progress,
             validation_progress,
             discriminator,
-            optimizerD
+            optimizerD,
+            max_batches
         )
         train_loss_avg = np.mean(train_loss)
         train_generator_loss_avg = np.mean(train_generator_loss)
@@ -145,28 +152,34 @@ def train_model(
             c1_loss,
             c2_loss,
             ssim,
-            optimizerG,
+            optimizer,
             training_progress,
             validation_progress,
             discriminator,
-            optimizerD
+            optimizerD,
+            max_batches
         )
         val_loss_avg = np.mean(val_loss)
         percetual_loss_avg = np.mean(percetual_loss)
         ssim_loss_avg = np.mean(ssim_loss)
         eval_generator_loss_avg = np.mean(generator_loss)
 
+
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
+        
 
-        if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            checkpoint_file = local_storer.save_model(model=model, optimizer=optimizerG, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg)
-            model_storer.save_model(checkpoint_file)
+        if (epoch+1) % cfg.checkpoint_save_frequency == 0 or epoch+1 == num_epochs:
+            checkpoint_file = local_model_store.save_model(model=model, optimizer=optimizer, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg)
+            remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
 
-    print('Finished Training')
+        epochs.update()
+
+
+    print("Training completed!")
     return model
 
 def forward_step(
@@ -181,7 +194,8 @@ def forward_step(
         training_progress: tqdm,
         validation_progress: tqdm,
         discriminator: torch.nn.Module,
-        optimizerD: torch.optim.Optimizer
+        optimizerD: torch.optim.Optimizer,
+        max_batches: int = 0,
 ):
     perceptual_weight = 0.3
     loss_list = []
@@ -191,7 +205,7 @@ def forward_step(
     discriminator_loss = []
     real_first_label = 0.
     real_second_label = 1.
-    optimum_label = 0.5
+    # optimum_label = 0.5
 
 
     Dcriterion = torch.nn.BCELoss()
@@ -221,12 +235,14 @@ def forward_step(
 
             optimizerD.step()
             model.zero_grad()
-            label.fill_(optimum_label)
+            label.fill_(real_first_label)
             i1 = target
             i2 = pred
             random_side = np.random.randint(0, 2)
             if random_side != 0:
                 i1, i2 = i2, i1
+            else:  # This is the only difference between the two branches
+                label.fill_(real_second_label)
             # Since we just updated D, perform another forward pass of all-fake batch through D
             output = discriminator(i1, i2, source).view(-1)
             # Calculate G's loss based on this output
@@ -244,11 +260,13 @@ def forward_step(
                 pred = model(source)
                 i1 = target
                 i2 = pred
+                label = torch.full((output.size(0),), real_first_label, dtype=torch.float, device=device)
                 random_side = np.random.randint(0, 2)
                 if random_side != 0:
                     i1, i2 = i2, i1
+                else:
+                    label.fill_(real_second_label)
                 output = discriminator(i1, i2, source).view(-1)
-                label = torch.full((output.size(0),), optimum_label, dtype=torch.float, device=device)
                 errG = Dcriterion(output, label)
                 loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
             validation_progress.update()
