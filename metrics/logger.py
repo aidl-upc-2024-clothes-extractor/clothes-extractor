@@ -18,3 +18,6 @@ class Logger:
         train_discriminator_loss_avg: np.ndarray,
     ):
         raise NotImplementedError
+
+    def log_images(self, epoch:int, train_images: torch.Tensor, val_images: torch.Tensor):
+        raise NotImplementedError

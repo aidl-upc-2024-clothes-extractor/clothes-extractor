@@ -37,3 +37,6 @@ class WandbLogger(Logger):
         wandb.log(data={"eval_generator_loss": eval_generator_loss_avg}, step=epoch)
         wandb.log(data={"train_discriminator_loss": train_discriminator_loss_avg}, step=epoch)
 
+    def log_images(self, epoch:int, train_images: torch.Tensor, val_images: torch.Tensor):
+        wandb.log({"train_images": [wandb.Image(img) for img in train_images]}, step=epoch)
+        wandb.log({"val_images": [wandb.Image(img) for img in val_images]}, step=epoch)

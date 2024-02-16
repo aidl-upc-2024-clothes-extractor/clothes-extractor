@@ -174,6 +174,11 @@ def train_model(
             remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
+        ten_train = [model(x["centered_mask_body"].to(device)) for x in train_dataloader.data_loader[:10]]
+        ten_train = [ClothesDataset.unnormalize(x) for x in ten_train]
+        ten_val = [model(x["centered_mask_body"].to(device)) for x in val_dataloader.data_loader[:10]]
+        ten_val = [ClothesDataset.unnormalize(x) for x in ten_val]
+        logger.log_images(epoch, ten_train, ten_val)
 
         epochs.update()
 
