@@ -28,7 +28,8 @@ class ClothesDataset(data.Dataset):
     dataset_mode must be 'test' or 'train'
     """
 
-    def unnormalize(self, img):
+    @staticmethod
+    def unnormalize(img):
         return img * 0.5 + 0.5
     
     def __init__(self, cfg, dataset_mode, device="cpu"):
