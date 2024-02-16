@@ -16,3 +16,6 @@ class Logger:
 
     ):
         raise NotImplementedError
+
+    def log_images(self, epoch:int, train_images: torch.Tensor, val_images: torch.Tensor):
+        raise NotImplementedError

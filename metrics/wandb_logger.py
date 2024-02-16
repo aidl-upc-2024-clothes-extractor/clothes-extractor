@@ -30,3 +30,7 @@ class WandbLogger(Logger):
         wandb.log(data={"train_loss": train_loss_avg}, step=epoch)
         wandb.log(data={"val_ssim": ssim}, step=epoch)
         wandb.log(data={"val_perceptual": perceptual}, step=epoch)
+
+    def log_images(self, epoch:int, train_images: torch.Tensor, val_images: torch.Tensor):
+        wandb.log({"train_images": [wandb.Image(img) for img in train_images]}, step=epoch)
+        wandb.log({"val_images": [wandb.Image(img) for img in val_images]}, step=epoch)
