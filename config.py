@@ -38,6 +38,7 @@ class Config:
     dataset_device: str = 'cpu'
     predict_image: int = 1 #  Image index to predict
     reload_model: str = None
+    reload_config: bool = None
     ssim_range: float = 1.0
     disable_wandb: bool = False
     resume_wandb: bool = False

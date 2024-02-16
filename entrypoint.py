@@ -53,7 +53,8 @@ def main():
     cfg = args.parse_args()
 
     reload_model = cfg.reload_model
-    if reload_model is not None:
+    reload_config = cfg.reload_config if cfg.reload_config is not None else (reload_model is not None)
+    if reload_config is not None:
         old_cfg = model_store.load_previous_config(reload_model)
         print(f"Reading previous config from {reload_model}")
         for a in dir(old_cfg):
@@ -128,7 +129,7 @@ def main():
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
-        if reload_model is not None:
+        if resume is not None:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         wandb.login()
         wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
