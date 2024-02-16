@@ -15,7 +15,7 @@ def get_model(cfg: Config, device: str):
     ).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
-    discriminator = Discriminator(ngpu=1).to(device)
+    discriminator = Discriminator().to(device)
     optimizerD = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
     return model, optimizer, discriminator, optimizerD
