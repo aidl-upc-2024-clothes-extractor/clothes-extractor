@@ -259,7 +259,7 @@ def forward_step(
                 pred = model(source)
                 i1 = target
                 i2 = pred
-                label = torch.full((output.size(0),), real_first_label, dtype=torch.float, device=device)
+                label = torch.full((pred.size(0),), real_first_label, dtype=torch.float, device=device)
                 random_side = np.random.randint(0, 2)
                 if random_side != 0:
                     i1, i2 = i2, i1
