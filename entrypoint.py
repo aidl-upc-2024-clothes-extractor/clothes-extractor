@@ -17,6 +17,7 @@ from config import Config
 from models.unet import Unet
 import models.model_store as model_store
 from trainer.trainer import train_model
+from model_instantiate import get_model
 
 from models.wandb_store import WandbStore
 from models.dummy_wandb_store import DummyWandbStorer
@@ -111,9 +112,11 @@ def main():
     epoch = 0
     wabdb_id = None
     resume=cfg.resume_wandb
+    model, optimizer, discriminator, optimizerD = get_model(cfg, device)
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
-            model=model, optimizer=optimizer, path=reload_model
+            model=model, optimizer=optimizer, path=reload_model,
+            discriminator=discriminator, optimizerD=optimizerD, model_name=reload_model
         )
         epoch += 1
         print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")

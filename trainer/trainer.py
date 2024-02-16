@@ -9,7 +9,6 @@ from metrics.logger import Logger
 from utils.utils import DatasetType
 from tqdm.auto import tqdm
 import math
-from model_instantiate import get_model
 from dataset.dataset import ClothesDataset, ClothesDataLoader
 
 import torchvision
