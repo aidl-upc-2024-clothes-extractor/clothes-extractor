@@ -27,9 +27,6 @@ class ClothesDataset(data.Dataset):
     """
     dataset_mode must be 'test' or 'train'
     """
-
-    def unnormalize(self, img):
-        return img * 0.5 + 0.5
     
     def __init__(self, cfg, dataset_mode, device="cpu"):
         super(ClothesDataset).__init__()
@@ -211,6 +208,10 @@ class ClothesDataset(data.Dataset):
         new_data = PadToShapeTransform(img.shape)(new_data)
 
         return new_data
+
+    @staticmethod
+    def unnormalize(img):
+        return img * 0.5 + 0.5
 
     @staticmethod
     def adjust_at_offset(img, offset, mask=None):

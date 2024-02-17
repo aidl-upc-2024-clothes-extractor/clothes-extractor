@@ -171,7 +171,7 @@ def main():
         start_from_epoch=epoch,
     )
 
-    out = run_model_on_image(model, device, train_dataset, 2)
+    out = run_model_on_image(trained_model, device, train_dataset, 2)
     visualize_nn_output(out, device)
 
     if cfg.disable_wandb is False:
