@@ -70,6 +70,8 @@ def combined_criterion(
     result = 0
     perceptual = 0
     ssim_res = 0
+    outputs = outputs / 2 + 0.5
+    target = target / 2 + 0.5
     if l1_loss is not None:
         result += l1_loss(outputs, target)
     if perceptual_loss is not None:
