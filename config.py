@@ -42,5 +42,6 @@ class Config:
     disable_wandb: bool = False
     model_name: str = "default"
     max_models_to_keep : int = None # Save only the best n models in the local disk
+    predict_dataset: str = "test"
 
 
