@@ -113,6 +113,7 @@ def train_model(
     training_progress = tqdm(total=training_steps, desc="Training progress")
     validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
+
     for epoch in range(num_epochs):
         # Fix for tqdm not starting from start_from_epoch
         if epoch < start_from_epoch:
@@ -165,10 +166,11 @@ def train_model(
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, perceptual_loss_avg, ssim_loss_avg)
         with torch.no_grad():
-            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 10)]
-            ten_train = [model(x["centered_mask_body"].to(device)) for x in train_dataloader.data_loader.dataset[:10]]
+            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0))
+                         for i in range(0, min(len(train_dataloader.data_loader.dataset), 10))]
             ten_train = [ClothesDataset.unnormalize(x) for x in ten_train]
-            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 10)]
+            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i
+                       in range(0, min(len(val_dataloader.data_loader.dataset), 10))]
             ten_val = [ClothesDataset.unnormalize(x) for x in ten_val]
             logger.log_images(epoch, ten_train, ten_val)
 

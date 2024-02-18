@@ -12,5 +12,5 @@ class WandbStore:
 
     def save_model(self, checkpoint_path):
         artifact = wandb.Artifact('model', type='model')
-        artifact.add_file(checkpoint_path)
+        artifact.add_file(checkpoint_path, self.run.name)
         self.run.log_artifact(artifact)
