@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import wandb
 
-from dataset.dataset import ClothesDataset, ClothesDataLoader
+from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
 from models.unet import Unet
 import models.model_store as model_store
@@ -88,11 +88,19 @@ def main():
     dataset_device = cfg.dataset_device
     if dataset_device == "default":
         dataset_device = device
-    test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
-    train_dataset = ClothesDataset(cfg, "train", device=dataset_device)
 
-    test_dataloader = ClothesDataLoader(
-        test_dataset,
+    full_dataset = ClothesDataset(cfg, "train", device=dataset_device)
+    #test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
+    train_dataset, validation_dataset = split_clothes_dataset(full_dataset, [0.9, 0.1], generator=None)
+
+    # test_dataloader = ClothesDataLoader(
+    #     test_dataset,
+    #     cfg.batch_size,
+    #     num_workers=cfg.workers,
+    #     pin_memory=cfg.dataloader_pin_memory,
+    # )
+    validation_dataloader = ClothesDataLoader(
+        validation_dataset,
         cfg.batch_size,
         num_workers=cfg.workers,
         pin_memory=cfg.dataloader_pin_memory,
@@ -163,7 +171,7 @@ def main():
         model=model,
         device=device,
         train_dataloader=train_dataloader,
-        val_dataloader=test_dataloader,
+        val_dataloader=validation_dataloader,
         cfg=cfg,
         logger=wandb_logger,
         remote_model_store=wandb_store,

@@ -226,6 +226,11 @@ class ClothesDataset(data.Dataset):
             image = image.convert("RGB")
         transform = transforms.ToTensor()
         return transform(image)
+    
+def split_clothes_dataset(dataset: ClothesDataset, split: list, generator = None):
+    if generator is None:
+        generator = torch.Generator().manual_seed(42)
+    return torch.utils.data.random_split(dataset, split, generator=generator)
 
 
 class ClothesDataLoader:
@@ -253,3 +258,4 @@ class ClothesDataLoader:
             batch = self.data_iter.__next__()
 
         return batch
+    
