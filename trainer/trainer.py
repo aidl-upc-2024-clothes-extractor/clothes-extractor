@@ -19,7 +19,6 @@ class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
         blocks = []
-        #blocks.append(torchvision.models.vgg16(pretrained=True).features[:4].eval())
         blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[:4].eval())
         blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[4:9].eval())
         blocks.append(torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT).features[9:16].eval())
@@ -70,19 +69,20 @@ def combined_criterion(
     result = 0
     perceptual = 0
     ssim_res = 0
-    outputs = outputs / 2 + 0.5
-    target = target / 2 + 0.5
+
+    outputs = ClothesDataset.unnormalize(outputs)
+    target = ClothesDataset.unnormalize(target)
+
     if l1_loss is not None:
         result += l1_loss(outputs, target)
     if perceptual_loss is not None:
         # It is important to unnormalize the images before passing them to the perceptual loss
-        perceptual = c1_weight * perceptual_loss(ClothesDataset.unnormalize(outputs) , ClothesDataset.unnormalize(target))
+        perceptual = c1_weight * perceptual_loss(outputs, target)
         result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))
         result += ssim_res
     return result, perceptual, ssim_res
-
 
 
 def train_model(
