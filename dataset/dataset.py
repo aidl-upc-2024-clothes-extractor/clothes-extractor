@@ -214,6 +214,10 @@ class ClothesDataset(data.Dataset):
         return new_data
 
     @staticmethod
+    def unnormalize(img):
+        return img * 0.5 + 0.5
+
+    @staticmethod
     def adjust_at_offset(img, offset, mask=None):
         new_img = Image.new("RGB", img.size)
         new_img.paste(img, offset, mask=mask)

@@ -44,6 +44,7 @@ class Config:
     resume_wandb: bool = False
     checkpoint_save_frequency: int = 4
     model_name: str = "default"
-    max_models_to_keep : int = None # Save only the best n models in the local disk
+    max_models_to_keep: int = None # Save only the best n models in the local disk
+    predict_dataset: str = "test"
 
 
