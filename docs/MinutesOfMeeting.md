@@ -43,3 +43,17 @@ Periodic meeting for reviewing the actual status of the project
 * Alvarto and Joan to use the lab U-net as base to create a net that we can train from scratch.
 * Josep Maria to use a pretrainned U-net and do the transfer learning
 * Raul to prepare an index of the presentation and an intial propossal. When this is done help to the rest.
+
+
+## 2024-02-15
+**Attendees** Alvaro, Joan, Josep Maria, Pol, Raúl
+* Split the training data into a training set and a validation set. *** Joan or Raul or Alvaro ***
+* wabdb uploads too many things. Find a way to upload only the best model. *** Alvaro ***
+* Upload images for each epoch in to wandb. *** Joan ***
+* Check if the SSMI data is normalized. *** Raul ***
+* Investigate ways to compare images to make Raul happier *** Raul ***
+* Rerun the unet model with the unnormalized data. Wait for SSMI investigation to finish. *** Joan ***
+* Write the report of the project in the README.md file.  *** ALL ***
+* Take a look at the PatchGAN's discriminator. *** Josep ***
+* Make an effort to show the results of the work/trains we are performing. *** ALL ***
+* Include the model in the stored data to avoid conflicts when loading the weights. *** Alvaro ***
