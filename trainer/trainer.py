@@ -77,7 +77,7 @@ def combined_criterion(
         result += 100 * l1_loss(outputs, target)
     if perceptual_loss is not None:
         # It is important to unnormalize the images before passing them to the perceptual loss
-        perceptual = c1_weight * perceptual_loss(ClothesDataset.unnormalize(outputs) , ClothesDataset.unnormalize(target))
+        perceptual = c1_weight * perceptual_loss(outputs, target)
         # result += perceptual
     if ssim is not None:
         ssim_res = (ssim.data_range-ssim(outputs, target))
@@ -211,10 +211,6 @@ def forward_step(
     ssim_list = []
     generator_loss = []
     discriminator_loss = []
-    real_first_label = 0.
-    real_second_label = 1.
-    # optimum_label = 0.5
-
 
     Dcriterion = torch.nn.BCELoss()
 
@@ -223,41 +219,22 @@ def forward_step(
         source = inputs["centered_mask_body"].to(device)
         if dataset_type == DatasetType.TRAIN:
             discriminator.zero_grad()
-            # Format batch
-            b_size = target.size(0)
-            pred = model(source)
-            i1 = target
-            i2 = pred.detach()
-            random_side = np.random.randint(0, 2)
-            label = torch.full((b_size,), real_first_label, dtype=torch.float, device=device)
-            if random_side != 0:
-                i1, i2 = i2, i1
-                label.fill_(real_second_label)
-            # Forward pass real batch through D
-            output = discriminator(i1, i2, source).view(-1)
-            # Calculate loss on all-real batch
-            errD = Dcriterion(output, label)
-            # Calculate gradients for D in backward pass
+            output = discriminator(source, target).squeeze()
+            ones = torch.ones(output.shape, dtype=torch.float, device=device)
+            errD = Dcriterion(output, ones)
+            pred = model(source).detach()
+            zeros = torch.zeros(output.shape, dtype=torch.float, device=device)
+            output = discriminator(source, pred).squeeze()
+            errD_fake = Dcriterion(output, zeros)
+            errD = (errD + errD_fake) * 0.5
             errD.backward()
-            D_x = output.mean().item()
 
             optimizerD.step()
             model.zero_grad()
-            label.fill_(real_first_label)
-            i1 = target
-            i2 = pred
-            random_side = np.random.randint(0, 2)
-            if random_side != 0:
-                i1, i2 = i2, i1
-            else:  # This is the only difference between the two branches
-                label.fill_(real_second_label)
-            # Since we just updated D, perform another forward pass of all-fake batch through D
-            output = discriminator(i1, i2, source).view(-1)
-            # Calculate G's loss based on this output
-            errG = Dcriterion(output, label)
-            # Calculate gradients for G
-            D_G_z2 = output.mean().item()
-            # Update G
+            pred = model(source)
+            ones = torch.ones(output.shape, dtype=torch.float, device=device)
+            output = discriminator(source, pred).squeeze()
+            errG = Dcriterion(output, ones)
             loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
             loss.backward()
             optimizer.step()
@@ -266,16 +243,9 @@ def forward_step(
         else:
             with torch.no_grad():
                 pred = model(source)
-                i1 = target
-                i2 = pred
-                label = torch.full((pred.size(0),), real_first_label, dtype=torch.float, device=device)
-                random_side = np.random.randint(0, 2)
-                if random_side != 0:
-                    i1, i2 = i2, i1
-                else:
-                    label.fill_(real_second_label)
-                output = discriminator(i1, i2, source).view(-1)
-                errG = Dcriterion(output, label)
+                ones = torch.ones(output.shape, dtype=torch.float, device=device)
+                output = discriminator(source, pred).squeeze()
+                errG = Dcriterion(output, ones)
                 loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
             validation_progress.update()
         loss_list.append(loss.item())
