@@ -113,6 +113,7 @@ def train_model(
     training_progress = tqdm(total=training_steps, desc="Training progress")
     validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
+    checkpoint_file = ""
 
     for epoch in range(num_epochs):
         # Fix for tqdm not starting from start_from_epoch
@@ -158,11 +159,8 @@ def train_model(
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
-        
 
         checkpoint_file = local_model_store.save_model(cfg, model, optimizer, epoch, train_loss_avg, val_loss_avg)
-        if (epoch+1) % 2 == 0 or epoch+1 == num_epochs:
-            remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, perceptual_loss_avg, ssim_loss_avg)
         with torch.no_grad():
@@ -176,6 +174,10 @@ def train_model(
 
         epochs.update()
 
+    if len(local_model_store.models_saved) > 0:
+        remote_model_store.save_model(local_model_store.models_saved[-1][0])
+    else:
+        remote_model_store.save_model(checkpoint_file)
 
     print("Training completed!")
     return model
@@ -217,7 +219,7 @@ def forward_step(
                 source = inputs["centered_mask_body"].to(device)
                 outputs = model(source)
                 loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, outputs, target)
-            validation_progress.update()
+                validation_progress.update()
         loss_list.append(loss.item())
         perceptual_list.append(perceptual.item())
         ssim_list.append(ssim_res.item())
