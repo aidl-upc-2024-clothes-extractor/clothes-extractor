@@ -6,8 +6,8 @@ from torch.nn import L1Loss
 from config import Config
 from models.wandb_store import WandbStore
 from metrics.logger import Logger
-from trainer.factory_trainer import TrainerConfiguration
 from trainer.trainer import Trainer
+from trainer.trainer_configuration import TrainerConfiguration
 from utils.utils import DatasetType
 from tqdm.auto import tqdm
 from dataset.dataset import ClothesDataset
@@ -86,16 +86,17 @@ class VGGPerceptualLoss(torch.nn.Module):
 
 class UnetTrainerConfiguration(TrainerConfiguration):
     def __init__(self, optimizer: optim.Optimizer, model: Module):
-        super().__init__("unet_v1", {"optimizer": optimizer, "model": model})
+        super(UnetTrainerConfiguration, self).__init__("unet_v1", {"optimizer": optimizer, "model": model})
 
 
 class UnetTrainer(Trainer):
     def __init__(self, trainerConfiguration: UnetTrainerConfiguration):
-        super(self).__init__()
+        super(UnetTrainer, self).__init__()
         self.optimizer = trainerConfiguration.configuration["optimizer"]
         self.model = trainerConfiguration.configuration["model"]
 
-    def combined_criterion(
+    def _combined_criterion(
+            self,
         perceptual_loss: torch.nn.Module,
         l1_loss: torch.nn.Module,
         ssim: StructuralSimilarityIndexMeasure,
@@ -154,7 +155,7 @@ class UnetTrainer(Trainer):
             training_progress.reset()
             validation_progress.reset()
             self.model.train()
-            train_loss, _, _ = self.forward_step(
+            train_loss, _, _ = self._forward_step(
                 device,
                 self.model,
                 train_dataloader.data_loader,
@@ -170,7 +171,7 @@ class UnetTrainer(Trainer):
             train_loss_avg = np.mean(train_loss)
 
             self.model.eval()
-            val_loss, perceptual_loss, ssim_loss = self.forward_step(
+            val_loss, perceptual_loss, ssim_loss = self._forward_step(
                 device,
                 self.model,
                 val_dataloader.data_loader,
@@ -230,7 +231,7 @@ class UnetTrainer(Trainer):
         print("Training completed!")
         return self.model
 
-    def forward_step(
+    def _forward_step(
         self,
         device,
         model: torch.nn.Module,
@@ -257,7 +258,7 @@ class UnetTrainer(Trainer):
                 source = inputs["centered_mask_body"].to(device)
                 optimizer.zero_grad()
                 outputs = model(source)
-                loss, perceptual, ssim_res = self.combined_criterion(
+                loss, perceptual, ssim_res = self._combined_criterion(
                     c1Loss, c2Loss, ssim, perceptual_weight, outputs, target
                 )
                 loss.backward()
@@ -268,7 +269,7 @@ class UnetTrainer(Trainer):
                     target = inputs["target"].to(device)
                     source = inputs["centered_mask_body"].to(device)
                     outputs = model(source)
-                    loss, perceptual, ssim_res = self.combined_criterion(
+                    loss, perceptual, ssim_res = self._combined_criterion(
                         c1Loss, c2Loss, ssim, perceptual_weight, outputs, target
                     )
                 validation_progress.update()

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import Logger
 
-from torch import Module
+from torch.nn import Module
 
 from config import Config
 from models.model_store import ModelStore
