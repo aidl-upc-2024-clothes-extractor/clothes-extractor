@@ -23,23 +23,23 @@ class VGGPerceptualLoss(torch.nn.Module):
         blocks = []
         blocks.append(
             torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
-            .features[:4]
-            .eval()
+                .features[:4]
+                .eval()
         )
         blocks.append(
             torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
-            .features[4:9]
-            .eval()
+                .features[4:9]
+                .eval()
         )
         blocks.append(
             torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
-            .features[9:16]
-            .eval()
+                .features[9:16]
+                .eval()
         )
         blocks.append(
             torchvision.models.vgg16(weights=torchvision.models.VGG16_Weights.DEFAULT)
-            .features[16:23]
-            .eval()
+                .features[16:23]
+                .eval()
         )
         for bl in blocks:
             for p in bl.parameters():
@@ -85,24 +85,26 @@ class VGGPerceptualLoss(torch.nn.Module):
 
 
 class UnetTrainerConfiguration(TrainerConfiguration):
-    def __init__(self, optimizer: optim.Optimizer, model: Module):
-        super(UnetTrainerConfiguration, self).__init__("unet_v1", {"optimizer": optimizer, "model": model})
+    def __init__(self, model: Module):
+        super(UnetTrainerConfiguration, self).__init__("unet_v1", {"model": model})
 
 
 class UnetTrainer(Trainer):
-    def __init__(self, trainerConfiguration: UnetTrainerConfiguration):
+    def __init__(self, trainer_configuration: UnetTrainerConfiguration):
         super(UnetTrainer, self).__init__()
-        self.optimizer = trainerConfiguration.configuration["optimizer"]
-        self.model = trainerConfiguration.configuration["model"]
+        self.optimizer = trainer_configuration.optimizer
+        self.model = trainer_configuration.configuration["model"]
+        if self.optimizer is None:
+            raise ValueError("Optimizer is required for UnetTrainer")
 
     def _combined_criterion(
             self,
-        perceptual_loss: torch.nn.Module,
-        l1_loss: torch.nn.Module,
-        ssim: StructuralSimilarityIndexMeasure,
-        c1_weight: float,
-        outputs,
-        target,
+            perceptual_loss: torch.nn.Module,
+            l1_loss: torch.nn.Module,
+            ssim: StructuralSimilarityIndexMeasure,
+            c1_weight: float,
+            outputs,
+            target,
     ):
         result = 0
         perceptual = 0
@@ -123,15 +125,15 @@ class UnetTrainer(Trainer):
         return result, perceptual, ssim_res
 
     def train_model(
-        self,
-        device,
-        train_dataloader,
-        val_dataloader,
-        cfg: Config,
-        logger: Logger,
-        remote_model_store: WandbStore,
-        local_model_store: ModelStore,
-        start_from_epoch: int = 0,
+            self,
+            device,
+            train_dataloader,
+            val_dataloader,
+            cfg: Config,
+            logger: Logger,
+            remote_model_store: WandbStore,
+            local_model_store: ModelStore,
+            start_from_epoch: int = 0,
     ) -> Module:
         num_epochs = cfg.num_epochs
         max_batches = cfg.max_batches
@@ -189,7 +191,7 @@ class UnetTrainer(Trainer):
             ssim_loss_avg = np.mean(ssim_loss)
 
             tqdm.write(
-                f"Epoch [{epoch+1}/{num_epochs}], "
+                f"Epoch [{epoch + 1}/{num_epochs}], "
                 f"Train Loss: {train_loss_avg:.4f}, "
                 f"Validation Loss: {val_loss_avg:.4f}"
             )
@@ -207,8 +209,8 @@ class UnetTrainer(Trainer):
                 ten_train = [
                     self.model(
                         train_dataloader.data_loader.dataset[i]["centered_mask_body"]
-                        .to(device)
-                        .unsqueeze(0)
+                            .to(device)
+                            .unsqueeze(0)
                     )
                     for i in range(
                         0, min(len(train_dataloader.data_loader.dataset), 10)
@@ -218,8 +220,8 @@ class UnetTrainer(Trainer):
                 ten_val = [
                     self.model(
                         val_dataloader.data_loader.dataset[i]["centered_mask_body"]
-                        .to(device)
-                        .unsqueeze(0)
+                            .to(device)
+                            .unsqueeze(0)
                     )
                     for i in range(0, min(len(val_dataloader.data_loader.dataset), 10))
                 ]
@@ -232,18 +234,18 @@ class UnetTrainer(Trainer):
         return self.model
 
     def _forward_step(
-        self,
-        device,
-        model: torch.nn.Module,
-        loader: torch.utils.data.DataLoader,
-        dataset_type: DatasetType,
-        c1Loss: torch.nn.Module,
-        c2Loss: torch.nn.Module,
-        ssim: StructuralSimilarityIndexMeasure,
-        optimizer: torch.optim.Optimizer,
-        training_progress: tqdm,
-        validation_progress: tqdm,
-        max_batches: int = 0,
+            self,
+            device,
+            model: torch.nn.Module,
+            loader: torch.utils.data.DataLoader,
+            dataset_type: DatasetType,
+            c1_loss: torch.nn.Module,
+            c2_loss: torch.nn.Module,
+            ssim: StructuralSimilarityIndexMeasure,
+            optimizer: torch.optim.Optimizer,
+            training_progress: tqdm,
+            validation_progress: tqdm,
+            max_batches: int = 0,
     ):
         perceptual_weight = 0.3
         loss_list = []
@@ -259,7 +261,7 @@ class UnetTrainer(Trainer):
                 optimizer.zero_grad()
                 outputs = model(source)
                 loss, perceptual, ssim_res = self._combined_criterion(
-                    c1Loss, c2Loss, ssim, perceptual_weight, outputs, target
+                    c1_loss, c2_loss, ssim, perceptual_weight, outputs, target
                 )
                 loss.backward()
                 optimizer.step()
@@ -270,7 +272,7 @@ class UnetTrainer(Trainer):
                     source = inputs["centered_mask_body"].to(device)
                     outputs = model(source)
                     loss, perceptual, ssim_res = self._combined_criterion(
-                        c1Loss, c2Loss, ssim, perceptual_weight, outputs, target
+                        c1_loss, c2_loss, ssim, perceptual_weight, outputs, target
                     )
                 validation_progress.update()
             loss_list.append(loss.item())

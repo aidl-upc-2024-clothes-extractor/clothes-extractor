@@ -13,6 +13,7 @@ import wandb
 from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
 import models.sotre.model_store as model_store
+from models.factory_model import get_model
 from trainer.factory_trainer import get_trainer
 
 from models.sotre.wandb_store import WandbStore
@@ -56,7 +57,13 @@ def main():
         for a in dir(old_cfg):
             if not a.startswith('__'):
                 print(f"    {a}: {getattr(old_cfg, a)}")
+        # Allow to overwrite the model name to support previous runs
+        if cfg.model_name is None:
+            old_cfg.model_name = cfg.model_name
         cfg = old_cfg
+
+    if cfg.model_name is None:
+        raise ValueError("model-name must be set")
             
     # TODO: get error level from config
     logger = logging.getLogger("clothes-logger")
@@ -112,18 +119,12 @@ def main():
     )
     print("Done")
 
-    model = smp.Unet(
-        encoder_name="resnet34",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=3,  # model output channels (number of classes in your dataset)
-        decoder_attention_type="scse"
-    ).to(device)
-
+    model, trainer_configuration = get_model(cfg.model_name)
+    model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
+    trainer_configuration.optimizer = optimizer
 
     epoch = 0
-    wabdb_id = None
     resume=None
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
@@ -135,6 +136,7 @@ def main():
     # WANDB
     wabdb_id = None
     wandb_run_name = None
+    wandb_run = None
     if cfg.disable_wandb:
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
@@ -142,7 +144,7 @@ def main():
         if reload_model is not None:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         if wabdb_id is not None:
-            resume=True
+            resume = True
         wandb.login()
         wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
         wandb_run = wandb.init(
@@ -166,7 +168,8 @@ def main():
         max_models_to_keep=cfg.max_models_to_keep
     )
 
-    trainer = get_trainer(UnetTrainerConfiguration(optimizer, model))  
+    trainer = get_trainer(trainer_configuration)
+
     trained_model = trainer.train_model(
         device=device,
         train_dataloader=train_dataloader,
