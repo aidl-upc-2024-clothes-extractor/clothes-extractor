@@ -85,8 +85,8 @@ class VGGPerceptualLoss(torch.nn.Module):
 
 
 class UnetTrainerConfiguration(TrainerConfiguration):
-    def __init__(self, model: Module):
-        super(UnetTrainerConfiguration, self).__init__("unet_v1", {"model": model})
+    def __init__(self, model: Module, scheduler: str = None):
+        super(UnetTrainerConfiguration, self).__init__("unet_v1", {"model": model, "scheduler": scheduler})
 
 
 class UnetTrainer(Trainer):
@@ -94,8 +94,11 @@ class UnetTrainer(Trainer):
         super(UnetTrainer, self).__init__()
         self.optimizer = trainer_configuration.optimizer
         self.model = trainer_configuration.configuration["model"]
-        if self.optimizer is None:
-            raise ValueError("Optimizer is required for UnetTrainer")
+        self.scheduler = None
+        if trainer_configuration.configuration["scheduler"] == "onecyclelr":
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
+                self.optimizer, max_lr=0.1, steps_per_epoch=100, epochs=70
+            )
 
     def _combined_criterion(
             self,
@@ -270,6 +273,8 @@ class UnetTrainer(Trainer):
                 )
                 loss.backward()
                 optimizer.step()
+                if self.scheduler is not None:
+                    self.scheduler.step()
                 training_progress.update()
             else:
                 with torch.no_grad():

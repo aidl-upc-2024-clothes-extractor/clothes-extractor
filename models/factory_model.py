@@ -5,6 +5,7 @@ from trainer.unet_trainer import UnetTrainerConfiguration
 
 
 def get_model(model_name: str):
+    model_name = model_name.lower()
     if model_name.startswith("unet"):
         unet_params = model_name.split("-")
         if len(unet_params) == 3:
@@ -18,7 +19,10 @@ def get_model(model_name: str):
             in_channels=3,
             classes=3,
         )
-        return model, UnetTrainerConfiguration(model)
+        scheduler = None
+        if "onecyclelr" in unet_params:
+            scheduler = "onecyclelr"
+        return model, UnetTrainerConfiguration(model, scheduler)
 
     else:
         raise ValueError(f"Model {model_name} not supported.")

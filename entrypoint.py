@@ -125,7 +125,7 @@ def main():
     trainer_configuration.optimizer = optimizer
 
     epoch = 0
-    resume=None
+    resume = None
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
             model=model, optimizer=optimizer, path=reload_model
