@@ -92,15 +92,10 @@ class UnetTrainerConfiguration(TrainerConfiguration):
 class UnetTrainer(Trainer):
     def __init__(self, trainer_configuration: UnetTrainerConfiguration):
         super(UnetTrainer, self).__init__()
+        self.scheduler = None
         self.optimizer = trainer_configuration.optimizer
         self.model = trainer_configuration.configuration["model"]
-        self.scheduler = None
-        if trainer_configuration.configuration["scheduler"] == "onecyclelr":
-            print("Using OneCycleLR scheduler")
-            self.scheduler = optim.lr_scheduler.OneCycleLR(
-                self.optimizer, max_lr=0.1, steps_per_epoch=100, epochs=70
-            )
-
+        self.add_scheduler = trainer_configuration.configuration["scheduler"] == "onecyclelr"
     def _combined_criterion(
             self,
             perceptual_loss: torch.nn.Module,
@@ -142,6 +137,14 @@ class UnetTrainer(Trainer):
         num_epochs = cfg.num_epochs
         max_batches = cfg.max_batches
         ssim_range = cfg.ssim_range
+
+        if self.add_scheduler:
+            max_lr = cfg.learning_rate / 0.06
+            steps_per_epoch = 100
+            print(f"Using OneCycleLR: max_lr={max_lr} steps_per_epoch={steps_per_epoch} ")
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
+                self.optimizer, max_lr=max_lr, steps_per_epoch=100, epochs=cfg.num_epochs
+            )
 
         c1_loss = VGGPerceptualLoss().to(device)  # None
         c2_loss = L1Loss()  # None
