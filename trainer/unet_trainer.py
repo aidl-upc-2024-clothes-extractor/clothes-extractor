@@ -96,6 +96,7 @@ class UnetTrainer(Trainer):
         self.model = trainer_configuration.configuration["model"]
         self.scheduler = None
         if trainer_configuration.configuration["scheduler"] == "onecyclelr":
+            print("Using OneCycleLR scheduler")
             self.scheduler = optim.lr_scheduler.OneCycleLR(
                 self.optimizer, max_lr=0.1, steps_per_epoch=100, epochs=70
             )

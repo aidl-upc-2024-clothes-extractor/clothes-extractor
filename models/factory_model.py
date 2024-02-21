@@ -19,6 +19,7 @@ def get_model(model_name: str):
             in_channels=3,
             classes=3,
         )
+        print(f"Using Unet:\n\t encoder_name={unet_params[1]}\n\t encoder_weights={unet_params[2]}\n\t decoder_attention_type={unet_params[3]}")
         scheduler = None
         if "onecyclelr" in unet_params:
             scheduler = "onecyclelr"
