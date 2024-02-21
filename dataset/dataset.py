@@ -246,6 +246,8 @@ class ClothesDataLoader:
             num_workers=num_workers,
             pin_memory=pin_memory,
             drop_last=True,
+            persistent_workers=True,
+            prefetch_factor=4
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()
