@@ -239,6 +239,11 @@ class ClothesDataLoader:
     ):
         super(ClothesDataLoader, self).__init__()
 
+        prefetch_factor = None
+        persistent_workers = False
+        if num_workers > 1:
+            prefetch_factor = 4
+            persistent_workers = True
         self.data_loader = data.DataLoader(
             dataset,
             batch_size=batch_size,
@@ -246,8 +251,8 @@ class ClothesDataLoader:
             num_workers=num_workers,
             pin_memory=pin_memory,
             drop_last=True,
-            persistent_workers=True,
-            prefetch_factor=4
+            persistent_workers=persistent_workers,
+            prefetch_factor=prefetch_factor
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()
