@@ -232,7 +232,7 @@ def split_clothes_dataset(dataset: ClothesDataset, split: list, generator=None):
     if generator is None:
         generator = torch.Generator().manual_seed(42)
     if split[0] <= 1:
-        train_size = int(0.8 * len(split[0]))
+        train_size = int(split[0] * len(split[0]))
         test_size = len(dataset) - train_size
     else:
         train_size = split[0]
