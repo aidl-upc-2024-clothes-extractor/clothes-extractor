@@ -1,4 +1,3 @@
-import argparse
 from argparse_dataclass import ArgumentParser
 import logging
 import os
@@ -13,13 +12,11 @@ import wandb
 
 from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
-from models.unet import Unet
-import models.model_store as model_store
+import models.sotre.model_store as model_store
 from trainer.factory_trainer import get_trainer
-from trainer.trainer import train_model
 
-from models.wandb_store import WandbStore
-from models.dummy_wandb_store import DummyWandbStorer
+from models.sotre.wandb_store import WandbStore
+from models.sotre.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
 from trainer.unet_trainer import UnetTrainerConfiguration

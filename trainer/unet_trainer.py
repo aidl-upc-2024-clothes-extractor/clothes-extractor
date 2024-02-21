@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.nn import Module
 from torch.nn import L1Loss
 from config import Config
-from models.wandb_store import WandbStore
+from models.sotre.wandb_store import WandbStore
 from metrics.logger import Logger
 from trainer.trainer import Trainer
 from trainer.trainer_configuration import TrainerConfiguration
@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 from dataset.dataset import ClothesDataset
 
 import torchvision
-from models.model_store import ModelStore
+from models.sotre.model_store import ModelStore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 
 

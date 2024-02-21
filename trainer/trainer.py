@@ -4,8 +4,8 @@ from logging import Logger
 from torch.nn import Module
 
 from config import Config
-from models.model_store import ModelStore
-from models.wandb_store import WandbStore
+from models.sotre.model_store import ModelStore
+from models.sotre.wandb_store import WandbStore
 
 
 class Trainer(ABC):
