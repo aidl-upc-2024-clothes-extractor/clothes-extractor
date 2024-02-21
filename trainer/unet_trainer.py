@@ -150,6 +150,8 @@ class UnetTrainer(Trainer):
         training_progress = tqdm(total=training_steps, desc="Training progress")
         validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
+        checkpoint_file = ""
+
         for epoch in range(num_epochs):
             # Fix for tqdm not starting from start_from_epoch
             if epoch < start_from_epoch:
@@ -199,8 +201,6 @@ class UnetTrainer(Trainer):
             checkpoint_file = local_model_store.save_model(
                 cfg, self.model, self.optimizer, epoch, train_loss_avg, val_loss_avg
             )
-            if (epoch + 1) % 2 == 0 or epoch + 1 == num_epochs:
-                remote_model_store.save_model(checkpoint_file)
 
             logger.log_training(
                 epoch, train_loss_avg, val_loss_avg, perceptual_loss_avg, ssim_loss_avg
@@ -229,6 +229,11 @@ class UnetTrainer(Trainer):
                 logger.log_images(epoch, ten_train, ten_val)
 
             epochs.update()
+
+            if len(local_model_store.models_saved) > 0:
+                remote_model_store.save_model(local_model_store.models_saved[-1][0])
+            else:
+                remote_model_store.save_model(checkpoint_file)
 
         print("Training completed!")
         return self.model
