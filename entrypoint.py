@@ -15,12 +15,14 @@ from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dat
 from config import Config
 from models.unet import Unet
 import models.model_store as model_store
+from trainer.factory_trainer import get_trainer
 from trainer.trainer import train_model
 
 from models.wandb_store import WandbStore
 from models.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
+from trainer.unet_trainer import UnetTrainerConfiguration
 
 
 def run_model_on_image(model, device, dataset, image_index):
@@ -166,9 +168,9 @@ def main():
         wabdb_id=wabdb_id,
         max_models_to_keep=cfg.max_models_to_keep
     )
-    trained_model = train_model(
-        optimizer=optimizer,
-        model=model,
+
+    trainer = get_trainer(UnetTrainerConfiguration(optimizer, model))  
+    trained_model = trainer.train_model(
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=validation_dataloader,

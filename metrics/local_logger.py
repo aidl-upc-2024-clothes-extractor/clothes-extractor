@@ -13,7 +13,7 @@ from datetime import datetime
 class LocalLogger(Logger):
 
     def __init__(self):
-        pass
+        super().__init__()
 
     def log_training(
             self,

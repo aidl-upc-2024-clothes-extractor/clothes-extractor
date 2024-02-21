@@ -16,6 +16,7 @@ class WandbLogger(Logger):
         self,
         wandb_run,
     ):
+        super().__init__()
         self.run = wandb_run
 
     def log_training(
