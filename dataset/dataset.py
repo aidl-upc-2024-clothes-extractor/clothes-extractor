@@ -27,7 +27,7 @@ class ClothesDataset(data.Dataset):
     """
     dataset_mode must be 'test' or 'train'
     """
-    
+
     def __init__(self, cfg, dataset_mode, device="cpu"):
         super(ClothesDataset).__init__()
         self.cfg = cfg
@@ -37,9 +37,9 @@ class ClothesDataset(data.Dataset):
             [
                 RGBAtoRGBWhiteBlack(),
                 MakeSquareWithPad(),
-                ToFloatTensor(), # From 255 to 0 - 1
+                ToFloatTensor(),  # From 255 to 0 - 1
                 transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # From 0 - 1 to -1 - 1
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # From 0 - 1 to -1 - 1
             ]
         )
         dataset_list = f"{dataset_mode}_pairs.txt"
@@ -226,16 +226,23 @@ class ClothesDataset(data.Dataset):
             image = image.convert("RGB")
         transform = transforms.ToTensor()
         return transform(image)
-    
-def split_clothes_dataset(dataset: ClothesDataset, split: list, generator = None):
+
+
+def split_clothes_dataset(dataset: ClothesDataset, split: list, generator=None):
     if generator is None:
         generator = torch.Generator().manual_seed(42)
-    return torch.utils.data.random_split(dataset, split, generator=generator)
+    if split[0] <= 1:
+        train_size = int(0.8 * len(split[0]))
+        test_size = len(dataset) - train_size
+    else:
+        train_size = split[0]
+        test_size = split[1]
+    return torch.utils.data.random_split(dataset, [train_size, test_size], generator=generator)
 
 
 class ClothesDataLoader:
     def __init__(
-        self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False
+            self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False
     ):
         super(ClothesDataLoader, self).__init__()
 
@@ -265,4 +272,3 @@ class ClothesDataLoader:
             batch = self.data_iter.__next__()
 
         return batch
-    
