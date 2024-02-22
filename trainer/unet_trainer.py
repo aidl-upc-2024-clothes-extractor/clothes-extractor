@@ -139,9 +139,8 @@ class UnetTrainer(Trainer):
         max_batches = cfg.max_batches
         ssim_range = cfg.ssim_range
 
-
-        c1_loss = VGGPerceptualLoss().to(device)  # None
-        c2_loss = L1Loss()  # None
+        c1_loss = VGGPerceptualLoss().to(device)
+        c2_loss = L1Loss()
         ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
         epochs = tqdm(total=num_epochs, desc="Epochs", initial=start_from_epoch)
