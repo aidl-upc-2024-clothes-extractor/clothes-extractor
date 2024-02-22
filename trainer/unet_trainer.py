@@ -61,12 +61,8 @@ class VGGPerceptualLoss(torch.nn.Module):
         input = (input - self.mean) / self.std
         target = (target - self.mean) / self.std
         if self.resize:
-            input = self.transform(
-                input, mode="bilinear", size=(224, 224), align_corners=False
-            )
-            target = self.transform(
-                target, mode="bilinear", size=(224, 224), align_corners=False
-            )
+            input = self.transform(input, mode="bilinear", size=(224, 224), align_corners=False)
+            target = self.transform(target, mode="bilinear", size=(224, 224), align_corners=False)
         loss = 0.0
         x = input
         y = target
