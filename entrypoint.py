@@ -135,7 +135,6 @@ def main():
 
     # WANDB
     wabdb_id = None
-    wandb_run_name = None
     wandb_run = None
     if cfg.disable_wandb:
         wandb_store = DummyWandbStorer()
@@ -146,7 +145,7 @@ def main():
         if wabdb_id is not None:
             resume = True
         wandb.login()
-        wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
+        wandb_run_name = cfg.model_name
         wandb_run = wandb.init(
             project="clothes-extractor",
             entity="clothes-extractor",
