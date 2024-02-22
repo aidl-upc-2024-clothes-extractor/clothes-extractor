@@ -143,7 +143,7 @@ class UnetTrainer(Trainer):
             steps_per_epoch = 100
             print(f"Using OneCycleLR: max_lr={max_lr} steps_per_epoch={steps_per_epoch} ")
             self.scheduler = optim.lr_scheduler.OneCycleLR(
-                self.optimizer, max_lr=max_lr, steps_per_epoch=100, epochs=cfg.num_epochs
+                self.optimizer, max_lr=max_lr, steps_per_epoch=steps_per_epoch, epochs=cfg.num_epochs
             )
 
         c1_loss = VGGPerceptualLoss().to(device)  # None
@@ -156,8 +156,6 @@ class UnetTrainer(Trainer):
         validation_steps = len(val_dataloader.data_loader)
         training_progress = tqdm(total=training_steps, desc="Training progress")
         validation_progress = tqdm(total=validation_steps, desc="Validation progress")
-
-        checkpoint_file = ""
 
         for epoch in range(num_epochs):
             # Fix for tqdm not starting from start_from_epoch
@@ -214,22 +212,12 @@ class UnetTrainer(Trainer):
             )
             with torch.no_grad():
                 ten_train = [
-                    self.model(
-                        train_dataloader.data_loader.dataset[i]["centered_mask_body"]
-                            .to(device)
-                            .unsqueeze(0)
-                    )
-                    for i in range(
-                        0, min(len(train_dataloader.data_loader.dataset), 10)
-                    )
+                    self.model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0))
+                    for i in range(0, min(len(train_dataloader.data_loader.dataset), 10))
                 ]
                 ten_train = [ClothesDataset.unnormalize(x) for x in ten_train]
                 ten_val = [
-                    self.model(
-                        val_dataloader.data_loader.dataset[i]["centered_mask_body"]
-                            .to(device)
-                            .unsqueeze(0)
-                    )
+                    self.model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0))
                     for i in range(0, min(len(val_dataloader.data_loader.dataset), 10))
                 ]
                 ten_val = [ClothesDataset.unnormalize(x) for x in ten_val]
@@ -245,6 +233,7 @@ class UnetTrainer(Trainer):
         print("Training completed!")
         return self.model
 
+    counter_scheduler = 0
     def _forward_step(
             self,
             device,
@@ -278,6 +267,8 @@ class UnetTrainer(Trainer):
                 loss.backward()
                 optimizer.step()
                 if self.scheduler is not None:
+                    self.counter_scheduler += 1
+                    print(f"Step {self.counter_scheduler}")
                     self.scheduler.step()
                 training_progress.update()
             else:
