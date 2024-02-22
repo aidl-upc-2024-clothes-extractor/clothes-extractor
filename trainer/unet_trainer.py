@@ -138,25 +138,26 @@ class UnetTrainer(Trainer):
         max_batches = cfg.max_batches
         ssim_range = cfg.ssim_range
 
-        if self.add_scheduler:
-            max_lr = cfg.learning_rate / 0.06
-            steps_per_epoch = 100
-            print(f"Using OneCycleLR: max_lr={max_lr} steps_per_epoch={steps_per_epoch} ")
-            self.scheduler = optim.lr_scheduler.OneCycleLR(
-                self.optimizer, max_lr=max_lr, steps_per_epoch=steps_per_epoch, epochs=cfg.num_epochs
-            )
 
         c1_loss = VGGPerceptualLoss().to(device)  # None
         c2_loss = L1Loss()  # None
         ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
-        print("Training started")
         epochs = tqdm(total=num_epochs, desc="Epochs", initial=start_from_epoch)
         training_steps = len(train_dataloader.data_loader)
         validation_steps = len(val_dataloader.data_loader)
         training_progress = tqdm(total=training_steps, desc="Training progress")
         validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
+        if self.add_scheduler:
+            max_lr = cfg.learning_rate / 0.06
+            steps_per_epoch = training_steps
+            print(f"Using OneCycleLR: max_lr={max_lr} steps_per_epoch={steps_per_epoch} ")
+            self.scheduler = optim.lr_scheduler.OneCycleLR(
+                self.optimizer, max_lr=max_lr, steps_per_epoch=steps_per_epoch, epochs=cfg.num_epochs
+            )
+
+        print("Training started")
         for epoch in range(num_epochs):
             # Fix for tqdm not starting from start_from_epoch
             if epoch < start_from_epoch:
@@ -233,7 +234,6 @@ class UnetTrainer(Trainer):
         print("Training completed!")
         return self.model
 
-    counter_scheduler = 0
     def _forward_step(
             self,
             device,
@@ -267,8 +267,6 @@ class UnetTrainer(Trainer):
                 loss.backward()
                 optimizer.step()
                 if self.scheduler is not None:
-                    self.counter_scheduler += 1
-                    print(f"Step {self.counter_scheduler}")
                     self.scheduler.step()
                 training_progress.update()
             else:
