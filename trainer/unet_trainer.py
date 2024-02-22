@@ -96,6 +96,7 @@ class UnetTrainer(Trainer):
         self.optimizer = trainer_configuration.optimizer
         self.model = trainer_configuration.configuration["model"]
         self.add_scheduler = trainer_configuration.configuration["scheduler"] == "onecyclelr"
+
     def _combined_criterion(
             self,
             perceptual_loss: torch.nn.Module,
