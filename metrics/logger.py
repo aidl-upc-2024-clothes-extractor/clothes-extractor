@@ -5,7 +5,8 @@ import torch.nn as nn
 from typing import Optional
 import matplotlib.pyplot as plt
 
-from trainer.trainer import LossTracker
+from trainer.common_trainer import LossTracker
+
 
 class Logger(ABC):
     def __init__(self):

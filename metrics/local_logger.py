@@ -8,7 +8,7 @@ from metrics.logger import Logger
 
 from datetime import datetime
 
-from trainer.trainer import LossTracker
+from trainer.common_trainer import LossTracker
 
 
 class LocalLogger(Logger):
