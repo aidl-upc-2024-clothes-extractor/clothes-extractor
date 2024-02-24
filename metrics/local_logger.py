@@ -25,6 +25,6 @@ class LocalLogger(Logger):
         print(f"epoch {epoch} train_loss {np.mean(train_loss_avg)} val_loss {np.mean(val_loss_avg)} ssim {np.mean(val_ssim_avg):.5} perceptual {np.mean(val_perceptual_avg):.5}")
 
     def log_images(
-        self, epoch: int, train_images: torch.Tensor, val_images: torch.Tensor
+            self, epoch: int, train_images: torch.Tensor, val_images: torch.Tensor, train_target: torch.Tensor, val_target: torch.Tensor
     ):
         pass
