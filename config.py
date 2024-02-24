@@ -4,10 +4,10 @@ import argparse
 @dataclass
 class Config:
     # General config
-    batch_size: int = 64
+    batch_size: int = 32
     workers: int = 0
     dataset_dir: str = 'data/zalando-hd-resized'
-    num_epochs: int = 30
+    num_epochs: int = 1000
     learning_rate: float = 0.0003
     discriminator_learning_rate: float = 0.0002
     load_height: int = 224 # Must be divisible by 32
