@@ -178,11 +178,14 @@ def train_model(
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
         with torch.no_grad():
-            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 16)]
+            num_images_remote = 16
+            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, num_images_remote)]
             ten_train = [ClothesDataset.unnormalize(x) for x in ten_train]
-            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 16)]
+            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, num_images_remote)]
             ten_val = [ClothesDataset.unnormalize(x) for x in ten_val]
-            logger.log_images(epoch, ten_train, ten_val)
+            train_target = [ClothesDataset.unnormalize(train_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0)) for i in range(0, num_images_remote)]
+            val_target = [ClothesDataset.unnormalize(val_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0)) for i in range(0, num_images_remote)]
+            logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
 
         epochs.update()
 
