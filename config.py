@@ -9,6 +9,7 @@ class Config:
     dataset_dir: str = 'data/zalando-hd-resized'
     num_epochs: int = 30
     learning_rate: float = 0.0003
+    discriminator_learning_rate: float = 0.0002
     load_height: int = 224 # Must be divisible by 32
     load_width: int = 224 # Must be divisible by 32
     dataloader_pin_memory: bool = False
@@ -43,6 +44,7 @@ class Config:
     ssim_range: float = 1.0
     disable_wandb: bool = False
     resume_wandb: bool = False
+    previous_wandb_id: str = None
     checkpoint_save_frequency: int = 1
     wandb_save_checkpoint: bool = False
     model_name: str = "default"

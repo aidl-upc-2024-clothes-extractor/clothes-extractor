@@ -131,6 +131,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     optimizerD = optim.Adam(discriminator.parameters(), lr=cfg.discriminator_learning_rate, betas=(0.5, 0.999))
     trainer_configuration.optimizer = optimizer
+    trainer_configuration.optimizerD = optimizerD
 
     epoch = 0
     resume = None
