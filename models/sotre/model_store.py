@@ -46,7 +46,7 @@ class ModelStore():
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
 
-    def save_model(self, cfg: Config, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, epoch: int, loss: float, val_loss:float, model_name: str = "default_model_name"):
+    def save_model(self, cfg: Config, model: nn.Module,  optimizer: optim, epoch: int, loss: float, val_loss:float, discriminator: nn.Module = None, optimizerD: optim = None, model_name: str = "default_model_name"):
         """
         Save a model to disk.
 
@@ -57,13 +57,16 @@ class ModelStore():
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
-            'discriminator_state_dict': discriminator.state_dict(),
-            'optimizerD_state_dict': optimizerD.state_dict(),
             'loss': loss,
             'val_loss': val_loss,
             'wabdb_id': self.wabdb_id,
             'config': cfg
         }
+        if discriminator is not None:
+            saving_dict['discriminator_state_dict'] = discriminator.state_dict()
+        if optimizerD is not None:
+            saving_dict['optimizerD_state_dict'] = optimizerD.state_dict()
+
         torch.save(saving_dict, filename)
         if self.max_models_to_keep is not None:
             self.models_saved.sort(key=lambda x: x[1])
