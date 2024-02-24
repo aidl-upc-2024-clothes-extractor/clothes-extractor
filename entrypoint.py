@@ -1,10 +1,8 @@
 from argparse_dataclass import ArgumentParser
 import logging
 import os
-from datetime import datetime
 
 import torch
-from trainer.trainer import train_model
 
 
 import matplotlib.pyplot as plt
@@ -14,7 +12,6 @@ import wandb
 from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
 from models.unet import Unet
-from trainer.trainer import train_model
 import models.sotre.model_store as model_store
 from models.factory_model import get_model
 from trainer.factory_trainer import get_trainer
@@ -23,7 +20,6 @@ from models.sotre.wandb_store import WandbStore
 from models.sotre.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
-from trainer.unet_trainer import UnetTrainerConfiguration
 from torch import optim
 
 
