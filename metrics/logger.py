@@ -4,18 +4,14 @@ import torch.nn as nn
 from typing import Optional
 import matplotlib.pyplot as plt
 
+from trainer.trainer import LossTracker
+
 class Logger:
 
     def log_training(
         self,
         epoch: int,
-        train_loss_avg: np.ndarray,
-        val_loss_avg: np.ndarray,
-        ssim: np.ndarray,
-        perceptual: np.ndarray,
-        train_generator_loss_avg: np.ndarray,
-        eval_generator_loss_avg: np.ndarray,
-        train_discriminator_loss_avg: np.ndarray,
+        loss_tracker: LossTracker,
     ):
         raise NotImplementedError
 

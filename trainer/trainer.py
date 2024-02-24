@@ -15,6 +15,38 @@ import torchvision
 from models.model_store import ModelStore
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 
+class LossTracker:
+    def __init__(self, epoch: int):
+        self.epoch = epoch
+        self.train_l1 = []
+        self.val_l1 = []
+        self.train_perceptual = []
+        self.val_perceptual = []
+        self.train_ssim = []
+        self.val_ssim = []
+        self.train_generator_loss = []
+        self.val_generator_loss = []
+        self.train_discriminator_loss = []
+        self.train_loss = []
+        self.val_loss = []
+
+    def get_avgs(self):
+        train_l1_avg = np.mean(self.train_l1)
+        val_l1_avg = np.mean(self.val_l1)
+        train_perceptual_avg = np.mean(self.train_perceptual)
+        val_perceptual_avg = np.mean(self.val_perceptual)
+        train_ssim_avg = np.mean(self.train_ssim)
+        val_ssim_avg = np.mean(self.val_ssim)
+        train_generator_loss_avg = np.mean(self.train_generator_loss)
+        val_generator_loss_avg = np.mean(self.val_generator_loss)
+        train_discriminator_loss_avg = np.mean(self.train_discriminator_loss)
+
+        train_loss_avg = np.mean(self.train_loss)
+        val_loss_avg = np.mean(self.val_loss)
+
+        return train_l1_avg, val_l1_avg, train_perceptual_avg, val_perceptual_avg, train_ssim_avg, val_ssim_avg, train_generator_loss_avg, val_generator_loss_avg, train_discriminator_loss_avg, train_loss_avg, val_loss_avg
+
+
 class VGGPerceptualLoss(torch.nn.Module):
     def __init__(self, resize=True):
         super(VGGPerceptualLoss, self).__init__()
@@ -69,10 +101,12 @@ def combined_criterion(
         target,
 ):
     result = 0
+    l1 = 0
     perceptual = 0
     ssim_res = 0
     if l1_loss is not None:
-        result += 100 * l1_loss(outputs, target)
+        l1 = 100 * l1_loss(outputs, target)
+        result += l1
     outputs = outputs / 2 + 0.5
     target = target / 2 + 0.5
     if perceptual_loss is not None:
@@ -84,7 +118,7 @@ def combined_criterion(
         # result += ssim_res
     if errG is not None:
         result += errG
-    return result, perceptual, ssim_res
+    return result, l1, perceptual, ssim_res
 
 
 
@@ -124,7 +158,8 @@ def train_model(
         training_progress.reset()
         validation_progress.reset()
         model.train()
-        train_loss, _, _, train_generator_loss, discriminator_loss = forward_step(
+        loss_tracker = LossTracker(epoch)
+        forward_step(
             device,
             model,
             train_dataloader.data_loader,
@@ -137,15 +172,12 @@ def train_model(
             validation_progress,
             discriminator,
             optimizerD,
+            loss_tracker,
             max_batches
         )
-        train_loss_avg = np.mean(train_loss)
-        train_generator_loss_avg = np.mean(train_generator_loss)
-        train_discriminator_loss_avg = np.mean(discriminator_loss)
-
 
         model.eval()
-        val_loss, percetual_loss, ssim_loss, generator_loss, _ = forward_step(
+        loss_tracker = forward_step(
             device,
             model,
             val_dataloader.data_loader,
@@ -158,14 +190,11 @@ def train_model(
             validation_progress,
             discriminator,
             optimizerD,
+            loss_tracker,
             max_batches
         )
-        val_loss_avg = np.mean(val_loss)
-        percetual_loss_avg = np.mean(percetual_loss)
-        ssim_loss_avg = np.mean(ssim_loss)
-        eval_generator_loss_avg = np.mean(generator_loss)
 
-
+        _, _, _, _, _, _, _, _, _, train_loss_avg, val_loss_avg = loss_tracker.get_avgs()
         tqdm.write(f'Epoch [{epoch+1}/{num_epochs}], '
               f'Train Loss: {train_loss_avg:.4f}, '
               f'Validation Loss: {val_loss_avg:.4f}')
@@ -176,7 +205,7 @@ def train_model(
             if cfg.wandb_save_checkpoint:
                 remote_model_store.save_model(checkpoint_file)
 
-        logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
+        logger.log_training(epoch, loss_tracker)
         with torch.no_grad():
             num_images_remote = 16
             ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, num_images_remote)]
@@ -206,14 +235,10 @@ def forward_step(
         validation_progress: tqdm,
         discriminator: torch.nn.Module,
         optimizerD: torch.optim.Optimizer,
+        loss_tracker: LossTracker,
         max_batches: int = 0,
 ):
     perceptual_weight = 0.3
-    loss_list = []
-    perceptual_list = []
-    ssim_list = []
-    generator_loss = []
-    discriminator_loss = []
 
     Dcriterion = torch.nn.BCELoss()
 
@@ -238,22 +263,30 @@ def forward_step(
             ones = torch.ones(output.shape, dtype=torch.float, device=device)
             output = discriminator(source, pred).squeeze()
             errG = Dcriterion(output, ones)
-            loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
+            loss, l1, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
             loss.backward()
             optimizer.step()
             training_progress.update()
-            discriminator_loss.append(errD.item())
+            
+            loss_tracker.train_l1.append(l1.item())
+            loss_tracker.train_perceptual.append(perceptual.item())
+            loss_tracker.train_ssim.append(ssim_res.item())
+            loss_tracker.train_generator_loss.append(errG.item())
+            loss_tracker.train_discriminator_loss.append(errD.item())
+            loss_tracker.train_loss.append(loss.item())
+            
         else:
             with torch.no_grad():
                 pred = model(source)
                 ones = torch.ones(output.shape, dtype=torch.float, device=device)
                 output = discriminator(source, pred).squeeze()
                 errG = Dcriterion(output, ones)
-                loss, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
+                loss, l1, perceptual, ssim_res = combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
+            
+            loss_tracker.val_l1.append(l1.item())
+            loss_tracker.val_perceptual.append(perceptual.item())
+            loss_tracker.val_ssim.append(ssim_res.item())
+            loss_tracker.val_generator_loss.append(errG.item())
+            loss_tracker.val_loss.append(loss.item())
             validation_progress.update()
-        loss_list.append(loss.item())
-        perceptual_list.append(perceptual.item())
-        ssim_list.append(ssim_res.item())
-        generator_loss.append(errG.item())
 
-    return loss_list, perceptual_list, ssim_list, generator_loss, discriminator_loss
