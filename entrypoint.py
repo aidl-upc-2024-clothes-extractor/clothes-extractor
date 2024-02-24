@@ -138,7 +138,7 @@ def main():
     trainer_configuration.optimizerD = optimizerD
 
     epoch = 0
-    resume = None
+    resume = cfg.no_resume_wandb is False
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
             model=model, optimizer=optimizer, path=reload_model,

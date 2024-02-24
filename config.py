@@ -43,7 +43,7 @@ class Config:
     reload_config: bool = None
     ssim_range: float = 1.0
     disable_wandb: bool = False
-    resume_wandb: bool = False
+    no_resume_wandb: bool = False
     previous_wandb_id: str = None
     checkpoint_save_frequency: int = 1
     wandb_save_checkpoint: bool = False
