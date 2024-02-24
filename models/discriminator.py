@@ -40,6 +40,8 @@ class Discriminator(nn.Module):
         self.main = DiscriminatorReduction()
 
     def resize(self, im):
+        if im.shape[2] == 224 and im.shape[3] == 224:
+            return im
         return nn.functional.interpolate(im, size=(224, 224), mode='bilinear', align_corners=True)
     
     def forward(self, i1, source):
