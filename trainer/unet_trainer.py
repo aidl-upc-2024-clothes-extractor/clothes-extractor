@@ -32,6 +32,7 @@ class UnetTrainer(Trainer):
         self.model = trainer_configuration.configuration["model"]
         self.add_scheduler = trainer_configuration.configuration["scheduler"] == "onecyclelr"
 
+
     def _combined_criterion(
             self,
             perceptual_loss: torch.nn.Module,
@@ -41,25 +42,18 @@ class UnetTrainer(Trainer):
             outputs,
             target,
     ):
-        result = 0
-        perceptual = 0
-        ssim_res = 0
-        l1 = 0
-
-        if l1_loss is not None:
-            l1 = l1_loss(outputs, target)
-            result += l1
+        l1 = l1_loss(outputs, target)
+        result = l1
 
         outputs = ClothesDataset.unnormalize(outputs)
         target = ClothesDataset.unnormalize(target)
 
-        if perceptual_loss is not None:
-            # It is important to unnormalize the images before passing them to the perceptual loss
-            perceptual = c1_weight * perceptual_loss(outputs, target)
-            result += perceptual
-        if ssim is not None:
-            ssim_res = ssim.data_range - ssim(outputs, target)
-            result += ssim_res
+        # It is important to unnormalize the images before passing them to the perceptual loss
+        perceptual = c1_weight * perceptual_loss(outputs, target)
+        result += perceptual
+
+        ssim_res = ssim.data_range - ssim(outputs, target)
+        result += ssim_res
         return result, l1, perceptual, ssim_res
 
     def train_model(

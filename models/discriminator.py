@@ -44,11 +44,11 @@ class Discriminator(nn.Module):
             return im
         return nn.functional.interpolate(im, size=(224, 224), mode='bilinear', align_corners=True)
     
-    def forward(self, i1, source):
-        i1 = self.resize(i1)
+    def forward(self, input, source):
+        input = self.resize(input)
         source = self.resize(source)
 
-        concated = torch.cat((i1, source), 1)
+        concated = torch.cat((input, source), 1)
         
         return self.main(concated)
         

@@ -42,29 +42,22 @@ class CGANTrainer(Trainer):
             outputs,
             target,
     ):
-        result = 0
-        l1 = 0
-        perceptual = 0
-        ssim_res = 0
-        if l1_loss is not None:
-            l1 = 100 * l1_loss(outputs, target)
-            result += l1
+        l1 = 100 * l1_loss(outputs, target)
+        result = l1
         
         outputs = ClothesDataset.unnormalize(outputs)
         target = ClothesDataset.unnormalize(target)
         
-        if perceptual_loss is not None:
-            # It is important to unnormalize the images before passing them to the perceptual loss
-            perceptual = c1_weight * perceptual_loss(outputs, target)
-            # result += perceptual
-        if ssim is not None:
-            ssim_res = (ssim.data_range-ssim(outputs, target))
-            # result += ssim_res
-        if errG is not None:
-            result += errG
+        # It is important to unnormalize the images before passing them to the perceptual loss
+        perceptual = c1_weight * perceptual_loss(outputs, target)
+        # result += perceptual
+
+        ssim_res = (ssim.data_range-ssim(outputs, target))
+        # result += ssim_res
+
+        result += errG
+
         return result, l1, perceptual, ssim_res
-
-
 
     def train_model(
         self,
