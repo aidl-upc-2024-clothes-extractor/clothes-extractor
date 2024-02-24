@@ -1,4 +1,3 @@
-import argparse
 from dataset.dataset import ClothesDataset, ClothesDataLoader
 from config import Config
 from argparse_dataclass import ArgumentParser
@@ -6,11 +5,10 @@ from argparse_dataclass import ArgumentParser
 import torch
 #from models.unet import  Unet
 import segmentation_models_pytorch as smp
-from trainer.trainer import train_model
 import matplotlib.pyplot as plt
 import numpy as np
 import torch.optim as optim
-import models.model_store as model_store
+import models.sotre.model_store as model_store
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 import torchvision.transforms as T
 

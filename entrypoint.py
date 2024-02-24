@@ -1,4 +1,3 @@
-import argparse
 from argparse_dataclass import ArgumentParser
 import logging
 import os
@@ -12,17 +11,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import wandb
 
-from dataset.dataset import ClothesDataset, ClothesDataLoader
+from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
 from models.unet import Unet
-import models.model_store as model_store
 from trainer.trainer import train_model
-from model_instantiate import get_model
+import models.sotre.model_store as model_store
+from models.factory_model import get_model
+from trainer.factory_trainer import get_trainer
 
-from models.wandb_store import WandbStore
-from models.dummy_wandb_store import DummyWandbStorer
+from models.sotre.wandb_store import WandbStore
+from models.sotre.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
+from trainer.unet_trainer import UnetTrainerConfiguration
+from torch import optim
 
 
 def run_model_on_image(model, device, dataset, image_index):
@@ -62,7 +64,13 @@ def main():
         for a in dir(old_cfg):
             if not a.startswith('__'):
                 print(f"    {a}: {getattr(old_cfg, a)}")
+        # Allow to overwrite the model name to support previous runs
+        if cfg.model_name is None:
+            old_cfg.model_name = cfg.model_name
         cfg = old_cfg
+
+    if cfg.model_name is None:
+        raise ValueError("model-name must be set")
             
     # TODO: get error level from config
     logger = logging.getLogger("clothes-logger")
@@ -93,11 +101,19 @@ def main():
     dataset_device = cfg.dataset_device
     if dataset_device == "default":
         dataset_device = device
-    test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
-    train_dataset = ClothesDataset(cfg, "train", device=dataset_device)
 
-    test_dataloader = ClothesDataLoader(
-        test_dataset,
+    full_dataset = ClothesDataset(cfg, "train", device=dataset_device)
+    #test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
+    train_dataset, validation_dataset = split_clothes_dataset(full_dataset, [0.9, 0.1], generator=None)
+
+    # test_dataloader = ClothesDataLoader(
+    #     test_dataset,
+    #     cfg.batch_size,
+    #     num_workers=cfg.workers,
+    #     pin_memory=cfg.dataloader_pin_memory,
+    # )
+    validation_dataloader = ClothesDataLoader(
+        validation_dataset,
         cfg.batch_size,
         num_workers=cfg.workers,
         pin_memory=cfg.dataloader_pin_memory,
@@ -110,12 +126,14 @@ def main():
     )
     print("Done")
 
-    
+    model, trainer_configuration, discriminator = get_model(cfg.model_name)
+    model.to(device)
+    optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
+    optimizerD = optim.Adam(discriminator.parameters(), lr=cfg.discriminator_learning_rate, betas=(0.5, 0.999))
+    trainer_configuration.optimizer = optimizer
 
     epoch = 0
-    wabdb_id = None
-    resume=cfg.resume_wandb
-    model, optimizer, discriminator, optimizerD = get_model(cfg, device)
+    resume = None
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
             model=model, optimizer=optimizer, path=reload_model,
@@ -125,16 +143,18 @@ def main():
         print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
 
     # WANDB
-    wabdb_id = None
-    wandb_run_name = None
+    wabdb_id = cfg.previous_wandb_id
+    wandb_run = None
     if cfg.disable_wandb:
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
         if resume is not False:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
+        if wabdb_id is not None:
+            resume = True
         wandb.login()
-        wandb_run_name = f'{datetime.now().strftime("%Y%m%d-%H%M")}'
+        wandb_run_name = cfg.model_name
         print(f'Starting wandb run with name {wandb_run_name} and id {wabdb_id} and resume={resume}')
         wandb_run = wandb.init(
             project="clothes-extractor",
@@ -156,14 +176,13 @@ def main():
         wabdb_id=wabdb_id,
         max_models_to_keep=cfg.max_models_to_keep
     )
-    trained_model = train_model(
-        optimizer=optimizer,
-        model=model,
-        optimizerD=optimizerD,
-        discriminator=discriminator,
+
+    trainer = get_trainer(trainer_configuration)
+
+    trained_model = trainer.train_model(
         device=device,
         train_dataloader=train_dataloader,
-        val_dataloader=test_dataloader,
+        val_dataloader=validation_dataloader,
         cfg=cfg,
         logger=wandb_logger,
         remote_model_store=wandb_store,

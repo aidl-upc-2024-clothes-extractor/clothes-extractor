@@ -27,7 +27,7 @@ class ClothesDataset(data.Dataset):
     """
     dataset_mode must be 'test' or 'train'
     """
-    
+
     def __init__(self, cfg, dataset_mode, device="cpu"):
         super(ClothesDataset).__init__()
         self.cfg = cfg
@@ -37,9 +37,9 @@ class ClothesDataset(data.Dataset):
             [
                 RGBAtoRGBWhiteBlack(),
                 MakeSquareWithPad(),
-                ToFloatTensor(), # From 255 to 0 - 1
+                ToFloatTensor(),  # From 255 to 0 - 1
                 transforms.Resize((cfg.load_height, cfg.load_width), antialias=True),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # From 0 - 1 to -1 - 1
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),  # From 0 - 1 to -1 - 1
             ]
         )
         dataset_list = f"{dataset_mode}_pairs.txt"
@@ -228,12 +228,29 @@ class ClothesDataset(data.Dataset):
         return transform(image)
 
 
+def split_clothes_dataset(dataset: ClothesDataset, split: list, generator=None):
+    if generator is None:
+        generator = torch.Generator().manual_seed(42)
+    if split[0] <= 1:
+        train_size = int(split[0] * len(dataset))
+        test_size = len(dataset) - train_size
+    else:
+        train_size = split[0]
+        test_size = split[1]
+    return torch.utils.data.random_split(dataset, [train_size, test_size], generator=generator)
+
+
 class ClothesDataLoader:
     def __init__(
-        self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False
+            self, dataset, batch_size, shuffle=True, num_workers=1, pin_memory=False
     ):
         super(ClothesDataLoader, self).__init__()
 
+        prefetch_factor = None
+        persistent_workers = False
+        if num_workers > 1:
+            prefetch_factor = 4
+            persistent_workers = True
         self.data_loader = data.DataLoader(
             dataset,
             batch_size=batch_size,
@@ -241,8 +258,8 @@ class ClothesDataLoader:
             num_workers=num_workers,
             pin_memory=pin_memory,
             drop_last=True,
-            persistent_workers=True,
-            prefetch_factor=4,
+            persistent_workers=persistent_workers,
+            prefetch_factor=prefetch_factor
         )
         self.dataset = dataset
         self.data_iter = self.data_loader.__iter__()

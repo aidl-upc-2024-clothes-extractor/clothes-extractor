@@ -13,6 +13,7 @@ class Config:
     load_width: int = 224 # Must be divisible by 32
     dataloader_pin_memory: bool = False
     dataset_pairs_dir: str = 'data'
+    model_name: str = None
 
     # For development allow setting number of batches to not run the whole dataset
     max_batches: int = 0
@@ -36,7 +37,7 @@ class Config:
     # Other config
     device: str = None
     dataset_device: str = 'cpu'
-    predict_image: int = 1 #  Image index to predict
+    predict_image: int = 1  # Image index to predict
     reload_model: str = None
     reload_config: bool = None
     ssim_range: float = 1.0
@@ -45,7 +46,7 @@ class Config:
     checkpoint_save_frequency: int = 1
     wandb_save_checkpoint: bool = False
     model_name: str = "default"
-    max_models_to_keep: int = None # Save only the best n models in the local disk
+    max_models_to_keep: int = None  # Save only the best n models in the local disk
     predict_dataset: str = "test"
 
 
