@@ -136,9 +136,7 @@ class UnetTrainer(Trainer):
                 f"Validation Loss: {val_loss_avg:.4f}"
             )
 
-            checkpoint_file = local_model_store.save_model(
-                cfg, self.model, self.optimizer, epoch, train_loss_avg, val_loss_avg
-            )
+            checkpoint_file = local_model_store.save_model(cfg=cfg, model=self.model, optimizer=self.optimizer, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
 
             logger.log_training(epoch, loss_tracker)
             
