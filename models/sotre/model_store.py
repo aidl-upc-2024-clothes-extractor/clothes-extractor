@@ -46,16 +46,10 @@ class ModelStore():
         if not p.exists():
             p.mkdir(parents=True, exist_ok=True)
 
-
-    def save_model(self, cfg: Config,  model: nn.Module, optimizer: optim, epoch: int, loss: float, val_loss: float):
+    def save_model(self, cfg: Config, model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, epoch: int, loss: float, val_loss:float, model_name: str = "default_model_name"):
         """
         Save a model to disk.
 
-        Args:
-            model (nn.Module): The model to be stored on disk.
-            optimizer (optim): The optimizer state to be stored.
-            epoch (int): The epoch number.
-            loss (float): The current loss.
         """
         prefix = f'{datetime.now():%Y%m%d_%H%M}'
         filename = os.path.join(self.path, prefix + "_e" + str(epoch) + "_" + self.model_name + ".pt")
@@ -63,6 +57,8 @@ class ModelStore():
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
+            'discriminator_state_dict': discriminator.state_dict(),
+            'optimizerD_state_dict': optimizerD.state_dict(),
             'loss': loss,
             'val_loss': val_loss,
             'wabdb_id': self.wabdb_id,
@@ -111,18 +107,7 @@ def load_previous_wabdb_id(path: str = None):
         raise FileNotFoundError(f"File {full_file_name} does not exist")
     return wabdb_id
 
-def load_model(model: nn.Module, optimizer: optim, path: str = None):
-    """
-    Load a model from disk.
-
-    Args:
-        model (nn.Module): The nn.Module object representing your neural network.
-        optimizer (optim): The torch.optim object representing the optimizer.
-        path (str): The name of the file to be read from disk. If not provided, the most recent file stored will be loaded.
-
-    Returns:
-        Tuple[nn.Module, optim, int, float]: The loaded model, optimizer, epoch, and loss.
-    """
+def load_model(model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, path: str = None):
     loss = 0.0
     epoch = 0
     if path is None:
@@ -136,11 +121,13 @@ def load_model(model: nn.Module, optimizer: optim, path: str = None):
         checkpoint = torch.load(full_file_name)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if 'discriminator_state_dict' in checkpoint and discriminator is not None:
+            discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
+        if 'optimizerD_state_dict' in checkpoint and optimizerD is not None:
+            optimizerD.load_state_dict(checkpoint['optimizerD_state_dict'])
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         val_loss = checkpoint['val_loss']
-
     else:
         raise FileNotFoundError(f"File {full_file_name} does not exist")
     return model, optimizer, epoch, loss, val_loss
-

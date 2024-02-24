@@ -4,11 +4,12 @@ import argparse
 @dataclass
 class Config:
     # General config
-    batch_size: int = 64
+    batch_size: int = 32
     workers: int = 0
     dataset_dir: str = 'data/zalando-hd-resized'
-    num_epochs: int = 30
+    num_epochs: int = 1000
     learning_rate: float = 0.0003
+    discriminator_learning_rate: float = 0.0002
     load_height: int = 224 # Must be divisible by 32
     load_width: int = 224 # Must be divisible by 32
     dataloader_pin_memory: bool = False
@@ -39,8 +40,14 @@ class Config:
     dataset_device: str = 'cpu'
     predict_image: int = 1  # Image index to predict
     reload_model: str = None
+    reload_config: bool = None
     ssim_range: float = 1.0
     disable_wandb: bool = False
+    no_resume_wandb: bool = False
+    previous_wandb_id: str = None
+    checkpoint_save_frequency: int = 1
+    wandb_save_checkpoint: bool = False
+    model_name: str = "default"
     max_models_to_keep: int = None  # Save only the best n models in the local disk
     predict_dataset: str = "test"
 

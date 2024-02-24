@@ -1,17 +1,17 @@
 from argparse_dataclass import ArgumentParser
 import logging
 import os
-from datetime import datetime
 
 import torch
-import torch.optim as optim
-import segmentation_models_pytorch as smp
+
+
 import matplotlib.pyplot as plt
 import numpy as np
 import wandb
 
 from dataset.dataset import ClothesDataset, ClothesDataLoader, split_clothes_dataset
 from config import Config
+from models.unet import Unet
 import models.sotre.model_store as model_store
 from models.factory_model import get_model
 from trainer.factory_trainer import get_trainer
@@ -20,7 +20,7 @@ from models.sotre.wandb_store import WandbStore
 from models.sotre.dummy_wandb_store import DummyWandbStorer
 from metrics.wandb_logger import WandbLogger
 from metrics.local_logger import LocalLogger
-from trainer.unet_trainer import UnetTrainerConfiguration
+from torch import optim
 
 
 def run_model_on_image(model, device, dataset, image_index):
@@ -48,10 +48,13 @@ def visualize_nn_output(output, device, image_index=0):
 
 def main():
     args = ArgumentParser(Config)
-    cfg = args.parse_args()
+    cfg:Config = args.parse_args()
 
     reload_model = cfg.reload_model
-    if reload_model is not None:
+    reload_config = cfg.reload_config
+    if reload_config is not None and reload_model is None:
+        raise ValueError("reload_config is set but reload_model is not. Both must be set or none.")
+    if reload_config is not None:
         old_cfg = model_store.load_previous_config(reload_model)
         print(f"Reading previous config from {reload_model}")
         for a in dir(old_cfg):
@@ -119,33 +122,41 @@ def main():
     )
     print("Done")
 
-    model, trainer_configuration = get_model(cfg.model_name)
+    model, trainer_configuration, discriminator = get_model(cfg.model_name)
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
+    if discriminator is None:
+        optimizerD = None
+    else:
+        discriminator.to(device)
+        optimizerD = optim.Adam(discriminator.parameters(), lr=cfg.discriminator_learning_rate, betas=(0.5, 0.999))
     trainer_configuration.optimizer = optimizer
+    trainer_configuration.optimizerD = optimizerD
 
     epoch = 0
-    resume = None
+    resume = cfg.no_resume_wandb is False
     if reload_model is not None:
         model, optimizer, epoch, loss, val_loss = model_store.load_model(
-            model=model, optimizer=optimizer, path=reload_model
+            model=model, optimizer=optimizer, path=reload_model,
+            discriminator=discriminator, optimizerD=optimizerD
         )
         epoch += 1
         print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
 
     # WANDB
-    wabdb_id = None
+    wabdb_id = cfg.previous_wandb_id
     wandb_run = None
     if cfg.disable_wandb:
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
-        if reload_model is not None:
+        if resume is not False:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         if wabdb_id is not None:
             resume = True
         wandb.login()
         wandb_run_name = cfg.model_name
+        print(f'Starting wandb run with name {wandb_run_name} and id {wabdb_id} and resume={resume}')
         wandb_run = wandb.init(
             project="clothes-extractor",
             entity="clothes-extractor",

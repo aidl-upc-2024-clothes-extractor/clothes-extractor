@@ -5,6 +5,8 @@ import torch.nn as nn
 from typing import Optional
 import matplotlib.pyplot as plt
 
+from trainer.common_trainer import LossTracker
+
 
 class Logger(ABC):
     def __init__(self):
@@ -14,15 +16,12 @@ class Logger(ABC):
     def log_training(
         self,
         epoch: int,
-        train_loss_avg: np.ndarray,
-        val_loss_avg: np.ndarray,
-        ssim: np.ndarray,
-        perceptual: np.ndarray,
+        loss_tracker: LossTracker,
     ):
         pass
 
     @abstractmethod
     def log_images(
-        self, epoch: int, train_images: torch.Tensor, val_images: torch.Tensor
+        self, epoch:int, train_images: torch.Tensor, val_images: torch.Tensor, train_target: torch.Tensor, val_target: torch.Tensor
     ):
         pass
