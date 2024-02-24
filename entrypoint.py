@@ -128,6 +128,7 @@ def main():
 
     model, trainer_configuration, discriminator = get_model(cfg.model_name)
     model.to(device)
+    discriminator.to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     if discriminator is None:
         optimizerD = None
