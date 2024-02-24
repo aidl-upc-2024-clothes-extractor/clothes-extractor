@@ -181,7 +181,7 @@ class UnetTrainer(Trainer):
         perceptual_weight = 0.3
 
         for batch_idx, inputs in enumerate(loader):
-            if 0 < max_batches == batch_idx:
+            if 0 < max_batches and max_batches == batch_idx:
                 break
             if dataset_type == DatasetType.TRAIN:
                 target = inputs["target"].to(device)

@@ -183,6 +183,8 @@ class CGANTrainer(Trainer):
         for batch_idx, inputs in enumerate(loader):
             target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
+            if 0 < max_batches and max_batches == batch_idx:
+                break
             if dataset_type == DatasetType.TRAIN:
                 discriminator.zero_grad()
                 output = discriminator(source, target).squeeze()
