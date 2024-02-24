@@ -44,6 +44,6 @@ def get_model(model_name: str):
         scheduler = None
         # if "onecyclelr" in cgan_params:
         #     scheduler = "onecyclelr"
-        return model, CGANTrainerConfiguration(model, scheduler), discriminator
+        return model, CGANTrainerConfiguration(model, discriminator, scheduler), discriminator
     else:
         raise ValueError(f"Model {model_name} not supported.")
