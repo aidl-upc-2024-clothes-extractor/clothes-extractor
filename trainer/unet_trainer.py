@@ -50,10 +50,10 @@ class UnetTrainer(Trainer):
 
         # It is important to unnormalize the images before passing them to the perceptual loss
         perceptual = c1_weight * perceptual_loss(outputs, target)
-        result += perceptual
+        # result += perceptual
 
         ssim_res = ssim.data_range - ssim(outputs, target)
-        result += ssim_res
+        # result += ssim_res
         return result, l1, perceptual, ssim_res
 
     def train_model(
