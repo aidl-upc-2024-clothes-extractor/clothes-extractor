@@ -42,7 +42,8 @@ class Config:
     ssim_range: float = 1.0
     disable_wandb: bool = False
     resume_wandb: bool = False
-    checkpoint_save_frequency: int = 4
+    checkpoint_save_frequency: int = 1
+    wandb_save_checkpoint: bool = False
     model_name: str = "default"
     max_models_to_keep: int = None # Save only the best n models in the local disk
     predict_dataset: str = "test"

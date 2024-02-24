@@ -50,10 +50,13 @@ def visualize_nn_output(output, device, image_index=0):
 
 def main():
     args = ArgumentParser(Config)
-    cfg = args.parse_args()
+    cfg:Config = args.parse_args()
 
     reload_model = cfg.reload_model
-    if reload_model is not None:
+    reload_config = cfg.reload_config
+    if reload_config is not None and reload_model is None:
+        raise ValueError("reload_config is set but reload_model is not. Both must be set or none.")
+    if reload_config is not None:
         old_cfg = model_store.load_previous_config(reload_model)
         print(f"Reading previous config from {reload_model}")
         for a in dir(old_cfg):

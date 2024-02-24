@@ -71,10 +71,10 @@ def combined_criterion(
     result = 0
     perceptual = 0
     ssim_res = 0
-    outputs = outputs / 2 + 0.5
-    target = target / 2 + 0.5
     if l1_loss is not None:
         result += 100 * l1_loss(outputs, target)
+    outputs = outputs / 2 + 0.5
+    target = target / 2 + 0.5
     if perceptual_loss is not None:
         # It is important to unnormalize the images before passing them to the perceptual loss
         perceptual = c1_weight * perceptual_loss(outputs, target)
@@ -173,14 +173,14 @@ def train_model(
 
         if (epoch+1) % cfg.checkpoint_save_frequency == 0 or epoch+1 == num_epochs:
             checkpoint_file = local_model_store.save_model(cfg=cfg, model=model, optimizer=optimizer, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
-            remote_model_store.save_model(checkpoint_file)
+            if cfg.wandb_save_checkpoint:
+                remote_model_store.save_model(checkpoint_file)
 
         logger.log_training(epoch, train_loss_avg, val_loss_avg, percetual_loss_avg, ssim_loss_avg, train_generator_loss_avg, eval_generator_loss_avg, train_discriminator_loss_avg)
         with torch.no_grad():
-            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 10)]
-            ten_train = [model(x["centered_mask_body"].to(device)) for x in train_dataloader.data_loader.dataset[:10]]
+            ten_train = [model(train_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 16)]
             ten_train = [ClothesDataset.unnormalize(x) for x in ten_train]
-            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 10)]
+            ten_val = [model(val_dataloader.data_loader.dataset[i]["centered_mask_body"].to(device).unsqueeze(0)) for i in range(0, 16)]
             ten_val = [ClothesDataset.unnormalize(x) for x in ten_val]
             logger.log_images(epoch, ten_train, ten_val)
 
