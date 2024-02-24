@@ -216,8 +216,8 @@ class CGANTrainer(Trainer):
             else:
                 with torch.no_grad():
                     pred = model(source)
-                    ones = torch.ones(output.shape, dtype=torch.float, device=device)
                     output = discriminator(source, pred).squeeze()
+                    ones = torch.ones(output.shape, dtype=torch.float, device=device)
                     errG = Dcriterion(output, ones)
                     loss, l1, perceptual, ssim_res = self._combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
                 
