@@ -188,10 +188,10 @@ class CGANTrainer(Trainer):
             if dataset_type == DatasetType.TRAIN:
                 discriminator.zero_grad()
                 output = discriminator(source, target).squeeze()
-                ones = torch.ones(output.shape, dtype=torch.float, device=device)
+                ones = torch.ones(output.shape, dtype=torch.float, device=device, requires_grad=True)
                 errD = Dcriterion(output, ones)
                 pred = model(source).detach()
-                zeros = torch.zeros(output.shape, dtype=torch.float, device=device)
+                zeros = torch.zeros(output.shape, dtype=torch.float, device=device, requires_grad=True)
                 output = discriminator(source, pred).squeeze()
                 errD_fake = Dcriterion(output, zeros)
                 errD = (errD + errD_fake) * 0.5
@@ -200,7 +200,7 @@ class CGANTrainer(Trainer):
                 optimizerD.step()
                 model.zero_grad()
                 pred = model(source)
-                ones = torch.ones(output.shape, dtype=torch.float, device=device)
+                ones = torch.ones(output.shape, dtype=torch.float, device=device, requires_grad=True)
                 output = discriminator(source, pred).squeeze()
                 errG = Dcriterion(output, ones)
                 loss, l1, perceptual, ssim_res = self._combined_criterion(c1Loss, c2Loss, ssim, perceptual_weight, errG, pred, target)
