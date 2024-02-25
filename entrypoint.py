@@ -150,7 +150,7 @@ def main():
         wandb_store = DummyWandbStorer()
         wandb_logger = LocalLogger()
     else:
-        if resume is not False:
+        if resume and reload_model is not None:
             wabdb_id = model_store.load_previous_wabdb_id(reload_model)
         if wabdb_id is not None:
             resume = True
