@@ -16,6 +16,7 @@ from models.sotre.model_store import ModelStore
 from trainer.common_trainer import LossTracker, VGGPerceptualLoss
 from trainer.trainer_configuration import TrainerConfiguration
 from trainer.trainer import Trainer
+from torch.autograd import Variable
 
 class CGANTrainerConfiguration(TrainerConfiguration):
     def __init__(self, model: Module, discriminator: Module, scheduler: str = None):
@@ -186,6 +187,8 @@ class CGANTrainer(Trainer):
             if 0 < max_batches and max_batches == batch_idx:
                 break
             if dataset_type == DatasetType.TRAIN:
+                target = Variable(target, requires_grad=True)
+                source = Variable(source, requires_grad=True)
                 discriminator.zero_grad()
                 output = discriminator(source, target).squeeze()
                 ones = torch.ones(output.shape, dtype=torch.float, device=device, requires_grad=True)
