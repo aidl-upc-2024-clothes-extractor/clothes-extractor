@@ -24,6 +24,7 @@ class DiscriminatorReduction(nn.Module):
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. ``(ndf*8) x 14 x 14``
+            nn.Flatten(),
             nn.Linear(ndf * 8 * 14 * 14, 4096),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(4096, 1),
