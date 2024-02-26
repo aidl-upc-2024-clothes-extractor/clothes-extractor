@@ -20,12 +20,12 @@ class DiscriminatorReduction(nn.Module):
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. ``(ndf*4) x 28 x 28``
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
+            nn.Conv2d(ndf * 4, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. ``(ndf*8) x 14 x 14``
+            # state size. ``(ndf*4) x 14 x 14``
             nn.Flatten(),
-            nn.Linear(ndf * 8 * 14 * 14, 4096),
+            nn.Linear(ndf * 4 * 14 * 14, 4096),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(4096, 1),
             nn.Sigmoid()
