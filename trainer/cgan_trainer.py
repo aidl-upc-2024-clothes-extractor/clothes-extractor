@@ -97,6 +97,7 @@ class CGANTrainer(Trainer):
             training_progress.reset()
             validation_progress.reset()
             model.train()
+            discriminator.train()
             loss_tracker = LossTracker(epoch)
             self._forward_step(
                 device,
@@ -116,6 +117,7 @@ class CGANTrainer(Trainer):
             )
 
             model.eval()
+            discriminator.eval()
             self._forward_step(
                 device,
                 model,
