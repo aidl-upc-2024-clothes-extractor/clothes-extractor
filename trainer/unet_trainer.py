@@ -90,6 +90,8 @@ class UnetTrainer(Trainer):
                 self.optimizer, max_lr=max_lr, steps_per_epoch=steps_per_epoch, epochs=cfg.num_epochs
             )
 
+        checkpoint_file = ""
+
         print("Training started")
         for epoch in range(num_epochs):
             # Fix for tqdm not starting from start_from_epoch
@@ -153,11 +155,11 @@ class UnetTrainer(Trainer):
 
             epochs.update()
 
-            if cfg.wandb_save_checkpoint:
-                if len(local_model_store.models_saved) > 0:
-                    remote_model_store.save_model(local_model_store.models_saved[-1][0])
-                else:
-                    remote_model_store.save_model(checkpoint_file)
+        if cfg.wandb_save_checkpoint:
+            if len(local_model_store.models_saved) > 0:
+                remote_model_store.save_model(local_model_store.models_saved[-1][0])
+            else:
+                remote_model_store.save_model(checkpoint_file)
 
         print("Training completed!")
         return self.model

@@ -46,7 +46,7 @@ class Config:
     no_resume_wandb: bool = False
     previous_wandb_id: str = None
     checkpoint_save_frequency: int = 1
-    wandb_save_checkpoint: bool = False
+    wandb_save_checkpoint: bool = True
     model_name: str = "default"
     max_models_to_keep: int = None  # Save only the best n models in the local disk
     predict_dataset: str = "test"
