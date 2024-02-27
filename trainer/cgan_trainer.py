@@ -43,7 +43,7 @@ class CGANTrainer(Trainer):
             target,
     ):
         result = 0
-        l1 = 100 * l1_loss(outputs, target)
+        l1 = 150 * l1_loss(outputs, target)
         result += l1
         
         outputs = ClothesDataset.unnormalize(outputs)
