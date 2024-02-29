@@ -43,7 +43,7 @@ class CGANTrainer(Trainer):
             target,
     ):
         result = 0
-        l1 = 100 * l1_loss(outputs, target)
+        l1 = 200 * l1_loss(outputs, target)
         result += l1
         
         outputs = ClothesDataset.unnormalize(outputs)
@@ -53,6 +53,7 @@ class CGANTrainer(Trainer):
         perceptual = c1_weight * perceptual_loss(outputs, target)
         # result += perceptual
 
+        outputs = torch.clip(outputs, 0, 1)
         ssim_res = (ssim.data_range-ssim(outputs, target))
         # result += ssim_res
 
