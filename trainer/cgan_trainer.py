@@ -90,6 +90,8 @@ class CGANTrainer(Trainer):
         training_progress = tqdm(total=training_steps, desc="Training progress")
         validation_progress = tqdm(total=validation_steps, desc="Validation progress")
 
+        checkpoint_file = ""
+
         for epoch in range(num_epochs):
             # Fix for tqdm not starting from start_from_epoch
             if epoch < start_from_epoch:
@@ -140,8 +142,6 @@ class CGANTrainer(Trainer):
             
 
             checkpoint_file = local_model_store.save_model(cfg=cfg, model=model, optimizer=optimizer, discriminator=discriminator, optimizerD=optimizerD, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
-            if cfg.wandb_save_checkpoint:
-                remote_model_store.save_model(checkpoint_file)
 
             logger.log_training(epoch, loss_tracker)
             with torch.no_grad():
@@ -155,6 +155,9 @@ class CGANTrainer(Trainer):
                 logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
 
             epochs.update()
+
+        if cfg.wandb_save_checkpoint:
+            remote_model_store.save_model(checkpoint_file)
 
 
         print("Training completed!")
