@@ -156,6 +156,9 @@ class ClothesDataset(data.Dataset):
 
         cloth_mask = io.read_image(path.join(self.data_path, "cloth-mask", img_name))
         cloth_mask = cloth_mask.to(self.device)
+        if self.cfg.data_augmentation:
+            if horizontal_flip:
+                cloth_mask = F.hflip(cloth_mask)
         self.logger.debug(f"cloth_mask: {cloth_mask.shape}")
 
         target = ApplyMaskTransform()(cloth, cloth_mask)
