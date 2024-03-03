@@ -1,12 +1,12 @@
 from torch import nn
 import torch
 
-NDF = 64
+NDF = 128
 
 class DiscriminatorReduction(nn.Module):
     def __init__(self):
         super(DiscriminatorReduction, self).__init__()
-        nc = 9
+        nc = 6
         ndf = NDF
         self.main = nn.Sequential(
             # input is ``(nc) x 224 x 224``
