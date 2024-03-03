@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 
-NDF = 128
+NDF = 32
 
 class DiscriminatorReduction(nn.Module):
     def __init__(self):
