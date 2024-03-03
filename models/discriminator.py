@@ -6,7 +6,7 @@ NDF = 64
 class DiscriminatorReduction(nn.Module):
     def __init__(self):
         super(DiscriminatorReduction, self).__init__()
-        nc = 6
+        nc = 9
         ndf = NDF
         self.main = nn.Sequential(
             # input is ``(nc) x 224 x 224``
