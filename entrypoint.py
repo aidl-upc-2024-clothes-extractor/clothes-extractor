@@ -101,6 +101,7 @@ def main():
     full_dataset = ClothesDataset(cfg, "train", device=dataset_device)
     #test_dataset = ClothesDataset(cfg, "test", device=dataset_device)
     train_dataset, validation_dataset = split_clothes_dataset(full_dataset, [0.9, 0.1], generator=None)
+    validation_dataset.data_augmentation = False
 
     # test_dataloader = ClothesDataLoader(
     #     test_dataset,

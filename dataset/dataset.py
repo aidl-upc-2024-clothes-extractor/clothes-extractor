@@ -43,6 +43,7 @@ class ClothesDataset(data.Dataset):
             ]
         )
         dataset_list = f"{dataset_mode}_pairs.txt"
+        self.data_augmentation = True
 
         # load data list
         img_names = []
@@ -73,8 +74,9 @@ class ClothesDataset(data.Dataset):
         random_zoom = None
         color_jitter = None
         random_rotation = None
+        data_augmentation = self.data_augmentation and self.cfg.data_augmentation
 
-        if self.cfg.data_augmentation:
+        if data_augmentation:
             random_zoom = SameCropTransform(
                 scale=(self.cfg.min_crop_factor, self.cfg.max_crop_factor)
             )
@@ -86,7 +88,7 @@ class ClothesDataset(data.Dataset):
             )
             random_rotation = StableRotation(self.cfg.rotation_angle)
 
-        if self.cfg.data_augmentation:
+        if data_augmentation:
             if horizontal_flip:
                 img_torch = F.hflip(img_torch)
             if zoom:
@@ -115,7 +117,7 @@ class ClothesDataset(data.Dataset):
         mask_body_parts = mask_body_parts.to(self.device)
         self.logger.debug(f"mask_body_parts: {mask_body_parts.shape}")
 
-        if self.cfg.data_augmentation:
+        if data_augmentation:
             if horizontal_flip:
                 mask_body_parts = F.hflip(mask_body_parts)
             if zoom:
@@ -146,7 +148,7 @@ class ClothesDataset(data.Dataset):
         cloth = cloth.to(self.device)
         self.logger.debug(f"cloth: {cloth.shape}")
 
-        if self.cfg.data_augmentation:
+        if data_augmentation:
             if horizontal_flip:
                 cloth = F.hflip(cloth)
             if jitter:
@@ -155,7 +157,7 @@ class ClothesDataset(data.Dataset):
 
         cloth_mask = io.read_image(path.join(self.data_path, "cloth-mask", img_name))
         cloth_mask = cloth_mask.to(self.device)
-        if self.cfg.data_augmentation:
+        if data_augmentation:
             if horizontal_flip:
                 cloth_mask = F.hflip(cloth_mask)
         self.logger.debug(f"cloth_mask: {cloth_mask.shape}")
