@@ -22,9 +22,7 @@ class Config:
     # Data Augmentation
     data_augmentation: bool = False
     horizontal_flip_prob: float = 0.5
-    rotation_prob: float = 0.5
-    rotation_angle: float = 10
-    crop_prob: float = 0.25
+    crop_prob: float = 0
     min_crop_factor: float = 0.65
     max_crop_factor: float = 0.92
     brightness: float = 0.15
@@ -33,7 +31,7 @@ class Config:
     hue: float = 0.05
     color_jitter_prob: float = 0
     angle_prob: float = 0.2
-    angle: float = 10
+    rotation_angle: float = 5
 
     # Other config
     device: str = None
