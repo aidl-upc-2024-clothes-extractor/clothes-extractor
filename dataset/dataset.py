@@ -133,7 +133,9 @@ class ClothesDataset(data.Dataset):
             mask_body_parts, target_colors, img_torch
         )
         self.logger.debug(f"mask_tensor: {mask_tensor.shape}")
-
+        if self.cfg.data_augmentation:
+            if horizontal_flip:
+                mask_tensor = F.hflip(mask_tensor)
         mask_tensor = self.transform(mask_tensor)
         self.logger.debug(f"mask_tensor(transformed): {mask_tensor.shape}")
 
