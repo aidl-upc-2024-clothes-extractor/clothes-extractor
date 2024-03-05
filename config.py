@@ -7,7 +7,7 @@ class Config:
     batch_size: int = 32
     workers: int = 0
     dataset_dir: str = 'data/zalando-hd-resized'
-    num_epochs: int = 1000
+    num_epochs: int = 500
     learning_rate: float = 0.0003
     discriminator_learning_rate: float = 0.0002
     load_height: int = 224 # Must be divisible by 32
@@ -20,7 +20,7 @@ class Config:
     max_batches: int = 0
 
     # Data Augmentation
-    data_augmentation: bool = False
+    data_augmentation: bool = True
     horizontal_flip_prob: float = 0.5
     crop_prob: float = 0
     min_crop_factor: float = 0.65

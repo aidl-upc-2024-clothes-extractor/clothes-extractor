@@ -3,7 +3,6 @@ import torch
 import numpy as np
 
 NDF = 64
-
 class DiscriminatorReduction(nn.Module):
     def __init__(self):
         super(DiscriminatorReduction, self).__init__()
@@ -53,7 +52,56 @@ class Discriminator(nn.Module):
         
         return self.main(concated)
         
+
+class DiscriminatorFC(nn.Module):
+    def __init__(self):
+        super(DiscriminatorFC, self).__init__()
+        nc = 6
+        ndf = 64
+        self.main = nn.Sequential(
+            # input is ``(nc) x 224 x 224``
+            nn.Conv2d(nc, ndf, 5, 3, 1),
+            nn.LeakyReLU(0.2, inplace=True),
+            # input is ``(ndf) x 74 x 74``
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. ``(ndf * 2) x 37 x 37``
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. ``(ndf*4) x 18 x 18``
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. ``(ndf*8) x 9 x 9``
+            nn.Conv2d(ndf * 8, ndf, 1, 1, 0, bias=False),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. ``ndf x 9 x 9``
+            nn.Flatten(),
+            nn.Linear(9*9 * ndf, 1024),
+            nn.LeakyReLU(0.2),
+            nn.Linear(1024, 512),
+            nn.LeakyReLU(0.2),
+            nn.Linear(512, 64),
+            nn.LeakyReLU(0.2),
+            nn.Linear(64, 1),
+            nn.Sigmoid()
+        )
+
+    def resize(self, im):
+        if im.shape[2] == 224 and im.shape[3] == 224:
+            return im
+        return nn.functional.interpolate(im, size=(224, 224), mode='bilinear', align_corners=True)
+    
+    def forward(self, input, source):
+        input = self.resize(input)
+        source = self.resize(source)
+
+        concated = torch.cat((input, source), 1)
         
+        return self.main(concated)
+                
 
 class ConditionalFCCGANDiscriminator(nn.Module):
     def __init__(self):

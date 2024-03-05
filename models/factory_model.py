@@ -1,6 +1,6 @@
 import torch.nn as nn
 import segmentation_models_pytorch as smp
-from models.discriminator import Discriminator
+from models.discriminator import Discriminator, ConditionalFCCGANDiscriminator, DiscriminatorFC
 from trainer.cgan_trainer import CGANTrainerConfiguration
 
 from trainer.unet_trainer import UnetTrainerConfiguration
@@ -36,10 +36,11 @@ def get_model(model_name: str):
             encoder_name=cgan_params[1],
             encoder_weights=cgan_params[2],
             decoder_attention_type=cgan_params[3],
+            activation="tanh",
             in_channels=3,
             classes=3,
         )
-        discriminator = Discriminator()
+        discriminator = DiscriminatorFC()
         print(f"Using Unet:\n\t encoder_name={cgan_params[1]}\n\t encoder_weights={cgan_params[2]}\n\t decoder_attention_type={cgan_params[3]}")
         scheduler = None
         # if "onecyclelr" in cgan_params:
