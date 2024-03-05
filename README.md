@@ -12,13 +12,12 @@ Table of Contents
   * [INTRODUCTION](#introduction)
   * [DATASET](#dataset)
   * [PROJECT ARCHITECTURE](#project-architecture)
-	 * [UNET](#optical-flow)
-	 * [PATCH-GAN (Discriminator)](#patch-gan)
+	 * [INITIAL APPROACH](#initial-approach)
 	
 ## Introduction
 In this project we have trained a model using a patch-GAN to extract the t-shirt from an image of a person and generate a frontal img of the t-shirt.
 
-On inference the model expects an input image and a segmented mask from the image. We have left the segmenter model that would extract the mask for future improvements.
+On inference the model expects an input image and a segmented mask from the image. We have left the segmenter model that would extract the mask for future development.
 
 ![docs/images/first_pipeline.png](docs/images/first_pipeline.png)
 
@@ -47,6 +46,15 @@ We use the dataset from the [VITON-HD project](https://github.com/shadow2496/VIT
 In order to run the code you need to download and unzip the [VITON-HD dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset) in the `data` folder.
 
 
+## Project architecture
+### Initial approach
+We wanted to iterate and not start  by steps so we
+
+[UNET](https://arxiv.org/abs/1505.04597)
+[segmentation_models.pytorch](https://github.com/qubvel/segmentation_models.pytorch)
+
+### Final architecture: PATCH-GAN (UNET Generator + Discriminator)
+[]https://arxiv.org/pdf/1611.07004v3.pdf
 
 
 ## Development
