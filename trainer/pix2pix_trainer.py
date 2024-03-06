@@ -64,10 +64,7 @@ class Pix2PixTrainer(Trainer):
         local_model_store: ModelStore,
         start_from_epoch: int = 0,
     ):
-        optimizer: optim.Optimizer = self.optimizer
         model: Module = self.model
-        optimizerD: optim.Optimizer = self.optimizerD
-        discriminator: Module = self.discriminator
         num_epochs = cfg.num_epochs
         max_batches = cfg.max_batches
         ssim_range = cfg.ssim_range
@@ -101,11 +98,11 @@ class Pix2PixTrainer(Trainer):
                 DatasetType.TRAIN,
                 c1_loss,
                 ssim,
-                optimizer,
+                None,
                 training_progress,
                 validation_progress,
-                discriminator,
-                optimizerD,
+                None,
+                None,
                 loss_tracker,
                 max_batches
             )
@@ -119,11 +116,11 @@ class Pix2PixTrainer(Trainer):
                 DatasetType.VALIDATION,
                 c1_loss,
                 ssim,
-                optimizer,
+                None,
                 training_progress,
                 validation_progress,
-                discriminator,
-                optimizerD,
+                None,
+                None,
                 loss_tracker,
                 max_batches
             )
