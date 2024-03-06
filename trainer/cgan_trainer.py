@@ -117,7 +117,8 @@ class CGANTrainer(Trainer):
                 max_batches
             )
 
-            model.eval()
+            # We don't want to disable dropout:
+            # model.eval()
             self._forward_step(
                 device,
                 model,

@@ -39,6 +39,9 @@ def get_model(model_name: str):
             activation="tanh",
             in_channels=3,
             classes=3,
+            aux_params={
+                "dropout": 0.2
+            }
         )
         discriminator = DiscriminatorFC()
         print(f"Using Unet:\n\t encoder_name={cgan_params[1]}\n\t encoder_weights={cgan_params[2]}\n\t decoder_attention_type={cgan_params[3]}")
