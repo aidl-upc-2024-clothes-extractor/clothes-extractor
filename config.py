@@ -10,8 +10,8 @@ class Config:
     num_epochs: int = 500
     learning_rate: float = 0.0003
     discriminator_learning_rate: float = 0.0002
-    load_height: int = 224 # Must be divisible by 32
-    load_width: int = 224 # Must be divisible by 32
+    load_height: int = 256 # Must be divisible by 32
+    load_width: int = 256 # Must be divisible by 32
     dataloader_pin_memory: bool = False
     dataset_pairs_dir: str = 'data'
     model_name: str = None
