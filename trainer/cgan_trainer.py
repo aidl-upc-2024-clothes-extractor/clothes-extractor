@@ -147,12 +147,12 @@ class CGANTrainer(Trainer):
             logger.log_training(epoch, loss_tracker)
             with torch.no_grad():
                 num_images_remote = 16
-                train_target = [train_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
-                val_target = [val_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
-                ten_train = [ClothesDataset.unnormalize(model(img)[1]) for img in train_target]
-                ten_val = [ClothesDataset.unnormalize(model(img)[1]) for img in val_target]
-                train_target = [ClothesDataset.unnormalize(img) for img in train_target]
-                val_target = [ClothesDataset.unnormalize(img) for img in val_target]
+                train_target = [train_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
+                val_target = [val_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
+                ten_train = [ClothesDataset.unnormalize(model(img["centered_mask_body"].to(device).unsqueeze(0))) for img in train_target]
+                ten_val = [ClothesDataset.unnormalize(model(img["centered_mask_body"].to(device).unsqueeze(0))) for img in val_target]
+                train_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in train_target]
+                val_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in val_target]
                 logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
 
             epochs.update()
