@@ -92,7 +92,7 @@ class Pix2PixDefaultOptions:
         self.isTrain = True  # Training mode by default
         self.dataroot = None  # Required field, no default provided
         self.name = 'experiment_name'
-        self.gpu_ids = '0'
+        self.gpu_ids = 'cuda'
         self.checkpoints_dir = './checkpoints'
         self.model = 'cycle_gan'
         self.input_nc = 3
