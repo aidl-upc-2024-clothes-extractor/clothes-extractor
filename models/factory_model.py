@@ -41,7 +41,8 @@ def get_model(model_name: str):
             classes=3,
             aux_params={
                 "dropout": 0.2,
-                "classes": 3
+                "classes": 3,
+                "activation": "tanh"
             }
         )
         discriminator = DiscriminatorFC()

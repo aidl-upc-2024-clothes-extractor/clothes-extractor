@@ -197,6 +197,7 @@ class CGANTrainer(Trainer):
                 errD = Dcriterion(output, ones)
                 _, pred = model(source)
                 pred = pred.detach()
+                print('Shape:', pred.shape)
                 zeros = torch.zeros(output.shape, dtype=torch.float, device=device)
                 output = discriminator(source, pred).squeeze()
                 errD_fake = Dcriterion(output, zeros)
