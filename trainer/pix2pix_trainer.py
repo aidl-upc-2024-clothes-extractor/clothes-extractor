@@ -202,7 +202,8 @@ class Pix2PixTrainer(Trainer):
                 with torch.no_grad():
                     pred = model.netG(source)
                     _, l1, perceptual, ssim_res = self._combined_criterion(c1Loss, ssim, perceptual_weight, pred, target)
-                    pred_fake = model.netD(pred)
+                    fake_AB = torch.cat((source, pred), 1)
+                    pred_fake = model.netD(fake_AB)
                     loss_G = model.criterionGAN(pred_fake, True)
                 loss_tracker.val_l1.append(l1.item())
                 loss_tracker.val_perceptual.append(perceptual.item())
