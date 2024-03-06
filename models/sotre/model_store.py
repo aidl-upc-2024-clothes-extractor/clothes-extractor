@@ -56,12 +56,13 @@ class ModelStore():
         saving_dict = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
             'loss': loss,
             'val_loss': val_loss,
             'wabdb_id': self.wabdb_id,
             'config': cfg
         }
+        if optimizer is not None:
+            saving_dict['optimizer_state_dict'] = optimizer.state_dict()
         if discriminator is not None:
             saving_dict['discriminator_state_dict'] = discriminator.state_dict()
         if optimizerD is not None:
