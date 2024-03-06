@@ -86,8 +86,8 @@ class Pix2PixDefaultOptions:
         self.n_epochs_decay = 100
         self.beta1 = 0.5
         self.lr = 0.0002
-        self.gan_mode = 'lsgan'
-        self.pool_size = 50
+        self.gan_mode = 'vanilla'
+        self.pool_size = 0
         self.lr_policy = 'linear'
         self.lr_decay_iters = 50
         self.isTrain = True  # Training mode by default
@@ -101,13 +101,13 @@ class Pix2PixDefaultOptions:
         self.ngf = 64
         self.ndf = 64
         self.netD = 'basic'
-        self.netG = 'resnet_9blocks'
+        self.netG = 'unet_256'
         self.n_layers_D = 3
-        self.norm = 'instance'
+        self.norm = 'batch'
         self.init_type = 'normal'
         self.init_gain = 0.02
         self.no_dropout = False  # Since action='store_true', default should be False
-        self.dataset_mode = 'unaligned'
+        self.dataset_mode = 'aligned'
         self.direction = 'AtoB'
         self.serial_batches = False  # Since action='store_true', default should be False
         self.num_threads = 4
@@ -125,3 +125,4 @@ class Pix2PixDefaultOptions:
         self.use_wandb = False  # Since action='store_true', default should be False
         self.wandb_project_name = 'CycleGAN-and-pix2pix'
         self.initialized = True
+        self.lambda_L1 = 100.0
