@@ -169,7 +169,7 @@ def main():
         wabdb_id = wandb_run.id
 
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
-        wandb_run.watch(models=model)  # , log=UtLiteral["gradients", "weights"])
+        # wandb_run.watch(models=model)  # , log=UtLiteral["gradients", "weights"])
 
         wandb_store = WandbStore(wandb_run)
         wandb_logger = WandbLogger(wandb_run)
