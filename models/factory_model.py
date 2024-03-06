@@ -94,7 +94,7 @@ class Pix2PixDefaultOptions:
         self.dataroot = None  # Required field, no default provided
         self.name = 'experiment_name'
         self.gpu_ids = [0]
-        self.checkpoints_dir = './checkpoints'
+        self.checkpoints_dir = './model_checkpoints'
         self.model = 'cycle_gan'
         self.input_nc = 3
         self.output_nc = 3

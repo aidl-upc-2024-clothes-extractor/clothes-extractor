@@ -131,23 +131,25 @@ class Pix2PixTrainer(Trainer):
                 f'Validation Loss: {val_loss_avg:.4f}')
             
 
-            checkpoint_file = local_model_store.save_model(cfg=cfg, model=model, optimizer=None, discriminator=None, optimizerD=None, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
+            # checkpoint_file = local_model_store.save_model(cfg=cfg, model=model, optimizer=None, discriminator=None, optimizerD=None, epoch=epoch, loss=train_loss_avg, val_loss=val_loss_avg)
+            model.save_networks('latest')
+            model.save_networks(epoch)
 
             logger.log_training(epoch, loss_tracker)
             with torch.no_grad():
                 num_images_remote = 16
                 train_target = [train_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
                 val_target = [val_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
-                ten_train = [ClothesDataset.unnormalize(model(img["centered_mask_body"].to(device).unsqueeze(0))) for img in train_target]
-                ten_val = [ClothesDataset.unnormalize(model(img["centered_mask_body"].to(device).unsqueeze(0))) for img in val_target]
+                ten_train = [ClothesDataset.unnormalize(model.netG(img["centered_mask_body"].to(device).unsqueeze(0))) for img in train_target]
+                ten_val = [ClothesDataset.unnormalize(model.netG(img["centered_mask_body"].to(device).unsqueeze(0))) for img in val_target]
                 train_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in train_target]
                 val_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in val_target]
                 logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
 
             epochs.update()
 
-        if cfg.wandb_save_checkpoint:
-            remote_model_store.save_model(checkpoint_file)
+        # if cfg.wandb_save_checkpoint:
+        #     remote_model_store.save_model(checkpoint_file)
 
 
         print("Training completed!")
@@ -198,7 +200,7 @@ class Pix2PixTrainer(Trainer):
                 
             else:
                 with torch.no_grad():
-                    pred = model(source)
+                    pred = model.netG(source)
                     _, l1, perceptual, ssim_res = self._combined_criterion(c1Loss, ssim, perceptual_weight, pred, target)
                     pred_fake = model.netD(pred)
                     loss_G = model.criterionGAN(pred_fake, True)
