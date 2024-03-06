@@ -149,8 +149,8 @@ class CGANTrainer(Trainer):
                 num_images_remote = 16
                 train_target = [train_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
                 val_target = [val_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
-                ten_train = [ClothesDataset.unnormalize(model(img)) for img in train_target]
-                ten_val = [ClothesDataset.unnormalize(model(img)) for img in val_target]
+                ten_train = [ClothesDataset.unnormalize(model(img)[1]) for img in train_target]
+                ten_val = [ClothesDataset.unnormalize(model(img)[1]) for img in val_target]
                 train_target = [ClothesDataset.unnormalize(img) for img in train_target]
                 val_target = [ClothesDataset.unnormalize(img) for img in val_target]
                 logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
@@ -195,7 +195,8 @@ class CGANTrainer(Trainer):
                 output = discriminator(source, target).squeeze()
                 ones = torch.ones(output.shape, dtype=torch.float, device=device)
                 errD = Dcriterion(output, ones)
-                pred = model(source).detach()
+                _, pred = model(source)
+                pred = pred.detach()
                 zeros = torch.zeros(output.shape, dtype=torch.float, device=device)
                 output = discriminator(source, pred).squeeze()
                 errD_fake = Dcriterion(output, zeros)
@@ -204,7 +205,7 @@ class CGANTrainer(Trainer):
 
                 optimizerD.step()
                 model.zero_grad()
-                pred = model(source)
+                _, pred = model(source)
                 ones = torch.ones(output.shape, dtype=torch.float, device=device)
                 output = discriminator(source, pred).squeeze()
                 errG = Dcriterion(output, ones)
@@ -222,7 +223,7 @@ class CGANTrainer(Trainer):
                 
             else:
                 with torch.no_grad():
-                    pred = model(source)
+                    _, pred = model(source)
                     output = discriminator(source, pred).squeeze()
                     ones = torch.ones(output.shape, dtype=torch.float, device=device)
                     errG = Dcriterion(output, ones)
