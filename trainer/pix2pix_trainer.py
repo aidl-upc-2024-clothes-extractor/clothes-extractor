@@ -8,6 +8,7 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure
 import numpy as np
 import torch
 import torch.optim as optim
+from torch.nn import functional as F
 from torch.nn import Module
 from torch.nn import L1Loss
 from config import Config
@@ -31,14 +32,13 @@ class Pix2PixTrainer(Trainer):
     def _combined_criterion(
             self,
             perceptual_loss: torch.nn.Module,
-            l1_loss: torch.nn.Module,
             ssim: StructuralSimilarityIndexMeasure,
             c1_weight: float,
             outputs,
             target,
     ):
         result = 0
-        l1 = 200 * l1_loss(outputs, target)
+        l1 = 200 * F.l1_loss(outputs, target)
         result += l1
         
         outputs = ClothesDataset.unnormalize(outputs)
