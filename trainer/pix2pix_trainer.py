@@ -64,7 +64,7 @@ class Pix2PixTrainer(Trainer):
         local_model_store: ModelStore,
         start_from_epoch: int = 0,
     ):
-        model: Module = self.model
+        model: Pix2PixModel = self.model
         num_epochs = cfg.num_epochs
         max_batches = cfg.max_batches
         ssim_range = cfg.ssim_range
@@ -89,7 +89,7 @@ class Pix2PixTrainer(Trainer):
 
             training_progress.reset()
             validation_progress.reset()
-            model.train()
+            # model.train()
             loss_tracker = LossTracker(epoch)
             self._forward_step(
                 device,
