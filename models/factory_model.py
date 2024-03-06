@@ -54,8 +54,9 @@ def get_model(model_name: str):
         return model, CGANTrainerConfiguration(model, discriminator, scheduler), discriminator
     if model_name.startswith("pix2pix"):
         from pix2pix.models.pix2pix_model import Pix2PixModel
-
-        model = Pix2PixModel(Pix2PixDefaultOptions())
+        opt = Pix2PixDefaultOptions()
+        model = Pix2PixModel(opt)
+        model.setup(opt)
         print(f"Using Pix2Pix ")
         scheduler = None
         # if "onecyclelr" in cgan_params:
