@@ -29,25 +29,40 @@ On inference the model expects an input image and a segmented mask from the imag
 
 ![docs/images/first_pipeline.png](docs/images/first_pipeline.png)
 
-
-## Future pipeline
-For this workflow we are defining 2 pipelines:
-
-First pipeline:
-
-A Segmenter generates and img mask for the different clothes in the source img.
-An img2img model based on a patch-GAN (U-Net for the generator) uses the image mask and the source to generate a frontal img of the extracted t-shirt.
-
-Second pipeline:
-Use the VITTON HD model to infer our generated T-shirt picture and the destiny.
-
-![docs/images/two_pipelines.png](docs/images/two_pipelines.png)
-
-
 ## Dataset
 We use the dataset from the [VITON-HD project](https://github.com/shadow2496/VITON-HD).
 In order to run the code you need to download and unzip the [VITON-HD dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset) in the `data` folder.
 
+## Loss functions
+There are 3 loss functions that we found relevant for our model:
+* L1 loss
+* Perceptual loss
+* SSIM loss
+
+## Using a UNET model
+Our first approach was to use a UNET model with the following common configurations:
+
+* 200 epochs
+* Learning rate of 0.0003
+* Batch size 32
+* Image size 224x224
+* Resnet encoder with the initial imagenet weights 
+* SCE attention block
+
+We run different runs:
+
+* Resnet 18 with L1 loss
+* Resnet 18 with L1 loss + perceptual loss
+* Resnet 18 with L1 loss + perceptual loss + SSIM loss
+* Resnet 34 with L1 loss
+* Resnet 34 with L1 loss + perceptual loss
+* Resnet 34 with L1 loss + perceptual loss + SSIM loss
+
+The following graph shows the results of the different runs:
+
+TODO: Add graph
+
+We can see that the model was capable of predicting the shaps and the colors accurately, but the model was not able to predict the high frequency details of the t-shirt.
 
 ## Project architecture
 ### Initial approach
@@ -72,3 +87,17 @@ The flag `-f` will set the number of files (or empty for all) and the flag `-s` 
 ```bash
 $ python dataset/down_sample_dataset.py -f 20 -s 64
 ```
+
+
+## Future pipeline
+For this workflow we are defining 2 pipelines:
+
+First pipeline:
+
+A Segmenter generates and img mask for the different clothes in the source img.
+An img2img model based on a patch-GAN (U-Net for the generator) uses the image mask and the source to generate a frontal img of the extracted t-shirt.
+
+Second pipeline:
+Use the VITTON HD model to infer our generated T-shirt picture and the destiny.
+
+![docs/images/two_pipelines.png](docs/images/two_pipelines.png)
