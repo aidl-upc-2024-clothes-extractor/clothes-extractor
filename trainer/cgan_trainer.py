@@ -159,7 +159,7 @@ class CGANTrainer(Trainer):
                 phase1_train = [phase1_model(img) for img in ten_train_intermediate]
                 phase1_val = [phase1_model(img) for img in ten_val_intermediate]
 
-                phase1_val = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_train_intermediate, phase1_val)]
+                phase1_val = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_val_intermediate, phase1_val)]
                 phase1_train = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_train_intermediate, phase1_train)]
 
                 ten_train = [ClothesDataset.unnormalize(model(img)) for img in phase1_train]
