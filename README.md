@@ -62,7 +62,25 @@ The following graph shows the results of the different runs:
 
 TODO: Add graph
 
-We can see that the model was capable of predicting the shaps and the colors accurately, but the model was not able to predict the high frequency details of the t-shirt.
+The following images shows the predicted results compared with the target images:
+
+TODO: Add images
+
+TODO: Describe the differences between the resnet18/34 and the different loss functions combinations 
+
+We can observe that the model was capable of predicting a satisfactory shapes and colors, but it failed to predict the high frequency details of the t-shirt.
+
+The problem with the high frequency details was expected as the UNets are well known for their poor performance in high frequency details. This is why we decided to change the model to a patch-GAN.
+
+## Using a Patch-GAN model
+We have used the following configuration for the patch-GAN model:
+
+* 200 epochs
+* Learning rate for the discriminator ????
+* Learning rate for the generator ????
+* Batch size 32
+* Image size 224x224
+* TODO: Add the rest of the configuration
 
 ## Project architecture
 ### Initial approach
