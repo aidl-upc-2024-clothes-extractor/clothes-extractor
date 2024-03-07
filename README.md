@@ -13,21 +13,24 @@ Table of Contents
   * [DATASET](#dataset)
   * [PROJECT ARCHITECTURE](#project-architecture)
 	 * [INITIAL APPROACH](#initial-approach)
-	
-## Introduction
+
+## Motivation
+We want to allow users to try virtually the clothes before buying them online.
+This could help users to make better decisions and save returning costs.
+
+![docs/images/final_objective.png](docs/images/final_objective.png)
+
+## Our proposal
+We did not have enough resources to implement the whole pipeline during given time, so we modified the initial proposal to a more feasible one.
+
 In this project we have trained a model using a patch-GAN to extract the t-shirt from an image of a person and generate a frontal img of the t-shirt.
 
 On inference the model expects an input image and a segmented mask from the image. We have left the segmenter model that would extract the mask for future development.
 
 ![docs/images/first_pipeline.png](docs/images/first_pipeline.png)
 
-### Motivation
-We want to allow users to try virtually the clothes before buying them online.
-This could help users to make better decisions and save returning costs.
 
-![docs/images/final_objective.png](docs/images/final_objective.png)
-
-### Future pipeline
+## Future pipeline
 For this workflow we are defining 2 pipelines:
 
 First pipeline:
