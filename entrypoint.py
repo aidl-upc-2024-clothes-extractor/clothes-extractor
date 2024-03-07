@@ -63,7 +63,11 @@ def main():
         # Allow to overwrite the model name to support previous runs
         if cfg.model_name is None:
             old_cfg.model_name = cfg.model_name
+
+        new_epochs = cfg.num_epochs
         cfg = old_cfg
+        if cfg.num_epochs < new_epochs:
+            cfg.num_epochs = new_epochs
 
     if cfg.model_name is None:
         raise ValueError("model-name must be set")
