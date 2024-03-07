@@ -46,6 +46,8 @@ class Config:
     checkpoint_save_frequency: int = 1
     wandb_save_checkpoint: bool = True
     model_name: str = "default"
+    phase1_model_name: str = "unet-resnet18-imagenet-scse"
+    phase1_model_path: str = "model_checkpoints/20240225_2021_e199_unet-resnet18-imagenet-scse-l1.pt"
     max_models_to_keep: int = None  # Save only the best n models in the local disk
     predict_dataset: str = "test"
 

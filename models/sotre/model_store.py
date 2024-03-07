@@ -123,7 +123,8 @@ def load_model(model: nn.Module,  optimizer: optim, discriminator: nn.Module, op
     if Path(full_file_name).exists():
         checkpoint = torch.load(full_file_name)
         model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        if optimizer is not None:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         if 'discriminator_state_dict' in checkpoint and discriminator is not None:
             discriminator.load_state_dict(checkpoint['discriminator_state_dict'])
         if 'optimizerD_state_dict' in checkpoint and optimizerD is not None:

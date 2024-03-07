@@ -36,7 +36,7 @@ def get_model(model_name: str):
             encoder_name=cgan_params[1],
             encoder_weights=cgan_params[2],
             decoder_attention_type=cgan_params[3],
-            in_channels=3,
+            in_channels=6,
             classes=3,
         )
         discriminator = Discriminator()

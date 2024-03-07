@@ -15,6 +15,7 @@ class Trainer(ABC):
     @abstractmethod
     def train_model(
         self,
+        phase1_model,
         device,
         train_dataloader,
         val_dataloader,

@@ -62,6 +62,7 @@ class CGANTrainer(Trainer):
 
     def train_model(
         self,
+        phase1_model,
         device,
         train_dataloader,
         val_dataloader,
@@ -80,6 +81,7 @@ class CGANTrainer(Trainer):
         ssim_range = cfg.ssim_range
 
         c1_loss = VGGPerceptualLoss().to(device) #None
+        phase1_model.eval().to(device)
         c2_loss = L1Loss() #None
         ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
@@ -102,6 +104,7 @@ class CGANTrainer(Trainer):
             loss_tracker = LossTracker(epoch)
             self._forward_step(
                 device,
+                phase1_model,
                 model,
                 train_dataloader.data_loader,
                 DatasetType.TRAIN,
@@ -120,6 +123,7 @@ class CGANTrainer(Trainer):
             model.eval()
             self._forward_step(
                 device,
+                phase1_model,
                 model,
                 val_dataloader.data_loader,
                 DatasetType.VALIDATION,
@@ -146,13 +150,26 @@ class CGANTrainer(Trainer):
             logger.log_training(epoch, loss_tracker)
             with torch.no_grad():
                 num_images_remote = 16
-                train_target = [train_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
-                val_target = [val_dataloader.data_loader.dataset[i]["target"].to(device).unsqueeze(0) for i in range(0, num_images_remote)]
-                ten_train = [ClothesDataset.unnormalize(model(img)) for img in train_target]
-                ten_val = [ClothesDataset.unnormalize(model(img)) for img in val_target]
-                train_target = [ClothesDataset.unnormalize(img) for img in train_target]
-                val_target = [ClothesDataset.unnormalize(img) for img in val_target]
+                train_target = [train_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
+                val_target = [val_dataloader.data_loader.dataset[i] for i in range(0, num_images_remote)]
+
+                ten_train_intermediate = [img["centered_mask_body"].to(device).unsqueeze(0) for img in train_target]
+                ten_val_intermediate = [img["centered_mask_body"].to(device).unsqueeze(0) for img in val_target]
+
+                phase1_train = [phase1_model(img) for img in ten_train_intermediate]
+                phase1_val = [phase1_model(img) for img in ten_val_intermediate]
+
+                phase1_val = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_train_intermediate, phase1_val)]
+                phase1_train = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_train_intermediate, phase1_train)]
+
+                ten_train = [ClothesDataset.unnormalize(model(img)) for img in phase1_train]
+                ten_val = [ClothesDataset.unnormalize(model(img)) for img in phase1_val]
+
+                train_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in train_target]
+                val_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in val_target]
+
                 logger.log_images(epoch, ten_train, ten_val, train_target, val_target)
+
 
             epochs.update()
 
@@ -166,6 +183,7 @@ class CGANTrainer(Trainer):
     def _forward_step(
             self,
             device,
+            phase1_model: torch.nn.Module,
             model: torch.nn.Module,
             loader: torch.utils.data.DataLoader,
             dataset_type: DatasetType,
@@ -187,6 +205,9 @@ class CGANTrainer(Trainer):
         for batch_idx, inputs in enumerate(loader):
             target = inputs["target"].to(device)
             source = inputs["centered_mask_body"].to(device)
+            with torch.no_grad():
+                source2 = phase1_model(source)
+                source = torch.cat((source, source2), 1)
             if 0 < max_batches and max_batches == batch_idx:
                 break
             if dataset_type == DatasetType.TRAIN:

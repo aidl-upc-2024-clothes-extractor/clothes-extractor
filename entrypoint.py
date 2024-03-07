@@ -124,6 +124,8 @@ def main():
     print("Done")
 
     model, trainer_configuration, discriminator = get_model(cfg.model_name)
+    phase1_model, _, _ = get_model(cfg.phase1_model_name)
+    phase1_model.requires_grad_(False)
     model.to(device)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
     if discriminator is None:
@@ -143,6 +145,11 @@ def main():
         )
         epoch += 1
         print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
+
+    model, _, _, _, _ = model_store.load_model(
+        model=phase1_model, optimizer=None, path=cfg.phase1_model_path,
+        discriminator=None, optimizerD=None
+    )
 
     # WANDB
     wabdb_id = cfg.previous_wandb_id
@@ -182,6 +189,7 @@ def main():
     trainer = get_trainer(trainer_configuration)
 
     trained_model = trainer.train_model(
+        phase1_model=phase1_model,
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=validation_dataloader,
