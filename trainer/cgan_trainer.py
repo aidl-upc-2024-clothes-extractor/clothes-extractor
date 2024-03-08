@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn import Module
-from torch.nn import L1Loss
+from torch.nn import L1Loss, SmoothL1Loss
 from config import Config
 from models.sotre.wandb_store import WandbStore
 from dataset.dataset import ClothesDataset
@@ -82,7 +82,7 @@ class CGANTrainer(Trainer):
 
         c1_loss = VGGPerceptualLoss().to(device) #None
         phase1_model.eval().to(device)
-        c2_loss = L1Loss() #None
+        c2_loss = SmoothL1Loss() #None
         ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
         print("Training started")
