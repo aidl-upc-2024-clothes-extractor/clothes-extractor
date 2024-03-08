@@ -13,23 +13,23 @@ class DiscriminatorReduction(nn.Module):
             # input is ``(nc) x 224 x 224``
             nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # input is ``(ndf) x 112 x 112``
+            # input is ``112 x 112``
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. ``(ndf * 2) x 56 x 56``
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 4),
+            # state size. ``56 x 56``
+            nn.Conv2d(ndf * 2, ndf * 3, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 3),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. ``(ndf*4) x 28 x 28``
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
+            # state size. ``28 x 28``
+            nn.Conv2d(ndf * 3, ndf * 5, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 5),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. ``(ndf*8) x 14 x 14``
-            nn.Conv2d(ndf * 8, ndf * 8, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 8),
+            # state size. ``14 x 14``
+            nn.Conv2d(ndf * 5, ndf * 5, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 5),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. ``1 x 7 x 7``
-            nn.Conv2d(ndf * 8, 1, 7, 1, 0, bias=False),
+            # state size. ``7 x 7``
+            nn.Conv2d(ndf * 5, 1, 7, 1, 0, bias=False),
             nn.Sigmoid()
         )
     def forward(self, input):
