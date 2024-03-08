@@ -2,7 +2,7 @@ from torch import nn
 import torch
 import numpy as np
 
-NDF = 8
+NDF = 16
 
 class DiscriminatorReduction(nn.Module):
     def __init__(self):
@@ -11,25 +11,25 @@ class DiscriminatorReduction(nn.Module):
         ndf = NDF
         self.main = nn.Sequential(
             # input is ``(nc) x 224 x 224``
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.Conv2d(nc, ndf, 4, 2, 1),
             nn.LeakyReLU(0.2, inplace=True),
             # input is ``112 x 112``
-            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.Conv2d(ndf, ndf * 2, 4, 2, 1),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. ``56 x 56``
-            nn.Conv2d(ndf * 2, ndf * 3, 4, 2, 1, bias=False),
+            nn.Conv2d(ndf * 2, ndf * 3, 4, 2, 1),
             nn.BatchNorm2d(ndf * 3),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. ``28 x 28``
-            nn.Conv2d(ndf * 3, ndf * 5, 4, 2, 1, bias=False),
+            nn.Conv2d(ndf * 3, ndf * 5, 4, 2, 1),
             nn.BatchNorm2d(ndf * 5),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. ``14 x 14``
-            nn.Conv2d(ndf * 5, ndf * 5, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 5),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(ndf * 5, 1, 5, 2, 1),
+            # nn.BatchNorm2d(ndf * 5),
+            # nn.LeakyReLU(0.2, inplace=True),
             # state size. ``7 x 7``
-            nn.Conv2d(ndf * 5, 1, 7, 1, 0, bias=False),
+            # nn.Conv2d(ndf * 5, 1, 7, 1, 0),
             nn.Sigmoid()
         )
     def forward(self, input):

@@ -8,8 +8,8 @@ class Config:
     workers: int = 0
     dataset_dir: str = 'data/zalando-hd-resized'
     num_epochs: int = 1000
-    learning_rate: float = 0.00025
-    discriminator_learning_rate: float = 0.00009
+    learning_rate: float = 0.0002
+    discriminator_learning_rate: float = 0.0001
     load_height: int = 224 # Must be divisible by 32
     load_width: int = 224 # Must be divisible by 32
     dataloader_pin_memory: bool = False

@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from torch.nn import Module
-from torch.nn import L1Loss, SmoothL1Loss
+from torch.nn import L1Loss
 from config import Config
 from models.sotre.wandb_store import WandbStore
 from dataset.dataset import ClothesDataset
@@ -21,6 +21,9 @@ class CGANTrainerConfiguration(TrainerConfiguration):
     def __init__(self, model: Module, discriminator: Module, scheduler: str = None):
         super(CGANTrainerConfiguration, self).__init__("cgan_v1", {"model": model, "scheduler": scheduler, "discriminator": discriminator })
 
+
+def model_clamp(output):
+    return torch.clamp(output, -1, 1)
 
 class CGANTrainer(Trainer):
     def __init__(self, trainer_configuration: CGANTrainerConfiguration):
@@ -43,7 +46,8 @@ class CGANTrainer(Trainer):
             target,
     ):
         result = 0
-        l1 = 250 * l1_loss(outputs, target)
+        outputs = model_clamp(outputs)
+        l1 = 300 * l1_loss(outputs, target)
         result += l1
         
         outputs = ClothesDataset.unnormalize(outputs)
@@ -82,7 +86,7 @@ class CGANTrainer(Trainer):
 
         c1_loss = VGGPerceptualLoss().to(device) #None
         phase1_model.eval().to(device)
-        c2_loss = SmoothL1Loss() #None
+        c2_loss = L1Loss() #None
         ssim = StructuralSimilarityIndexMeasure(data_range=ssim_range).to(device)
 
         print("Training started")
@@ -162,8 +166,8 @@ class CGANTrainer(Trainer):
                 phase1_val = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_val_intermediate, phase1_val)]
                 phase1_train = [torch.cat((img1, img2), 1) for img1, img2 in zip(ten_train_intermediate, phase1_train)]
 
-                ten_train = [ClothesDataset.unnormalize(model(img)) for img in phase1_train]
-                ten_val = [ClothesDataset.unnormalize(model(img)) for img in phase1_val]
+                ten_train = [ClothesDataset.unnormalize(model_clamp(model(img))) for img in phase1_train]
+                ten_val = [ClothesDataset.unnormalize(model_clamp(model(img))) for img in phase1_val]
 
                 train_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in train_target]
                 val_target = [ClothesDataset.unnormalize(img["target"].to(device).unsqueeze(0)) for img in val_target]
