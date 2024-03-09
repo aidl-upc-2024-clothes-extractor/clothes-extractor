@@ -138,3 +138,6 @@ Second pipeline:
 Use the VITTON HD model to infer our generated T-shirt picture and the destiny.
 
 ![docs/images/two_pipelines.png](docs/images/two_pipelines.png)
+
+![docs/images/mask.png](docs/images/mask.png)
+
