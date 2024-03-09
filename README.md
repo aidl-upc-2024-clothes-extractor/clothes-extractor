@@ -73,6 +73,14 @@ We can observe that the model was capable of predicting a satisfactory shapes an
 The problem with the high frequency details was expected as the UNets are well known for their poor performance in high frequency details. This is why we decided to change the model to a patch-GAN.
 
 ## Using a Patch-GAN model
+
+![docs/images/cgan_discriminator.png](docs/images/cgan_discriminator.png)
+
+[Image source pre modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
+
+PatchGAN (also known as fully Convolutional Discriminator) is a type of CNN used to discriminate at the scale of patches of an image, rather than at the whole image level. This approach allows the network to focus on high-frequency details, making it particularly useful for tasks like image-to-image translation where maintaining fine details is important. Each patch in the output is classified as real or fake by allowing the output of the discriminator to have more than 1 dimension. The network's objective is to judge if each patch looks realistic.
+
+
 We have used the following configuration for the patch-GAN model:
 
 * 200 epochs
