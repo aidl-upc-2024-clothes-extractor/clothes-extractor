@@ -142,3 +142,5 @@ Use the VITTON HD model to infer our generated T-shirt picture and the destiny.
 ![docs/images/mask.png](docs/images/mask.png)
 
 ![docs/images/source.png](docs/images/source.png)
+
+![docs/images/2phase.png](docs/images/2phase.png)
