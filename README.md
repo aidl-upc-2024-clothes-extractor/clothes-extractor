@@ -33,11 +33,16 @@ On inference the model expects an input image and a segmented mask from the imag
 We use the dataset from the [VITON-HD project](https://github.com/shadow2496/VITON-HD).
 In order to run the code you need to download and unzip the [VITON-HD dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset) in the `data` folder.
 
+Viton-HD Dataset is divided in two parts: train and test. 
+![Dataset Split](docs/images/dataset.png)
+* Test is not used during project phase and it is reserved to final conclussions. 
+* Train is divided in two parts (90% / 10%) used for pure training and for validation. All the training information and graphics in this document is related to this subset.
+
 ## Loss functions
 There are 3 loss functions that we found relevant for our model:
 * L1 loss
 * Perceptual loss
-* SSIM loss
+* SSIM loss [SSIM](https://ieeexplore.ieee.org/document/1284395)
 
 ## Using a UNET model
 Our first approach was to use a UNET model with the following common configurations:
@@ -64,7 +69,7 @@ TODO: Add graph
 
 The following images shows the predicted results compared with the target images:
 
-TODO: Add images
+![Predicted images](docs/images/predicted_images.png)
 
 TODO: Describe the differences between the resnet18/34 and the different loss functions combinations 
 
