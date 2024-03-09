@@ -54,6 +54,12 @@ Our first approach was to use a UNET model with the following common configurati
 * Resnet encoder with the initial imagenet weights 
 * SCE attention block
 
+### scSE attention block
+
+![scSE](docs/images/scse.jpg)
+
+The spatial and channel squeeze-and-excitation (scSE) attention mechanism enhances important areas and details in images for tasks like image segmentation. It works by analyzing the entire image and individual pixels simultaneously, using two separate modules that focus on different aspects: one for the overall image context (channel) and one for the pixel-level details (spatial). These modules then combine their findings, using a method like taking the maximum or summing values, to produce a feature map that highlights the most important parts of the image. This technique helps neural networks perform better in tasks that require understanding the image as a whole and its finer details, all with minimal extra computational cost.
+
 We run different runs:
 
 * Resnet 18 with L1 loss
