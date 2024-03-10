@@ -54,6 +54,8 @@ Our first approach was to use a UNET model with the following common configurati
 * Resnet encoder with the initial imagenet weights 
 * SCE attention block
 
+![img.png](docs/images/unet.png)
+
 ### scSE attention block
 
 ![scSE](docs/images/scse.jpg)
