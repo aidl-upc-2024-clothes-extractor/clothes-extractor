@@ -24,9 +24,10 @@ import segmentation_models_pytorch as smp
 
 def run_model_on_image(model1, model2, device, image):
     model1.eval()
-    source2 = model1(image)
+    model2.eval()
     with torch.no_grad():
-        source2 = image.to(device).unsqueeze(0)
+        image = image.to(device).unsqueeze(0)
+        source2 = model1(image)
         image = torch.cat((image, source2), 1)
         
         output = model2(image)
