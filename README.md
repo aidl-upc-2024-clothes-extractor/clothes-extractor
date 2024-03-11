@@ -253,7 +253,7 @@ To improve the outcome, we lowered the discriminator's learning-rate on differen
 
 To leverage the previous problem, we opted for leaving the same hyperparameters but adding data-augmentation to fix overfitting, we also lowered the number of filters in the convolution resulting in better qualitative results on run **cgan-resnet34-low-lr-disc32**.
 
-For future experiments, since we know that lowering the number of filters in the convolution has proven to be a good solution, we would increase the Discriminator Learning Rate to allow it learning a bit faster, since it's not able to improve as it can be seen on the blue line for the discriminator loss with legend **cgan-resnet34-low-lr-disc32 ** [in the graphic below](#generator-and-discriminator-losses).
+For future experiments, since we know that lowering the number of filters in the convolution has proven to be a good solution, we would increase the Discriminator Learning Rate to allow it learning a bit faster, since it's not able to improve as it can be seen on the blue line for the discriminator loss with legend **cgan-resnet34-low-lr-disc32 [in the graphic below](#generator-and-discriminator-losses).
 
 ### Hyperparameters for each of the 1 stage GAN runs 
 
