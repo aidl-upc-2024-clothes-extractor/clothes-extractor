@@ -247,14 +247,14 @@ When training the PatchGan we experimented tuning this hyperparameters:
 
 We are describing a set of 3 runs of 150+ epochs from our training, the hyperparameters used on each of these runs can be seen on the table below.
 
-In the first of the analyzed runs, **cgan-resnet34,** the discriminator was learning too fast, so the generator was not capable of improving.
+In the first of the analyzed runs, **cgan-resnet34**, the discriminator was learning too fast, so the generator was not capable of improving.
 
-To improve the outcome, we lowered the discriminator's learning-rate on different runs until trying a learning-rate of 0.00000625 on the run **cgan-resnet34-low-lr,** where we found a clear improvement. Still the model was overfitting fast and the generator was worsening the results after a certain epoch.
+To improve the outcome, we lowered the discriminator's learning-rate on different runs until trying a learning-rate of 0.00000625 on the run **cgan-resnet34-low-lr**, where we found a clear improvement. Still the model was overfitting fast and the generator was worsening the results after a certain epoch.
 
-To leverage the previous problem, we opted for leaving the same hyperparameters but adding data-augmentation to fix overfitting, we also lowered the number of filters in the convolution resulting in better qualitative results on run **cgan-resnet34-low-lr-disc32.**
+To leverage the previous problem, we opted for leaving the same hyperparameters but adding data-augmentation to fix overfitting, we also lowered the number of filters in the convolution resulting in better qualitative results on run **cgan-resnet34-low-lr-disc32**.
 
-For future experiments, since we know that lowering the filters has proven to be a good solution, we would increase the Discriminator Learning Rate to allow it learn a bit faster, since it's not able to improve as it can be seen in the graphic for
-**cgan-resnet34-low-lr-disc32.**
+For future experiments, since we know that lowering the filters has proven to be a good solution, we would increase the Discriminator Learning Rate to allow it to learn a bit faster, since it's not able to improve as it can be seen in the graphic for
+**cgan-resnet34-low-lr-disc32**.
 
 ### Hyperparameters for each of the 1 stage GAN runs 
 
