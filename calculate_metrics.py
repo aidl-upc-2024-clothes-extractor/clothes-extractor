@@ -107,6 +107,7 @@ def main():
     args = ArgumentParser(Config)
     cfg = args.parse_args()
     cfg.batch_size = 4
+    cfg.workers = 2
     reload_model = cfg.reload_model
     reload_config = cfg.reload_config
     if reload_config is not None and reload_model is None:
