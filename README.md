@@ -254,7 +254,7 @@ More information available
 
 <img src="./readme-media/media/image6.png" width="650.0in" height="258.0in">
 
-[Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
+[Source Image Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
 
 [SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure)
 
