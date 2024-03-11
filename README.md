@@ -74,8 +74,6 @@ In our project, we increase our dataset with a few clever tweaks to each image. 
 
 Our first approach was to use a small UNET model with the following configuration with an input image of 28x28:
 
-[TODO: Small unet]{.mark}
-
 After some runs we decided to use the [Segmentation Models library](https://smp.readthedocs.io/en/latest/index.html) which allowed us to speed up the development and choose from a variety of encoders and pretrained weights. We choose `resnet18` with 11M of parameters and `resnet34` with 21M of parameters combined with the pretrained weight of an imagenet and SCSE as attention. The used input image was 224x224.
 
 To work with resnet we require to input image size multiple of 32
