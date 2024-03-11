@@ -112,20 +112,21 @@ def main():
     reload_config = cfg.reload_config
     if reload_config is not None and reload_model is None:
         raise ValueError("reload_config is set but reload_model is not. Both must be set or none.")
-    if reload_config is not None:
-        old_cfg = model_store.load_previous_config(reload_model, device=device)
-        print(f"Reading previous config from {reload_model}")
-        for a in dir(old_cfg):
-            if not a.startswith('__'):
-                print(f"    {a}: {getattr(old_cfg, a)}")
-        # Allow to overwrite the model name to support previous runs
-        if cfg.model_name is None:
-            old_cfg.model_name = cfg.model_name
-        old_cfg.predict_image = cfg.predict_image
-        old_cfg.predict_dataset = cfg.predict_dataset
-        old_cfg.workers = 0
+    # if reload_config is not None:
+    #     old_cfg = model_store.load_previous_config(reload_model, device=device)
+    #     print(f"Reading previous config from {reload_model}")
+    #     for a in dir(old_cfg):
+    #         if not a.startswith('__'):
+    #             print(f"    {a}: {getattr(old_cfg, a)}")
+    #     # Allow to overwrite the model name to support previous runs
+    #     if cfg.model_name is None:
+    #         old_cfg.model_name = cfg.model_name
+    #     old_cfg.predict_image = cfg.predict_image
+    #     old_cfg.predict_dataset = cfg.predict_dataset
+    #     old_cfg.workers = 0
         
-        cfg = old_cfg
+    #     cfg = old_cfg
+    cfg.model_name = "cgan-resnet18-imagenet-scse"
 
     if cfg.model_name is None:
         raise ValueError("model-name must be set")
