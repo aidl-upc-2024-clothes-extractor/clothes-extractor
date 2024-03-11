@@ -38,7 +38,7 @@ online.
 This could help users to make better decisions and save returning
 costs.
 
-<img src="./readme-media/media/image13.png" width="650.0in" height="252.77777777777777in">
+<img src="./readme-media/media/image13.png" width="650.0in" height="253.0in">
 
 # Our proposal
 
@@ -52,12 +52,12 @@ On inference the model expects an input image and a segmented mask from
 the image. We have left the segmenter model that would extract the mask
 for future development.
 
-<img src="./readme-media/media/image22.png" width="650.0in" height="188.88888888888889in">
+<img src="./readme-media/media/image22.png" width="650.0in" height="189.0in">
 
 # Dataset
 
 We use the dataset from the [VITON-HD
-project]([[https://github.com/shadow2496/VITON-HD]{.underline}](https://github.com/shadow2496/VITON-HD))
+project](https://github.com/shadow2496/VITON-HD)
 with Zalando images that is distributed under CC-NonComercial, see
 [LICENSE](https://github.com/shadow2496/VITON-HD/blob/main/LICENSE).
 
@@ -65,7 +65,7 @@ In order to run the code you need to download and unzip the [VITON-HD
 dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset)
 in the `data` folder.
 
-<img src="./readme-media/media/image36.png" width="650.0in" height="127.77777777777777in">
+<img src="./readme-media/media/image36.png" width="650.0in" height="127.0">
 
 Viton-HD Dataset is divided in two parts: train and test.
 
@@ -112,7 +112,7 @@ To work with resnet we require to input image size multiple of 32
 
 ### Resnet
 
-[ResNet]([[https://arxiv.org/pdf/1512.03385.pdf]{.underline}](https://arxiv.org/pdf/1512.03385.pdf))
+[ResNet](https://arxiv.org/pdf/1512.03385.pdf)
 is a type of convolutional neural network (CNN) designed to deal with
 the problem of vanishing gradients, which can occur when training very
 deep neural networks.
@@ -144,8 +144,8 @@ details, all with minimal extra computational cost.
 
 <img src="./readme-media/media/image15.png" width="650.0in" height="279.16666666666663in">
 
-[[Image source pre
-modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
+[Image source pre
+modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
 
 PatchGAN (also known as fully Convolutional Discriminator) is a type of
 CNN used to discriminate at the scale of patches of an image, rather
@@ -158,7 +158,7 @@ network\'s objective is to judge if each patch looks realistic.
 
 ### 2 Stage Architecture
 
-<img src="./readme-media/media/image27.png" width="650.0in" height="311.11111111111114in">
+<img src="./readme-media/media/image27.png" width="650.0in" height="311.0in">
 
 Based on the unstable training of the CGAN / Discriminator training, we
 decided to train a new model based on the channel concatenation of the
@@ -176,7 +176,7 @@ improvements:
 -   In order to improve the stability of the training we have tried
     > including tanh as the last layer of our Unet:
 
-<img src="./readme-media/media/image32.png" width="311.4864391951006in" height="240.1042213473316in">
+<img src="./readme-media/media/image32.png" width="311.0in" height="240.0in">
 
 Although we noticed some slight stability improvements, that was not big
 enough to justify retraining all our models
@@ -185,17 +185,12 @@ enough to justify retraining all our models
 
 ## Implementation details
 
-\* 200 epochs
-
-\* Learning rate of 0.0003
-
-\* Batch size 32
-
-\* Image size 224x224
-
-\* Resnet encoder with the initial imagenet weights
-
-\* SCE attention block
+- 200 epochs
+- Learning rate of 0.0003
+- Batch size 32
+- Image size 224x224
+- Resnet encoder with the initial imagenet weights
+- SCE attention block
 
 # Experiments
 
@@ -204,11 +199,11 @@ enough to justify retraining all our models
 For the first Unet we used only L1. The following image shows the
 validation loss and the train loss for an input of 28x28
 
-<img src="./readme-media/media/image37.png" width="650.0in" height="376.38888888888886in">
+<img src="./readme-media/media/image37.png" width="650.0in" height="376.0in">
 
 The image below shows the inference for a single validation image
 
-<img src="./readme-media/media/image33.png" width="650.0in" height="258.33333333333337in">
+<img src="./readme-media/media/image33.png" width="650.0in" height="258.0in">
 
 We can see that the resolution is too small to extract good conclusions,
 but we can already see it is not very good dealing with high
@@ -259,9 +254,9 @@ More information available
 
 ### SSIM Loss function
 
-<img src="./readme-media/media/image4.png" width="650.0in" height="136.11111111111111in">
+<img src="./readme-media/media/image4.png" width="650.0in" height="136.0in">
 
-<img src="./readme-media/media/image6.png" width="650.0in" height="258.33333333333337in">
+<img src="./readme-media/media/image6.png" width="650.0in" height="258.0in">
 
 [Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
 
@@ -278,7 +273,6 @@ is designed to take into account the perceived change in structural
 information, which is more closely aligned with the human visual
 system's perception of image quality.
 
-###  
 
 ### Training Graphs
 
@@ -312,18 +306,18 @@ results.
 The following images shows the predicted results compared with the
 target images:
 
-<img src="./readme-media/media/image9.png" width="650.0in" height="495.8333333333333in">
+<img src="./readme-media/media/image9.png" width="650.0in" height="495.0in">
 
 The following animation shows the evolution of generating some images
 through the different epochs
 
 Training
 
-<img src="./readme-media/media/image11.gif" width="233.33333333333334in" height="233.33333333333334in"><img src="./readme-media/media/image19.gif" width="233.33333333333334in" height="233.33333333333334in">
+<img src="./readme-media/media/image11.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/image19.gif" width="233.0in" height="233.0in">
 
 Validation
 
-<img src="./readme-media/media/image20.gif" width="233.33333333333334in" height="233.33333333333334in"><img src="./readme-media/media/image34.gif" width="233.33333333333334in" height="233.33333333333334in">
+<img src="./readme-media/media/image20.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/image34.gif" width="233.0in" height="233.0in">
 
 We do not observe significant differences between the resnet18 and the
 resnet34.
@@ -445,6 +439,15 @@ difference as the training progresses:
 | Epoch 10 | Epoch 60 | Epoch 110 | Epoch 160 | Epoch 210 |
 |----------|----------|-----------|-----------|-----------|
 | <img src="./readme-media/media/image26.png" width="120" height="120"> | <img src="./readme-media/media/image10.png" width="120" height="120"> | <img src="./readme-media/media/image5.png" width="120" height="120"> | <img src="./readme-media/media/image3.png" width="120" height="120"> | <img src="./readme-media/media/image1.png" width="120" height="120"> |
+
+
+Training
+
+<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_1.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_7.gif" width="233.0in" height="233.0in">
+
+Validation
+
+<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-12.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-14.gif" width="233.0in" height="233.0in">
 
 
 High frequency errors have low weight in the L1 metric and take a lot of
