@@ -1,61 +1,34 @@
-[**Motivation 2**](#motivation)
+Table of Contents
+=================
+  * [Motivation](#motivation)
+  * [Our Proposal](#our-proposal)
+  * [Dataset](#dataset)
+    * [Data Augmentation](#data-augmentation)
+  * [Method & Architecture](#method-architecture)
+    * [Resnet](#resnet)
+    * [scSE Attention Block](#scse-attention-block)
+    * [PatchGAN Discriminator](#patchgan-discriminator)
+    * [2 Stage Architecture](#2-stage-architecture)
+    * [Other Tests](#other-tests)
+    * [Implementation Details](#implementation-details)
+  * [Experiments](#experiments)
+    * [Initial UNET Results](#initial-unet-results)
+    * [UNET with 5 Levels & Attention SCSE](#unet-with-5-levels-attention-scse)
+    * [L1 Loss Function](#l1-loss-function)
+    * [Perceptual Loss Function](#perceptual-loss-function)
+    * [SSIM Loss Function](#ssim-loss-function)
+    * [Training Graphs](#training-graphs)
+    * [Resnet18 and Resnet34](#resnet18-and-resnet34)
+    * [Discriminator PatchGAN](#discriminator-patchgan)
+    * [1 Stage Training Results](#1-stage-training-results)
+    * [2 Stage Results](#2-stage-results)
+  * [Development Infrastructure](#development-infrastructure)
+    * [Train Infrastructure](#train-infrastructure)
+    * [Experiment Tracking](#experiment-tracking)
+  * [Future Work](#future-work)
+    * [Improvements](#improvements)
+    * [Roadmap](#roadmap)
 
-[**Our proposal 2**](#our-proposal)
-
-[**Dataset 3**](#dataset)
-
-> [Data Augmentation 3](#data-augmentation)
-
-[**Method & Architecture 3**](#method-architecture)
-
-> [Resnet 5](#resnet)
->
-> [scSE attention block 5](#scse-attention-block)
->
-> [PatchGAN Discriminator 6](#patchgan-discriminator)
->
-> [2 Stage Architecture 7](#stage-architecture)
->
-> [Other tests 7](#other-tests)
->
-> [Implementation details 8](#implementation-details)
-
-[**Experiments 9**](#experiments)
-
-> [Initial UNET Results 9](#initial-unet-results)
->
-> [UNET with 5 Levels & Attention SCSE
-> 10](#unet-with-5-levels-attention-scse)
->
-> [L1 loss function 10](#l1-loss-function)
->
-> [Perceptual Loss function 10](#perceptual-loss-function)
->
-> [SSIM Loss function 11](#ssim-loss-function)
->
-> [Training Graphs 12](#training-graphs)
->
-> [Resnet18 and Resnet34 12](#resnet18-and-resnet34)
->
-> [Discriminator PatchGAN 14](#discriminator-patchgan)
->
-> [1 stage training Results 15](#stage-training-results)
->
-> [2 stage Results 21](#stage-results)
-
-[**Development infrastructure 23**](#development-infrastructure)
-
-> [Train infrastructure 23](#train-infrastructure)
->
-> [Experiment tracking 23](#experiment-tracking)
-
-[**Future work 23**](#future-work)
-
-> [Improvements 24](#improvements)
->
-> [Roadmap 24](#roadmap)
-
-#  
 
 # Motivation
 
