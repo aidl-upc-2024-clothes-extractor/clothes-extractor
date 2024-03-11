@@ -127,6 +127,7 @@ def main():
         
     #     cfg = old_cfg
     cfg.model_name = "cgan-resnet18-imagenet-scse"
+    cfg.reload_model = "/notebooks/clothes-extractor/model_checkpoints/20240311_0859_e37_cgan-resnet18-imagenet-scse.pt"
 
     if cfg.model_name is None:
         raise ValueError("model-name must be set")
