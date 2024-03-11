@@ -63,7 +63,7 @@ with Zalando images that is distributed under CC-NonComercial, see
 
 In order to run the code you need to download and unzip the [VITON-HD
 dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset)
-in the \`data\` folder.
+in the `data` folder.
 
 <img src="./readme-media/media/image36.png" width="650.0in" height="127.77777777777777in">
 
@@ -103,8 +103,8 @@ configuration with an input image of 28x28:
 After some runs we decided to use the [Segmentation Models
 library](https://smp.readthedocs.io/en/latest/index.html) which allowed
 us to speed up the development and choose from a variety of encoders and
-pretrained weights. We choose \`resnet18\` with 11M of parameters and
-\`resnet34\` with 21M of parameters combined with the pretrained weight
+pretrained weights. We choose `resnet18` with 11M of parameters and
+`resnet34` with 21M of parameters combined with the pretrained weight
 of an imagenet and SCSE as attention. The used input image was 224x224.
 To work with resnet we require to input image size multiple of 32
 
