@@ -119,7 +119,10 @@ As part of our experimentation, we have tested other architectures and possible 
 
 <img src="./readme-media/media/image32.png" width="311.0in" height="240.0in">
 
-Although we noticed some slight stability improvements, that was not big enough to justify retraining all our models
+The idea being that a tanh activation function would automatically map the output to the range [-1, 1] and would allow the flow of gradients correctly (compared with clamping the result). Although we noticed some slight stability improvements, that was not big
+enough to justify retraining all our models. 
+
+-   Query / Key / Value attention
 
 ## Implementation details
 
