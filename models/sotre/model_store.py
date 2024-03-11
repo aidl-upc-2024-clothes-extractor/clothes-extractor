@@ -77,7 +77,7 @@ class ModelStore():
 
         return filename
 
-def load_previous_config(path: str = None):
+def load_previous_config(path: str = None, device: str = None):
     if path is None or path == "latest":
         p_check = Path(_DEFAULT_CHECKPOINT_PATH)
         files = sorted(p_check.glob('*'))
@@ -86,7 +86,10 @@ def load_previous_config(path: str = None):
     else:
         full_file_name = path
     if Path(full_file_name).exists():
-        checkpoint = torch.load(full_file_name)
+        if device is not None:
+            checkpoint = torch.load(full_file_name,map_location=device)
+        else:
+            checkpoint = torch.load(full_file_name)
         config = checkpoint['config']
 
     else:
@@ -94,7 +97,7 @@ def load_previous_config(path: str = None):
     return config
 
 
-def load_previous_wabdb_id(path: str = None):
+def load_previous_wabdb_id(path: str = None, device: str = None):
     if path is None:
         p_check = Path(_DEFAULT_CHECKPOINT_PATH)
         files = sorted(p_check.glob('*'))
@@ -103,14 +106,17 @@ def load_previous_wabdb_id(path: str = None):
     else:
         full_file_name = path
     if Path(full_file_name).exists():
-        checkpoint = torch.load(full_file_name)
+        if device is not None:
+            checkpoint = torch.load(full_file_name,map_location=device)
+        else:
+            checkpoint = torch.load(full_file_name)
         wabdb_id = checkpoint['wabdb_id']
 
     else:
         raise FileNotFoundError(f"File {full_file_name} does not exist")
     return wabdb_id
 
-def load_model(model: nn.Module,  optimizer: optim, discriminator: nn.Module, optimizerD: optim, path: str = None):
+def load_model(model: nn.Module,  optimizer: optim = None, discriminator: nn.Module = None, optimizerD: optim = None, path: str = None, device: str = None):
     loss = 0.0
     epoch = 0
     if path is None:
@@ -121,7 +127,11 @@ def load_model(model: nn.Module,  optimizer: optim, discriminator: nn.Module, op
     else:
         full_file_name = path
     if Path(full_file_name).exists():
-        checkpoint = torch.load(full_file_name)
+        if device is not None:
+            checkpoint = torch.load(full_file_name, map_location=device)
+        else:
+            checkpoint = torch.load(full_file_name)
+
         model.load_state_dict(checkpoint['model_state_dict'])
         if optimizer is not None:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

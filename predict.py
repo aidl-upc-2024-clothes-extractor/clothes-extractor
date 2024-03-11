@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.optim as optim
 import models.sotre.model_store as model_store
-from torchmetrics.image import StructuralSimilarityIndexMeasure
+from torchmetrics.image import StructuralSimilarityIndexMeasure, SpatialCorrelationCoefficient, PeakSignalNoiseRatio, RelativeAverageSpectralError, ErrorRelativeGlobalDimensionlessSynthesis, LearnedPerceptualImagePatchSimilarity,MultiScaleStructuralSimilarityIndexMeasure
 import torchvision.transforms as T
+from models.factory_model import get_model
+from trainer.factory_trainer import get_trainer
 
 
 def run_model_on_image(model, device, dataset, image_index):
@@ -39,70 +41,127 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.backends.mps.is_available() and torch.backends.mps.is_built() and torch.device != "cuda":
         device = torch.device("mps")
+
     args = ArgumentParser(Config)
-    cfg = args.parse_args()
-    print(cfg.num_epochs)
+    cfg:Config = args.parse_args()
+
+    reload_model = cfg.reload_model
+    reload_config = cfg.reload_config
+    if reload_config is not None and reload_model is None:
+        raise ValueError("reload_config is set but reload_model is not. Both must be set or none.")
+    if reload_config is not None:
+        old_cfg = model_store.load_previous_config(reload_model, device=device)
+        print(f"Reading previous config from {reload_model}")
+        for a in dir(old_cfg):
+            if not a.startswith('__'):
+                print(f"    {a}: {getattr(old_cfg, a)}")
+        # Allow to overwrite the model name to support previous runs
+        if cfg.model_name is None:
+            old_cfg.model_name = cfg.model_name
+        old_cfg.predict_image = cfg.predict_image
+        old_cfg.predict_dataset = cfg.predict_dataset
+        old_cfg.workers = 0
+        
+        cfg = old_cfg
+
+    if cfg.model_name is None:
+        raise ValueError("model-name must be set")
+
     desired_cloth = cfg.predict_image 
 
-    test_dataset = ClothesDataset(cfg, "test")
-    train_dataset = ClothesDataset(cfg, "train")
+    used_dataset = ClothesDataset(cfg, cfg.predict_dataset)
 
-    test_dataloader = ClothesDataLoader(test_dataset, cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
-    train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers, pin_memory=cfg.dataloader_pin_memory)
-
-    model = smp.Unet(
-        encoder_name="resnet34",  # choose encoder, e.g. mobilenet_v2 or efficientnet-b7
-        encoder_weights="imagenet",  # use `imagenet` pre-trained weights for encoder initialization
-        in_channels=3,  # model input channels (1 for gray-scale images, 3 for RGB, etc.)
-        classes=3,  # model output channels (number of classes in your dataset)
-        decoder_attention_type="scse"
-    ).to(device)
+    model, trainer_configuration, discriminator = get_model(cfg.model_name)
     optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
-    #ms = ModelStore()
-    reload_model = None
-    if cfg.reload_model != None and cfg.reload_model != "latest":
-        reload_model = cfg.reload_model
-    print(reload_model)
+    optimizerD = None
+    discriminator = None
+    trainer_configuration.optimizer = optimizer
+    trainer_configuration.optimizerD = optimizerD
+    if reload_model is not None:
+        model, optimizer, epoch, loss, val_loss = model_store.load_model(
+            model=model, optimizer=optimizer, path=reload_model,
+            discriminator=discriminator, optimizerD=optimizerD, device=device
+        )
+        epoch += 1
+        print(f"Loaded model from ${reload_model} at epoch {epoch}/{cfg.num_epochs}. test_loss={loss} val_loss={val_loss}")
+    model.to(device)
 
-    image = None
-    if cfg.predict_dataset == "train":
-        image = train_dataset[desired_cloth]
-        model, optimizer, epoch, loss, val_loss = model_store.load_model(model, optimizer, reload_model)
-        out = run_model_on_image(model, device, train_dataset, desired_cloth)
-        #visualize_nn_output(out, device)
-    else:
-        image = test_dataset[desired_cloth]
-        model, optimizer, epoch, loss, val_loss = model_store.load_model(model, optimizer, reload_model)
-        out = run_model_on_image(model, device, test_dataset, desired_cloth)
-        #visualize_nn_output(out, device)
-        
+
+    image = used_dataset[desired_cloth]
+    out = run_model_on_image(model, device, used_dataset, desired_cloth)
     out = out.squeeze() 
     image["out"] = out
 
     # image_keys = ["img", "cloth", "cloth_mask", "predict", "agnostic_mask", "mask_body_parts", "mask_body", "centered_mask_body", "img_masked"]
-    image_keys = ["target", "centered_mask_body", "out"]
-    ssim = StructuralSimilarityIndexMeasure(data_range=1.0, gaussian_kernel=False, kernel_size=19).to(device)
-    print(ssim(torch.unsqueeze(image["target"].to(device),0), torch.unsqueeze(image["out"].to(device),0)))
+    # image_keys = ["target", "centered_mask_body", "out"]
+    # fig, axes = plt.subplots(1, len(image_keys))
+    # transform = T.ToPILImage()
 
-    fig, axes = plt.subplots(1, len(image_keys))
-    transform = T.ToPILImage()
-
-    for ax, key in zip(axes, image_keys):
-        result = image[key] / 2 + 0.5
-        for c in range(result.shape[0]):
-            min_chn = result[c].min()
-            if min_chn < 0.0:
-                result[c] = result[c] - min_chn
+    # for ax, key in zip(axes, image_keys):
+    #     result = image[key] / 2 + 0.5
+    #     result = torch.clamp(result, 0, 1)
+    #     # for c in range(result.shape[0]):
+    #     #     min_chn = result[c].min()
+    #     #     if min_chn < 0.0:
+    #     #         result[c] = result[c] - min_chn
         
-        ax.imshow(transform(result))
-        #ax.imshow(result.cpu().permute(1,2,0))
-        ax.axis('off')
-        ax.set_title(key, rotation=90, fontsize=10)
+    #     ax.imshow(transform(result))
+    #     #ax.imshow(result.cpu().permute(1,2,0))
+    #     ax.axis('off')
+    #     ax.set_title(key, rotation=90, fontsize=10)
+
     target = image["target"] / 2 + 0.5
-    out = image["out"] / 2 + 0.5
-    print(ssim(torch.unsqueeze(target.to(device),0), torch.unsqueeze(out.to(device),0)))
-    print(image["out"].shape)
-    plt.show()
+    source = image["centered_mask_body"] / 2 + 0.5
+    out = torch.clamp(image["out"] / 2 + 0.5, 0, 1)
+    print(f'Min Target: {target.min()}, Max Target: {target.max()}, Min Out: {out.min()}, Max Out: {out.max()}')
+
+    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    print(f'SSIM pred-targets: {ssim(torch.unsqueeze(out.to(device),0), torch.unsqueeze(target.to(device),0))}' +
+          f' - SSIM Source-Target {ssim(torch.unsqueeze(source.to(device),0), torch.unsqueeze(target.to(device),0))}' +
+          f' - SSIM Target-Target {ssim(torch.unsqueeze(target.to(device),0), torch.unsqueeze(target.to(device),0))}'
+          )
+
+    # vif = VisualInformationFidelity().to(device) #No sirve, el blanco sale alto y el negro bajo
+    # print(vif(torch.unsqueeze(out.to(device),0), torch.unsqueeze(target.to(device),0)))
+
+    psnr = PeakSignalNoiseRatio().to(device)
+    print(f'PSNR pred-targets: {psnr(torch.unsqueeze(out.to(device),0), torch.unsqueeze(target.to(device),0))}' +
+          f' - PSNR Source-Target {psnr(torch.unsqueeze(source.to(device),0), torch.unsqueeze(target.to(device),0))}' +
+          f' - PSNR Target-Target {psnr(torch.unsqueeze(target.to(device),0), torch.unsqueeze(target.to(device),0))}'
+          )
+
+    ergas = ErrorRelativeGlobalDimensionlessSynthesis()
+    print(f'ERGAS pred-targets: {torch.round(ergas(torch.unsqueeze(out.to(device),0), torch.unsqueeze(target.to(device),0)))}' + 
+          f' - ERGAS Source-Target {torch.round(ergas(torch.unsqueeze(source.to(device),0), torch.unsqueeze(target.to(device),0)))}' + 
+          f' - ERGAS Target-Target {torch.round(ergas(torch.unsqueeze(target.to(device),0), torch.unsqueeze(target.to(device),0)))}'
+          )
+
+    lpips = LearnedPerceptualImagePatchSimilarity(net_type='squeeze')
+    print(f'LPIPS pred-targets: {lpips(torch.unsqueeze(out,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}' + 
+          f' - LPIPS Source-Target {lpips(torch.unsqueeze(source,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}' +
+          f' - LPIPS Target-Target {lpips(torch.unsqueeze(target,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+          )
+    
+    ms_ssim = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0, normalize='relu')
+    print(f'MS SSIM pred-targets: {ms_ssim(torch.unsqueeze(out,0).to("cpu"),torch.unsqueeze(target,0).to("cpu"))}'+
+          f' - MS SSIM Source-Target {ms_ssim(torch.unsqueeze(source,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}' +
+          f' - MS SSIM Target-Target {ms_ssim(torch.unsqueeze(target,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+          )
+
+    # Da un Nan    
+    # rase = RelativeAverageSpectralError()
+    # print(f'RASE pred-targets: {rase(torch.unsqueeze(out,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}' + 
+    #       f' - RASE Source-Target {rase(torch.unsqueeze(source,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+    #       f' - RASE Target-Target {rase(torch.unsqueeze(target,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+    #       )
+    
+    scc = SpatialCorrelationCoefficient()
+    print(f'SCC pred-targets: {scc(torch.unsqueeze(out,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}' + 
+          f' - SCC Source-Target {scc(torch.unsqueeze(source,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+          f' - SCC Target-Target {scc(torch.unsqueeze(target,0).to("cpu"), torch.unsqueeze(target,0).to("cpu"))}'
+          )
+
+    #plt.show()
 
 if __name__ == '__main__':
     main()
