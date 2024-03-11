@@ -22,14 +22,14 @@ from models.factory_model import get_model
 from trainer.factory_trainer import get_trainer
 import segmentation_models_pytorch as smp
 
-def run_model_on_image(model, device, image):
-    model.eval()
-    
-    image = image.to(device).unsqueeze(0)
-
-    
+def run_model_on_image(model1, model2, device, image):
+    model1.eval()
+    source2 = model1(image)
     with torch.no_grad():
-        output = model(image)
+        source2 = image.to(device).unsqueeze(0)
+        image = torch.cat((image, source2), 1)
+        
+        output = model2(image)
 
     return output
 def get_files(dataset_dir, dataset_mode):
@@ -44,8 +44,9 @@ def get_files(dataset_dir, dataset_mode):
 
     return img_names    
 
-def calculate_metrics(model, device, dataset: ClothesDataset, num_images: int = None):
-    model.eval()
+def calculate_metrics(model1, model2, device, dataset: ClothesDataset, num_images: int = None):
+    model1.eval()
+    model2.eval()
     
     ssim_calc = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
     psnr_calc = PeakSignalNoiseRatio().to(device)
@@ -76,7 +77,7 @@ def calculate_metrics(model, device, dataset: ClothesDataset, num_images: int = 
         source = source / 2 + 0.5
         # print(f'Min Source: {source.min()}, Max Source: {source.max()}')
  
-        output = run_model_on_image(model, device, image["centered_mask_body"])
+        output = run_model_on_image(model1, model2, device, image["centered_mask_body"])
         output = output.squeeze()
         output = torch.clamp(output / 2 + 0.5, 0.0, 1.0)
         # print(f'Min Output: {output.min()}, Max Output: {output.max()}')
@@ -135,15 +136,17 @@ def main():
 
     train_dataloader = ClothesDataLoader(train_dataset, batch_size=cfg.batch_size, num_workers=cfg.workers)
     validation_dataloader = ClothesDataLoader(validation_dataset, cfg.batch_size, num_workers=cfg.workers)
-
-    model, trainer_configuration, discriminator = get_model(cfg.model_name)
-    model.to(device)
+    
+    model1, _, _ = get_model(cfg.phase1_model_name)
+    model2, trainer_configuration, discriminator = get_model(cfg.model_name)
+    model2.to(device)
 
     optimizer = None
-    model, optimizer, epoch, loss, val_loss = model_store.load_model(model, path=reload_model, device=device)
+    model2, optimizer, epoch, loss, val_loss = model_store.load_model(model2, path=reload_model, device=device)
+    model1, _, _, _, _ = model_store.load_model(model1, path=cfg.phase1_model_path, device=device)
     with torch.no_grad():
         num_images_remote = 16
-        metrics_avg, metrics = calculate_metrics(model, device, train_dataloader.data_loader.dataset, num_images_remote)
+        metrics_avg, metrics = calculate_metrics(model1, model2, device, train_dataloader.data_loader.dataset, num_images_remote)
         print(json.dumps(metrics, indent=2))
         print(json.dumps(metrics_avg, indent=2))
 
@@ -152,7 +155,7 @@ def main():
     #         txt_file.write(str(d) + "\n")
     with torch.no_grad():
         num_images_remote = 16
-        metrics_avg, metrics = calculate_metrics(model, device, validation_dataloader.data_loader.dataset, num_images_remote)
+        metrics_avg, metrics = calculate_metrics(model1, model2, device, validation_dataloader.data_loader.dataset, num_images_remote)
         print(json.dumps(metrics, indent=2))
         print(json.dumps(metrics_avg, indent=2))
     # with open("./ssim_4.txt", "w") as txt_file:
