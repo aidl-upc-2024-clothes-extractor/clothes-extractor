@@ -294,7 +294,7 @@ While training and trying to align the discriminator and generator losses, we ha
 
 <img src="./readme-media/media/image38.png" width="650.0in" height="166.66666666666669in">
 
-Also we have found mode collapse when generating the high frequencies or in some runs with the inability to generate uncommon shapes.
+Also, we have found mode collapse when generating the high frequencies or in some runs with the inability to generate uncommon shapes.
 
 | Target                                                        | Result                                                        |
 |---------------------------------------------------------------|---------------------------------------------------------------|
@@ -311,7 +311,7 @@ We have been able to decrease these problems by modifying the hyperparameters co
 |cgan-resnet18-lr-disc16-small-2-Stage|Train|0.855|25.505|0.895|
 |cgan-resnet18-lr-disc16-small-2-Stage|Validation|0.738|19.949|0.693|
 
-With this new training we have seen significantly improved results and stable training that do not break the tshirts. This way of training can be compared with analogies in the ML world where different parts are capable of learning the error of the images. In this case, our network is capable of learning the details of the piece of clothing and apply those to the start.
+With this new training we have seen significantly improved results and stable training that do not break the t-shirts. This way of training can be compared with analogies in the ML world where different parts are capable of learning the error of the images. In this case, our network is capable of learning the details of the piece of clothing and apply those to the start.
 
 L1 results show extremely quick convergence based on L1:
 
@@ -331,7 +331,7 @@ High frequency errors have low weight in the L1 metric and take a lot of epochs 
 
 ## Train infrastructure
 
-Our training infrastructure leverages Paperspace\'s GPU-powered cloud environment. The available GPUs in the platform are the A4000, P5000, and RTX5000. We have also trained some models on Azure spot instances using a Standard_NC4as_T4_v3 running on a Kubernetees cluster. This was possible with the help of Docker containers, which encapsulate our training environments, ensuring consistency across different stages of development and deployment. Kubernetes orchestrates these containers to allow them to resume, recover and run several executions in parallel.
+Our training infrastructure leverages Paperspace's GPU-powered cloud environment. The available GPUs in the platform are the A4000, P5000, and RTX5000. We have also trained some models on Azure spot instances using a Standard_NC4as_T4_v3 running on a Kubernetees cluster. This was possible with the help of Docker containers, which encapsulate our training environments, ensuring consistency across different stages of development and deployment. Kubernetes orchestrates these containers to allow them to resume, recover and run several executions in parallel.
 
 ## Experiment tracking
 
@@ -357,13 +357,13 @@ For experiment tracking and monitoring we connected with Wandb:
 
 ## Roadmap
 
-The VITON-HD dataset currently comes with pre-computed segmentation masks, which are crucial for our image processing tasks as they help the model distinguish between different parts of the image, such as clothing and human body parts. However, for the sake of completeness and control over our data processing pipeline, there\'s interest in developing our own segmentation model in the future. Creating an in-house segmenter would allow us to tailor the segmentation process to our specific needs. This could lead to improvements in segmentation quality and a better integrated system overall.
+The VITON-HD dataset currently comes with pre-computed segmentation masks, which are crucial for our image processing tasks as they help the model distinguish between different parts of the image, such as clothing and human body parts. However, for the sake of completeness and control over our data processing pipeline, there is interest in developing our own segmentation model in the future. Creating an in-house segmenter would allow us to tailor the segmentation process to our specific needs. This could lead to improvements in segmentation quality and a better integrated system overall.
 
 <img src="./readme-media/media/image14.png" width="231.3678915135608in" height="310.002624671916in">
 
 <img src="./readme-media/media/image28.png" width="650.0in" height="309.72222222222223in">
 
-Our pipeline will transform an image of a person into an isolated image of their clothing. First, we input the individual\'s image into our system. Next, our API abstracts the image to highlight the clothing\'s shape and color, discarding irrelevant details. Then, it segments the clothing item from the person. Finally, the isolated garment is rendered against a plain backdrop for use in our digital catalog. This pipeline is a crucial component of our roadmap for automated garment extraction from images.
+Our pipeline will transform an image of a person into an isolated image of their clothing. First, we input the individual's image into our system. Next, our API abstracts the image to highlight the clothing's shape and color, discarding irrelevant details. Then, it segments the clothing item from the person. Finally, the isolated garment is rendered against a plain backdrop for use in our digital catalog. This pipeline is a crucial component of our roadmap for automated garment extraction from images.
 
 # Annex
 
