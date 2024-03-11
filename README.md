@@ -340,15 +340,11 @@ details. This is why we decided to change the model to a patch-GAN.
 
 When training the PatchGan we experimented tuning this hyperparameters:
 
--   **Discriminator Learning Rate:** Lowering it allows the generator to
-    > learn better how to trick the discriminator.
+-   **Discriminator Learning Rate:** Lowering it allows the generator to learn better how to trick the discriminator.
 
--   **L1 Weight:** Giving more weight to the L1 Loss allowed the
-    > generator to improve being less affected by the discriminator
-    > loss.
+-   **L1 Weight:** Giving more weight to the L1 Loss allowed the generator to improve being less affected by the discriminator loss.
 
--   **Number of filters for the Convolution:** Allowing the convolution
-    > to be more generalistic.
+-   **Number of filters for the Convolution:** Allowing the convolution to be more generalistic.
 
 -   **Data augmentation:** To prevent overfitting.
 
@@ -378,26 +374,42 @@ Learning Rate to allow it learn a bit faster, since it's not able to
 improve as it can be seen in the graphic for
 **cgan-resnet34-low-lr-disc32.**
 
-  --------------------------------------------------------------------------------
-  Run                               Disc LR      L1 Weight Filters     Data Aug.
-                                                           Conv        
-  --------------------------------- ------------ --------- ----------- -----------
-  **cgan-resnet34**                 0.0003       100       64          False
+### Hyperparameters for each of the 1 stage GAN runs 
 
-  **cgan-resnet34-low-lr**          0.00000625   300       64          False
 
-  **cgan-resnet34-low-lr-disc32**   0.00000625   300       32          True
-  --------------------------------------------------------------------------------
+| Run                             | Disc LR     | L1 Weight | Filters Conv | Data Aug. |
+|---------------------------------|-------------|---------|-------------------|-----------|
+| **cgan-resnet34**               | 0.0003      | 100       | 64                 | False     |
+| **cgan-resnet34-low-lr**        | 0.00000625  | 300       | 64                 | False     |
+| **cgan-resnet34-low-lr-disc32** | 0.00000625  | 300       | 32                 | True      |
+
+
+### Generator and discriminator losses
+
 
 <img src="./readme-media/media/image24.png" width="650.0in" height="372.22222222222223in">
 
 <img src="./readme-media/media/image31.png" width="650.0in" height="331.94444444444446in">
 
-**Cgan-resnet34 Cgan-resnet34-low-lr cgan-resnet34-low-lr-disc32**
 
-<img src="./readme-media/media/image2.png" width="309.375in" height="507.8017279090114in"><img src="./readme-media/media/image25.png" width="303.67519685039366in" height="498.5416666666667in"><img src="./readme-media/media/image23.png" width="309.3847331583552in" height="507.7083333333333in">
+### Results
 
-**Convergence failure and Mode collapse**
+
+| **Cgan-resnet34**                             | **cgan-resnet34-low-lr**                                                                               | **cgan-resnet34-low-lr-disc32** |
+|---------------------------------|--------------------------------------------------------------------------------------------------------|---------|
+| <img src="./readme-media/media/image2.png" width="309.375in" height="507.8017279090114in">               | <img src="./readme-media/media/image25.png" width="303.67519685039366in" height="498.5416666666667in"> | <img src="./readme-media/media/image23.png" width="309.3847331583552in" height="507.7083333333333in">     |
+
+Training
+
+<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_1.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_7.gif" width="233.0in" height="233.0in">
+
+Validation
+
+<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-12.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-14.gif" width="233.0in" height="233.0in">
+
+
+
+### Convergence failure and Mode collapse
 
 While training and trying to align the discriminator and generator
 losses, we have sometimes ended up in loss of equilibrium between the 2
@@ -440,14 +452,6 @@ difference as the training progresses:
 |----------|----------|-----------|-----------|-----------|
 | <img src="./readme-media/media/image26.png" width="120" height="120"> | <img src="./readme-media/media/image10.png" width="120" height="120"> | <img src="./readme-media/media/image5.png" width="120" height="120"> | <img src="./readme-media/media/image3.png" width="120" height="120"> | <img src="./readme-media/media/image1.png" width="120" height="120"> |
 
-
-Training
-
-<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_1.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_train_7.gif" width="233.0in" height="233.0in">
-
-Validation
-
-<img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-12.gif" width="233.0in" height="233.0in"><img src="./readme-media/media/cgan-resnet34-imagenet-scse-disc32_val-14.gif" width="233.0in" height="233.0in">
 
 
 High frequency errors have low weight in the L1 metric and take a lot of
