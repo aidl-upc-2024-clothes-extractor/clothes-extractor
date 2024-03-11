@@ -143,6 +143,7 @@ def main():
     
     model1, _, _ = get_model(cfg.phase1_model_name)
     model2, trainer_configuration, discriminator = get_model(cfg.model_name)
+    model1.to(device)
     model2.to(device)
 
     optimizer = None
