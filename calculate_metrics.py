@@ -49,7 +49,7 @@ def calculate_metrics(model, device, dataset: ClothesDataset, num_images: int = 
     
     ssim_calc = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
     psnr_calc = PeakSignalNoiseRatio().to(device)
-    ms_ssim_calc = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0)
+    ms_ssim_calc = MultiScaleStructuralSimilarityIndexMeasure(data_range=1.0).to(device)
 
     metric_avg = {
         "ssim": 0.0,
@@ -144,7 +144,7 @@ def main():
     with torch.no_grad():
         num_images_remote = 16
         metrics_avg, metrics = calculate_metrics(model, device, train_dataloader.data_loader.dataset, num_images_remote)
-        print(json.dumps(metrics, indent=2))
+        # print(json.dumps(metrics, indent=2))
         print(json.dumps(metrics_avg, indent=2))
 
     # with open("./ssim_3.txt", "w") as txt_file:
@@ -153,7 +153,7 @@ def main():
     with torch.no_grad():
         num_images_remote = 16
         metrics_avg, metrics = calculate_metrics(model, device, validation_dataloader.data_loader.dataset, num_images_remote)
-        print(json.dumps(metrics, indent=2))
+        # print(json.dumps(metrics, indent=2))
         print(json.dumps(metrics_avg, indent=2))
     # with open("./ssim_4.txt", "w") as txt_file:
     #     for d in metrics:
