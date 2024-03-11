@@ -387,7 +387,7 @@ improve as it can be seen in the graphic for
 ### Generator and discriminator losses
 
 
-<img src="./readme-media/media/image24.png" width="349.0in" height="190.0in"><img src="./readme-media/media/image31.png" width="392.0in" height="190.0in">
+<img src="./readme-media/media/image24.png" width="349.0in" height="190.0in">  <img src="./readme-media/media/image31.png" width="392.0in" height="190.0in">
 
 
 ### Results
