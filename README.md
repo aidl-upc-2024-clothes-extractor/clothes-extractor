@@ -66,7 +66,7 @@ Viton-HD Dataset is divided in two parts: train and test.
 
 ## Data Augmentation
 
-In our project, we increase our dataset with a few clever tweaks to each image. We have support to randomly adjust the colors to simulate different lighting conditions and appearances; spin the image a random angle, which helps the model to recognize objects no matter how they\'reoriented; flip images horizontally at random, allowing our model to learn from a mirror view without needing extra data; and we also support zooming in on random parts of the image, which trains our model to identify features regardless of their size or position in the frame. These tricks give us a lot more variety in our training data, helping our system to be more robust and accurate.
+In our project, we increase our dataset with a few clever tweaks to each image. We have support to randomly adjust the colors to simulate different lighting conditions and appearances; spin the image a random angle, which helps the model to recognize objects no matter how they are eoriented; flip images horizontally at random, allowing our model to learn from a mirror view without needing extra data; and we also support zooming in on random parts of the image, which trains our model to identify features regardless of their size or position in the frame. These tricks give us a lot more variety in our training data, helping our system to be more robust and accurate.
 
 # Method & Architecture
 
@@ -88,19 +88,24 @@ To work with resnet we require to input image size multiple of 32
 
 The key innovation in ResNet is the introduction of "residual blocks". In a traditional deep learning model, each layer learns a new representation of the data. However, in a ResNet, each layer learns a "residual function" - a kind of modification to the identity of the previous layer. This is achieved by adding a "shortcut connection" that skips one or more layers, as shown below.
 
+<img src="./readme-media/media/resnet.png">
+
 ### scSE attention block
+
+The spatial and channel squeeze-and-excitation (scSE) attention mechanism enhances important areas and details in images for tasks like image segmentation. It works by analyzing the entire image and individual pixels simultaneously, using two separate modules that focus on different aspects: one for the overall image context (channel) and one for the pixel-level details (spatial).
+These modules then combine their findings, using a method like taking the maximum or summing values, to produce a feature map that highlights the most important parts of the image.
 
 <img src="./readme-media/media/image21.png" width="343.2292213473316in" height="516.9799868766404in">
 
-The spatial and channel squeeze-and-excitation (scSE) attention mechanism enhances important areas and details in images for tasks like image segmentation. It works by analyzing the entire image and individual pixels simultaneously, using two separate modules that focus on different aspects: one for the overall image context (channel) and one for the pixel-level details (spatial). These modules then combine their findings, using a method like taking the maximum or summing values, to produce a feature map that highlights the most important parts of the image. This technique helps neural networks perform better in tasks that require understanding the image as a whole and its finer details, all with minimal extra computational cost.
+This technique helps neural networks perform better in tasks that require understanding the image as a whole and its finer details, all with minimal extra computational cost.
 
 ## PatchGAN Discriminator
 
-<img src="./readme-media/media/image15.png" width="650.0in" height="279.16666666666663in">
+<img src="./readme-media/media/image15.png" width="650.0in" height="279.0">
 
 [Image source pre modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
 
-PatchGAN (also known as fully Convolutional Discriminator) is a type of CNN used to discriminate at the scale of patches of an image, rather than at the whole image level. This approach allows the network to focus on high-frequency details, making it particularly useful for tasks like image-to-image translation where maintaining fine details is important. Each patch in the output is classified as real or fake by allowing the output of the discriminator to have more than 1 dimension. The network\'s objective is to judge if each patch looks realistic.
+PatchGAN (also known as fully Convolutional Discriminator) is a type of CNN used to discriminate at the scale of patches of an image, rather than at the whole image level. This approach allows the network to focus on high-frequency details, making it particularly useful for tasks like image-to-image translation where maintaining fine details is important. Each patch in the output is classified as real or fake by allowing the output of the discriminator to have more than 1 dimension. The network's objective is to judge if each patch looks realistic.
 
 ### 2 Stage Architecture
 
@@ -135,11 +140,11 @@ For the first Unet we used only L1. The following image shows the validation los
 
 <img src="./readme-media/media/image37.png" width="650.0in" height="376.0in">
 
-The image below shows the inference for a single validation image
+The image below shows the inference for a single validation image:
 
 <img src="./readme-media/media/image33.png" width="650.0in" height="258.0in">
 
-We can see that the resolution is too small to extract good conclusions, but we can already see it is not very good dealing with high frequencies.
+We can see that the resolution is too small to extract good conclusions, but we can already see it is not very good dealing with high frequencies but it did generate a solid shape.
 
 ## UNET with 5 Levels & Attention SCSE
 
@@ -156,17 +161,15 @@ We have performed different runs:
 
 ### L1 loss function
 
-L1 loss, also known as Absolute Error Loss, measures the absolute difference between a prediction and the actual value for each example in a dataset. More information available [here](https://pytorch.org/docs/stable/generated/torch.nn.L1Loss.html)
+[L1 loss](https://pytorch.org/docs/stable/generated/torch.nn.L1Loss.html), also known as Absolute Error Loss, measures the absolute difference between a prediction and the actual value for each example in a dataset.
 
 ### Perceptual Loss function
 
-The Perceptual Loss function is designed to measure how close the output of a network is to a target output in terms of perceptual similarity rather than pixel-level similarity.
+The [Perceptual Loss function](https://deepai.org/machine-learning-glossary-and-terms/perceptual-loss-function) is designed to measure how close the output of a network is to a target output in terms of perceptual similarity rather than pixel-level similarity.
 
 The Perceptual Loss function works by comparing the high-level features extracted from the output and target images by a pre-trained convolutional neural network (CNN). This pre-trained network is often referred to as the "loss network" and is typically a network trained on a large-scale image classification task, such as VGG16 or VGG19 trained on ImageNet. For our model we used VGG16.
 
 The main benefit of using a Perceptual Loss function is that it can lead to higher-quality results in tasks like image super-resolution, style transfer, and image synthesis. This is because it encourages the network to generate outputs that not only have the correct low-level details (like colors and edges) but also the correct high-level features (like object shapes and textures).
-
-More information available [here](https://deepai.org/machine-learning-glossary-and-terms/perceptual-loss-function)
 
 ### SSIM Loss function
 
