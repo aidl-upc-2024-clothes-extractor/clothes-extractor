@@ -63,8 +63,9 @@ We want to allow users to try virtually the clothes before buying them
 online.
 
 This could help users to make better decisions and save returning
-costs.![](./readme-media/media/image13.png){width="6.5in"
-height="2.5277777777777777in"}
+costs.
+
+<img src="./readme-media/media/image13.png" width="650.0in" height="252.77777777777777in">
 
 # Our proposal
 
@@ -78,8 +79,7 @@ On inference the model expects an input image and a segmented mask from
 the image. We have left the segmenter model that would extract the mask
 for future development.
 
-![](./readme-media/media/image22.png){width="6.5in"
-height="1.8888888888888888in"}
+<img src="./readme-media/media/image22.png" width="650.0in" height="188.88888888888889in">
 
 # Dataset
 
@@ -92,12 +92,11 @@ In order to run the code you need to download and unzip the \[VITON-HD
 dataset\](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset)
 in the \`data\` folder.
 
-![](./readme-media/media/image36.png){width="6.5in"
-height="1.2777777777777777in"}
+<img src="./readme-media/media/image36.png" width="650.0in" height="127.77777777777777in">
 
 Viton-HD Dataset is divided in two parts: train and test.
 
-![](./readme-media/media/image12.png){width="6.5in" height="0.75in"}
+<img src="./readme-media/media/image12.png" width="650.0in" height="75.0in">
 
 -   Test is not used during the project phase and it is reserved for
     > final conclusions.
@@ -136,7 +135,7 @@ pretrained weights. We choose \`resnet18\` with 11M of parameters and
 of an imagenet and SCSE as attention. The used input image was 224x224.
 To work with resnet we require to input image size multiple of 32
 
-![](./readme-media/media/image29.png){width="6.5in" height="6.875in"}
+<img src="./readme-media/media/image29.png" width="650.0in" height="687.5in">
 
 ### Resnet
 
@@ -154,8 +153,7 @@ skips one or more layers, as shown below:
 
 ### scSE attention block
 
-![](./readme-media/media/image21.png){width="3.432292213473316in"
-height="5.169799868766404in"}
+<img src="./readme-media/media/image21.png" width="343.2292213473316in" height="516.9799868766404in">
 
 The spatial and channel squeeze-and-excitation (scSE) attention
 mechanism enhances important areas and details in images for tasks like
@@ -171,8 +169,7 @@ details, all with minimal extra computational cost.
 
 ## PatchGAN Discriminator
 
-![](./readme-media/media/image15.png){width="6.5in"
-height="2.7916666666666665in"}
+<img src="./readme-media/media/image15.png" width="650.0in" height="279.16666666666663in">
 
 \[[Image source pre
 modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)\](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
@@ -188,8 +185,7 @@ network\'s objective is to judge if each patch looks realistic.
 
 ### 2 Stage Architecture
 
-![](./readme-media/media/image27.png){width="6.5in"
-height="3.111111111111111in"}
+<img src="./readme-media/media/image27.png" width="650.0in" height="311.11111111111114in">
 
 Based on the unstable training of the CGAN / Discriminator training, we
 decided to train a new model based on the channel concatenation of the
@@ -207,8 +203,7 @@ improvements:
 -   In order to improve the stability of the training we have tried
     > including tanh as the last layer of our Unet:
 
-![](./readme-media/media/image32.png){width="3.114864391951006in"
-height="2.401042213473316in"}
+<img src="./readme-media/media/image32.png" width="311.4864391951006in" height="240.1042213473316in">
 
 Although we noticed some slight stability improvements, that was not big
 enough to justify retraining all our models
@@ -236,13 +231,11 @@ enough to justify retraining all our models
 For the first Unet we used only L1. The following image shows the
 validation loss and the train loss for an input of 28x28
 
-![](./readme-media/media/image37.png){width="6.5in"
-height="3.763888888888889in"}
+<img src="./readme-media/media/image37.png" width="650.0in" height="376.38888888888886in">
 
 The image below shows the inference for a single validation image
 
-![](./readme-media/media/image33.png){width="6.5in"
-height="2.5833333333333335in"}
+<img src="./readme-media/media/image33.png" width="650.0in" height="258.33333333333337in">
 
 We can see that the resolution is too small to extract good conclusions,
 but we can already see it is not very good dealing with high
@@ -252,22 +245,14 @@ frequencies.
 
 We have performed different runs:
 
-  --------------------------------------------------------------------------------
-  **Model**   **Loss Combination**               **L1     **Perceptual   **SSIM
-                                                 Loss**   Loss**         Loss**
-  ----------- ---------------------------------- -------- -------------- ---------
-  Resnet 18   L1 loss                            ✓                       
-
-  Resnet 18   L1 loss + Perceptual loss          ✓        ✓              
-
-  Resnet 18   L1 loss + Perceptual loss + SSIM   ✓        ✓              ✓
-
-  Resnet 34   L1 loss                            ✓                       
-
-  Resnet 34   L1 loss + Perceptual loss          ✓        ✓              
-
-  Resnet 34   L1 loss + Perceptual loss + SSIM   ✓        ✓              ✓
-  --------------------------------------------------------------------------------
+| Model     | Loss Combination                | L1 Loss | Perceptual Loss | SSIM Loss |
+|-----------|---------------------------------|---------|-----------------|-----------|
+| Resnet 18 | L1 loss                         | ✓       |                 |           |
+| Resnet 18 | L1 loss + Perceptual loss       | ✓       | ✓               |           |
+| Resnet 18 | L1 loss + Perceptual loss + SSIM| ✓       | ✓               | ✓         |
+| Resnet 34 | L1 loss                         | ✓       |                 |           |
+| Resnet 34 | L1 loss + Perceptual loss       | ✓       | ✓               |           |
+| Resnet 34 | L1 loss + Perceptual loss + SSIM| ✓       | ✓               | ✓         |
 
 ### L1 loss function
 
@@ -301,16 +286,13 @@ More information available
 
 ### SSIM Loss function
 
-![](./readme-media/media/image4.png){width="6.5in"
-height="1.3611111111111112in"}
+<img src="./readme-media/media/image4.png" width="650.0in" height="136.11111111111111in">
 
-![](./readme-media/media/image6.png){width="6.5in"
-height="2.5833333333333335in"}
+<img src="./readme-media/media/image6.png" width="650.0in" height="258.33333333333337in">
 
-\[Comparison SSIM
-MSE\](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
+[Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
 
-\[SSIM\](https://en.wikipedia.org/wiki/Structural_similarity_index_measure)
+[SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure)
 
 is a method for comparing similarities between two images. The SSIM
 index is a full reference metric; in other words, the measurement or
@@ -335,7 +317,7 @@ Unet - Resnet
 With the image below we can compare how the loss evolves with each new
 epoch.
 
-![](./readme-media/media/image30.png){width="6.5in" height="2.125in"}
+<img src="./readme-media/media/image30.png" width="650.0in" height="212.5in">
 
 From the quantitative point of view we can see that Resnet18 and
 Resnet34 are very similar and the validation for the different loss
@@ -357,23 +339,18 @@ results.
 The following images shows the predicted results compared with the
 target images:
 
-![](./readme-media/media/image9.png){width="6.5in"
-height="4.958333333333333in"}
+<img src="./readme-media/media/image9.png" width="650.0in" height="495.8333333333333in">
 
 The following animation shows the evolution of generating some images
 through the different epochs
 
 Training
 
-![](./readme-media/media/image11.gif){width="2.3333333333333335in"
-height="2.3333333333333335in"}![](./readme-media/media/image19.gif){width="2.3333333333333335in"
-height="2.3333333333333335in"}
+<img src="./readme-media/media/image11.gif" width="233.33333333333334in" height="233.33333333333334in"><img src="./readme-media/media/image19.gif" width="233.33333333333334in" height="233.33333333333334in">
 
 Validation
 
-![](./readme-media/media/image20.gif){width="2.3333333333333335in"
-height="2.3333333333333335in"}![](./readme-media/media/image34.gif){width="2.3333333333333335in"
-height="2.3333333333333335in"}
+<img src="./readme-media/media/image20.gif" width="233.33333333333334in" height="233.33333333333334in"><img src="./readme-media/media/image34.gif" width="233.33333333333334in" height="233.33333333333334in">
 
 We do not observe significant differences between the resnet18 and the
 resnet34.
@@ -445,18 +422,13 @@ improve as it can be seen in the graphic for
   **cgan-resnet34-low-lr-disc32**   0.00000625   300       32          True
   --------------------------------------------------------------------------------
 
-![](./readme-media/media/image24.png){width="6.5in"
-height="3.7222222222222223in"}
+<img src="./readme-media/media/image24.png" width="650.0in" height="372.22222222222223in">
 
-![](./readme-media/media/image31.png){width="6.5in"
-height="3.3194444444444446in"}
+<img src="./readme-media/media/image31.png" width="650.0in" height="331.94444444444446in">
 
 **Cgan-resnet34 Cgan-resnet34-low-lr cgan-resnet34-low-lr-disc32**
 
-![](./readme-media/media/image2.png){width="3.09375in"
-height="5.078017279090114in"}![](./readme-media/media/image25.png){width="3.036751968503937in"
-height="4.985416666666667in"}![](./readme-media/media/image23.png){width="3.093847331583552in"
-height="5.077083333333333in"}
+<img src="./readme-media/media/image2.png" width="309.375in" height="507.8017279090114in"><img src="./readme-media/media/image25.png" width="303.67519685039366in" height="498.5416666666667in"><img src="./readme-media/media/image23.png" width="309.3847331583552in" height="507.7083333333333in">
 
 **Convergence failure and Mode collapse**
 
@@ -465,19 +437,14 @@ losses, we have sometimes ended up in loss of equilibrium between the 2
 components (convergence failure), generating wrong predictions as it can
 be seen in the resulting white image in the 5th position below.
 
-![](./readme-media/media/image38.png){width="6.5in"
-height="1.6666666666666667in"}
+<img src="./readme-media/media/image38.png" width="650.0in" height="166.66666666666669in">
 
 Also we have found mode collapse when generating the high frequencies or
 in some runs with the inability to generate uncommon shapes.
 
-  ----------------------------------------------------------------------------------------------------------------------------------------
-  Target                                                               Result
-  -------------------------------------------------------------------- -------------------------------------------------------------------
-  ![](./readme-media/media/image17.png){width="3.1041666666666665in"   ![](./readme-media/media/image16.png){width="2.869792213473316in"
-  height="3.111111111111111in"}                                        height="2.9210378390201224in"}
-
-  ----------------------------------------------------------------------------------------------------------------------------------------
+| Target                                                        | Result                                                        |
+|---------------------------------------------------------------|---------------------------------------------------------------|
+| <img src="./readme-media/media/image17.png" width="120" height="120"> | <img src="./readme-media/media/image16.png" width="120" height="120"> |
 
 We have been able to decrease these problems by modifying the
 hyperparameters commented before and/or with the 2 stage pipeline
@@ -485,8 +452,7 @@ proposed in the next section.
 
 ## 2 stage Results
 
-![](./readme-media/media/image7.png){width="3.0764588801399824in"
-height="5.152083333333334in"}
+<img src="./readme-media/media/image7.png" width="307.6458880139982in" height="515.2083333333334in">
 
 With this new training we have seen significantly improved results and
 stable training that do not break the tshirts. This way of training can
@@ -497,26 +463,23 @@ those to the start.
 
 L1 results show extremely quick convergence based on L1:
 
-![](./readme-media/media/image18.png){width="6.5in" height="2.5in"}
+<img src="./readme-media/media/image18.png" width="650.0in" height="250.0in">
 
 This makes sense, as the network learns to prioritize the L1 model input
 and ignore the source. However, qualitatively we still see a significant
 difference as the training progresses:
 
-  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  Epoch 10                                                 Epoch 60                                                 Epoch 110                                               Epoch 160                                               Epoch 210
-  -------------------------------------------------------- -------------------------------------------------------- ------------------------------------------------------- ------------------------------------------------------- -------------------------------------------------------
-  ![](./readme-media/media/image26.png){width="0.9375in"   ![](./readme-media/media/image10.png){width="0.9375in"   ![](./readme-media/media/image5.png){width="0.9375in"   ![](./readme-media/media/image3.png){width="0.9375in"   ![](./readme-media/media/image1.png){width="0.9375in"
-  height="0.9444444444444444in"}                           height="0.9444444444444444in"}                           height="0.9444444444444444in"}                          height="0.9444444444444444in"}                          height="0.9444444444444444in"}
+| Epoch 10 | Epoch 60 | Epoch 110 | Epoch 160 | Epoch 210 |
+|----------|----------|-----------|-----------|-----------|
+| <img src="./readme-media/media/image26.png" width="120" height="120"> | <img src="./readme-media/media/image10.png" width="120" height="120"> | <img src="./readme-media/media/image5.png" width="120" height="120"> | <img src="./readme-media/media/image3.png" width="120" height="120"> | <img src="./readme-media/media/image1.png" width="120" height="120"> |
 
-  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 High frequency errors have low weight in the L1 metric and take a lot of
 epochs to show good results. The generator loss has remained somewhat
 constant all through the training, with a lot of variations on the
 validation set:
 
-# ![](./readme-media/media/image35.png){width="6.5in" height="2.4305555555555554in"} 
+# <img src="./readme-media/media/image35.png" width="650.0in" height="243.05555555555554in"> 
 
 # Development infrastructure
 
@@ -535,8 +498,7 @@ allow them to resume, recover and run several executions in parallel.
 
 For experiment tracking and monitoring we connected with Wandb:
 
-![](./readme-media/media/image8.png){width="6.5in"
-height="3.361111111111111in"}
+<img src="./readme-media/media/image8.png" width="650.0in" height="336.11111111111114in">
 
 # Future work
 
@@ -569,11 +531,9 @@ would allow us to tailor the segmentation process to our specific needs.
 This could lead to improvements in segmentation quality and a better
 integrated system overall.
 
-![](./readme-media/media/image14.png){width="2.313678915135608in"
-height="3.10002624671916in"}
+<img src="./readme-media/media/image14.png" width="231.3678915135608in" height="310.002624671916in">
 
-![](./readme-media/media/image28.png){width="6.5in"
-height="3.0972222222222223in"}
+<img src="./readme-media/media/image28.png" width="650.0in" height="309.72222222222223in">
 
 Our pipeline will transform an image of a person into an isolated image
 of their clothing. First, we input the individual\'s image into our
@@ -588,10 +548,8 @@ from images.
 
 ## Resnet18 Loss comparison
 
-![](./readme-media/media/image40.png){width="6.5in"
-height="6.291666666666667in"}
+<img src="./readme-media/media/image40.png" width="650.0in" height="629.1666666666667in">
 
 ## Resnet34 Loss comparison
 
-![](./readme-media/media/image39.png){width="6.5in"
-height="6.236111111111111in"}
+<img src="./readme-media/media/image39.png" width="650.0in" height="623.6111111111111in">
