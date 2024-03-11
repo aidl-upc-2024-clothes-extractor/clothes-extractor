@@ -66,6 +66,8 @@ This could help users to make better decisions and save returning
 costs.![](./readme-media/media/image13.png){width="6.5in"
 height="2.5277777777777777in"}
 
+<img src="./readme-media/media/image13.png" width="6.5in" height="2.5277777777777777in">
+
 # Our proposal
 
 We did not have enough resources to implement the whole pipeline during
