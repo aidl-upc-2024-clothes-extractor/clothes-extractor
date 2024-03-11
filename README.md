@@ -71,12 +71,9 @@ Viton-HD Dataset is divided in two parts: train and test.
 
 <img src="./readme-media/media/image12.png" width="650.0in" height="75.0in">
 
--   Test is not used during the project phase and it is reserved for
-    > final conclusions.
+-   Test is not used during the project phase and it is reserved for final conclusions.
 
--   Train is divided in two parts (90% / 10%) used for pure training and
-    > for validation. All the training information and graphics in this
-    > document is related to these subsets.
+-   Train is divided in two parts (90% / 10%) used for pure training and for validation. All the training information and graphics in this document is related to these subsets.
 
 ## Data Augmentation
 
@@ -173,13 +170,12 @@ As part of our experimentation, we have tested other architectures and
 possible improvements. These tests have not panned out into significant
 improvements:
 
--   In order to improve the stability of the training we have tried
-    > including tanh as the last layer of our Unet:
+-   In order to improve the stability of the training we have tried including tanh as the last layer of our Unet:
 
 <img src="./readme-media/media/image32.png" width="311.0in" height="240.0in">
 
-Although we noticed some slight stability improvements, that was not big
-enough to justify retraining all our models
+The idea being that a tanh activation function would automatically map the output to the range [-1, 1] and would allow the flow of gradients correctly (compared with clamping the result). Although we noticed some slight stability improvements, that was not big
+enough to justify retraining all our models. 
 
 -   Query / Key / Value attention
 
