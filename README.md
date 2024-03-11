@@ -305,8 +305,8 @@ We have been able to decrease these problems by modifying the hyperparameters co
 
 | Network | dataset | SSIM | PSNR | MS SSIM |
 |---------|---------|------|------|---------|
-|cgan-resnet34-low-lr-disc32-2-Stage|Train|0.855|25.505|0.895|
-|cgan-resnet34-low-lr-disc32-2-Stage|Validation|0.738|19.949|0.693|
+|cgan-resnet18-lr-disc16-small-2-Stage|Train|0.855|25.505|0.895|
+|cgan-resnet18-lr-disc16-small-2-Stage|Validation|0.738|19.949|0.693|
 
 With this new training we have seen significantly improved results and stable training that do not break the tshirts. This way of training can be compared with analogies in the ML world where different parts are capable of learning the error of the images. In this case, our network is capable of learning the details of the piece of clothing and apply those to the start.
 
