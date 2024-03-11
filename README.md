@@ -56,13 +56,13 @@ for future development.
 
 # Dataset
 
-We use the dataset from the \[VITON-HD
-project\]([[https://github.com/shadow2496/VITON-HD]{.underline}](https://github.com/shadow2496/VITON-HD))
+We use the dataset from the [VITON-HD
+project]([[https://github.com/shadow2496/VITON-HD]{.underline}](https://github.com/shadow2496/VITON-HD))
 with Zalando images that is distributed under CC-NonComercial, see
-\[LICENSE\](https://github.com/shadow2496/VITON-HD/blob/main/LICENSE).
+[LICENSE](https://github.com/shadow2496/VITON-HD/blob/main/LICENSE).
 
-In order to run the code you need to download and unzip the \[VITON-HD
-dataset\](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset)
+In order to run the code you need to download and unzip the [VITON-HD
+dataset](https://github.com/shadow2496/VITON-HD?tab=readme-ov-file#dataset)
 in the \`data\` folder.
 
 <img src="./readme-media/media/image36.png" width="650.0in" height="127.77777777777777in">
@@ -100,8 +100,8 @@ configuration with an input image of 28x28:
 
 [TODO: Small unet]{.mark}
 
-After some runs we decided to use the \[Segmentation Models
-library\](https://smp.readthedocs.io/en/latest/index.html) which allowed
+After some runs we decided to use the [Segmentation Models
+library](https://smp.readthedocs.io/en/latest/index.html) which allowed
 us to speed up the development and choose from a variety of encoders and
 pretrained weights. We choose \`resnet18\` with 11M of parameters and
 \`resnet34\` with 21M of parameters combined with the pretrained weight
@@ -112,7 +112,7 @@ To work with resnet we require to input image size multiple of 32
 
 ### Resnet
 
-\[ResNet\]([[https://arxiv.org/pdf/1512.03385.pdf]{.underline}](https://arxiv.org/pdf/1512.03385.pdf))
+[ResNet]([[https://arxiv.org/pdf/1512.03385.pdf]{.underline}](https://arxiv.org/pdf/1512.03385.pdf))
 is a type of convolutional neural network (CNN) designed to deal with
 the problem of vanishing gradients, which can occur when training very
 deep neural networks.
@@ -144,8 +144,8 @@ details, all with minimal extra computational cost.
 
 <img src="./readme-media/media/image15.png" width="650.0in" height="279.16666666666663in">
 
-\[[Image source pre
-modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)\](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
+[[Image source pre
+modification](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)](https://www.researchgate.net/figure/Architecture-of-the-PatchGAN-discriminator-The-discriminator-takes-two-channel-wise_fig2_358603007)
 
 PatchGAN (also known as fully Convolutional Discriminator) is a type of
 CNN used to discriminate at the scale of patches of an image, rather
@@ -232,7 +232,7 @@ We have performed different runs:
 L1 loss, also known as Absolute Error Loss, measures the absolute
 difference between a prediction and the actual value for each example in
 a dataset. More information available
-\[here\](https://pytorch.org/docs/stable/generated/torch.nn.L1Loss.html)
+[here](https://pytorch.org/docs/stable/generated/torch.nn.L1Loss.html)
 
 ### Perceptual Loss function
 
@@ -255,7 +255,7 @@ to generate outputs that not only have the correct low-level details
 object shapes and textures).
 
 More information available
-\[here\](https://deepai.org/machine-learning-glossary-and-terms/perceptual-loss-function)
+[here](https://deepai.org/machine-learning-glossary-and-terms/perceptual-loss-function)
 
 ### SSIM Loss function
 
