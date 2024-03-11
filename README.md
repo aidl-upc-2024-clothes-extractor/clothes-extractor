@@ -178,7 +178,7 @@ The main benefit of using a Perceptual Loss function is that it can lead to high
 
 <img src="./readme-media/media/image6.png" width="650.0in" height="258.0in">
 
-[Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
+[Source Image Comparison SSIM MSE](https://videoprocessing.ai/metrics/ways-of-cheating-on-popular-objective-metrics.html)
 
 [SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure) is a method for comparing similarities between two images. The SSIM index is a full reference metric; in other words, the measurement or prediction of image quality requires a reference image to be available. SSIM is designed to improve on traditional methods like peak signal-to-noise ratio (PSNR) and mean squared error (MSE).
 
