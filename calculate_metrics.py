@@ -108,6 +108,8 @@ def main():
     cfg = args.parse_args()
     cfg.batch_size = 4
     cfg.workers = 2
+    cfg.model_name = "cgan-resnet18-imagenet-scse"
+    cfg.reload_model = "/notebooks/clothes-extractor/model_checkpoints/20240311_0859_e37_cgan-resnet18-imagenet-scse.pt"
     reload_model = cfg.reload_model
     reload_config = cfg.reload_config
     if reload_config is not None and reload_model is None:
@@ -126,8 +128,6 @@ def main():
     #     old_cfg.workers = 0
         
     #     cfg = old_cfg
-    cfg.model_name = "cgan-resnet18-imagenet-scse"
-    cfg.reload_model = "/notebooks/clothes-extractor/model_checkpoints/20240311_0859_e37_cgan-resnet18-imagenet-scse.pt"
 
     if cfg.model_name is None:
         raise ValueError("model-name must be set")
